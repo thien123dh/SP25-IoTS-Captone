@@ -1,6 +1,5 @@
 ﻿using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Base;
-using CaptoneProject_IOTS_Repository.Repository.Interface;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -13,7 +12,6 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
     public class UserRepository : RepositoryBase<User>
     {
         private readonly string _loginRepository;
-
 
         public UserRepository(string loginRepository)
         {

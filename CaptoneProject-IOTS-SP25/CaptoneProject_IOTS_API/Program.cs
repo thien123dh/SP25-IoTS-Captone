@@ -1,7 +1,6 @@
 ﻿using CaptoneProject_IOTS_API.Middleware;
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
-using CaptoneProject_IOTS_Repository.Repository.Interface;
 using CaptoneProject_IOTS_Service.Services.Implement;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -36,12 +35,14 @@ builder.Services.AddScoped<UserRepository>(provider =>
     var connectionString = configuration.GetConnectionString("DefaultConnection");
     return new UserRepository(connectionString);
 });
+builder.Services.AddScoped<RoleRepository>();
 // Configure DbContext with SQL Server
 builder.Services.AddDbContext<IoTTraddingSystemContext>(options =>
     options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
 // Đăng ký dịch vụ
 builder.Services.AddScoped<IUserServices, UserService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
 
 builder.Services.AddCors(options =>
 {
