@@ -70,7 +70,7 @@ namespace CaptoneProject_IOTS_Repository.Base
             _context.SaveChanges();
         }
 
-        public async Task<int> CreateAsync(T entity)
+        public async Task<int> CreateAsync(IEnumerable<T> entity)
         {
             await _dbSet.AddRangeAsync(entity);
             return await _context.SaveChangesAsync();
@@ -83,7 +83,7 @@ namespace CaptoneProject_IOTS_Repository.Base
             _context.SaveChanges();
         }
 
-        public async Task<int> UpdateAsync(T entity)
+        public async Task<int> UpdateAsync(IEnumerable<T> entity)
         {
             var tracker = _context.Attach(entity);
             tracker.State = EntityState.Modified;
@@ -97,9 +97,9 @@ namespace CaptoneProject_IOTS_Repository.Base
             return true;
         }
 
-        public async Task<bool> RemoveAsync(T entity)
+        public async Task<bool> RemoveAsync(IEnumerable<T> entity)
         {
-            _dbSet.Remove(entity);
+            _dbSet.RemoveRange(entity);
             await _context.SaveChangesAsync();
             return true;
         }

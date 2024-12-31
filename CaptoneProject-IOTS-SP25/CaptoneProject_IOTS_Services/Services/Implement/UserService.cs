@@ -1,8 +1,12 @@
 ﻿using CaptoneProject_IOTS_BOs;
+using CaptoneProject_IOTS_BOs.DTO.RoleDTO;
+using CaptoneProject_IOTS_BOs.DTO.UserDTO;
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
+using CaptoneProject_IOTS_Service.Mapper;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Identity.Client;
 using System.Net;
 
 namespace CaptoneProject_IOTS_Service.Services.Implement
@@ -10,15 +14,18 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
     public class UserService : IUserServices
     {
         private readonly UserRepository _userRepository;
+        private readonly UserRoleRepository _userRoleRepository;
         private readonly ITokenServices _tokenGenerator;
         private readonly PasswordHasher<string> _passwordHasher;
 
         public UserService(
             UserRepository userService, 
-            ITokenServices tokenGenerator
+            ITokenServices tokenGenerator,
+            UserRoleRepository userRoleRepository
         )
         {
             _userRepository = userService;
+            _userRoleRepository = userRoleRepository;
             _tokenGenerator = tokenGenerator;
             _passwordHasher = new PasswordHasher<string>();
         }
@@ -45,16 +52,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 IsSuccess = true,
                 Message = "OK",
                 StatusCode = HttpStatusCode.OK,
-                Data = new
-                {
-                    Id = u.Id,
-                }
+                Data = (await GetUserDetailsById(u.Id)).Data
             };
-        }
-
-        public Task<ResponseDTO> DeactiveUser(int userId)
-        {
-            throw new NotImplementedException();
         }
 
         public async Task<ResponseDTO> GetAllUsers()
@@ -77,15 +76,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 Data = userList.Select(
                     item =>
                     {
-                        return new
-                        {
-                            id = item.Id,
-                            username = item.Username,
-                            email = item.Email,
-                            address = item.Address,
-                            role = item.UserRoles?.FirstOrDefault()?.Role.Label,
-                            isActive = item.IsActive == 1
-                        };
+                        return
+                        UserMapper.mapToUserDetailResponse(item);
                     }
                 )
             };
@@ -144,9 +136,76 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             };
         }
 
-        public Task<ResponseDTO> UpdateUserRole(int userId, int roleId)
+        public async Task<ResponseDTO> GetUserDetailsById(int id)
         {
-            throw new NotImplementedException();
+            User user = await _userRepository.GetUserById(id);
+
+            if (user == null)
+            {
+                return new ResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = "User does not exist",
+                    StatusCode = HttpStatusCode.BadRequest
+                };
+            }
+
+            var data = UserMapper.mapToUserDetailResponse(user);
+
+            return
+                new ResponseDTO
+                {
+                    IsSuccess = true,
+                    Message = "OK",
+                    StatusCode = HttpStatusCode.OK,
+                    //Data = _map.MappingTo(user)
+                    Data = data
+                };
+        }
+
+        public async Task<ResponseDTO> UpdateUserRole(int userId, List<int>? roleList)
+        {
+            roleList = (roleList == null) ? new List<int>() : roleList;
+            User user = await _userRepository.GetUserById(userId);
+
+            if (user == null)
+                return new ResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = "User does not exist",
+                    StatusCode = HttpStatusCode.BadRequest
+                };
+
+            List<UserRole> userRoleList = user.UserRoles.ToList();
+
+            //Get the user role doesn't exist in input user role list
+            IEnumerable<UserRole> deleteUserRoleList = userRoleList.Where(ur => !roleList.Contains(ur.RoleId));
+            //REMOVE user role
+            await _userRoleRepository.RemoveAsync(deleteUserRoleList);
+
+            var insertUserRoleList = roleList
+            .Where(
+                r => (userRoleList.FirstOrDefault(ur => ur.RoleId == r) == null)
+            )
+            .Select(r => new UserRole
+            {
+                UserId = userId,
+                RoleId = r,
+                CreatedDate = DateTime.Now,
+                //HARDCODE ==> TODO
+                CreatedBy = 1
+            });
+
+            //Create user role list
+            await _userRoleRepository.CreateAsync(insertUserRoleList);
+
+            return new ResponseDTO
+            {
+                IsSuccess = true,
+                Message = "Ok",
+                StatusCode = HttpStatusCode.OK,
+                Data = (await GetUserDetailsById(userId)).Data
+            };
         }
     }
 }

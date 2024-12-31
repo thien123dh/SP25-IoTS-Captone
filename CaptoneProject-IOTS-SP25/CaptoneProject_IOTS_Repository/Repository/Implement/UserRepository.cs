@@ -27,5 +27,15 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
             return user;
         }
 
+        public async Task<User> GetUserById(int id)
+        {
+            var user = await _dbSet
+                .Include(x => x.UserRoles)
+                .ThenInclude(ur => ur.Role)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            return user;
+        }
+
     }
 }
