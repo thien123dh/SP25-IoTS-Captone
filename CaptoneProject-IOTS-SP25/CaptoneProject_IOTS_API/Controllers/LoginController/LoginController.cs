@@ -17,7 +17,7 @@ namespace CaptoneProject_IOTS_API.Controllers.LoginController
             _userService = userService;
         }
 
-        [HttpPost("Login")]
+        [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDTO request)
         {
             if (request == null)

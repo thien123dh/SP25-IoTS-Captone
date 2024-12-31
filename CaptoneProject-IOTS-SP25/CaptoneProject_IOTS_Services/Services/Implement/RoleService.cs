@@ -1,4 +1,5 @@
 ﻿using CaptoneProject_IOTS_BOs;
+using CaptoneProject_IOTS_BOs.DTO.RoleDTO;
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
 using CaptoneProject_IOTS_Service.Services.Interface;
@@ -23,7 +24,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         public async Task<ResponseDTO> GetAllRoles()
         {
             IEnumerable<Role> roleList = _roleRepository.GetActiveRoles();
-
+            
+            MapService<Role, RoleResponse> _map = new MapService<Role, RoleResponse>();
+            
             if (roleList == null)
             {
                 return new ResponseDTO
@@ -39,15 +42,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 Message = "OK",
                 StatusCode = HttpStatusCode.OK,
                 Data = roleList.Select(
-                        (item) => new
-                        {
-                            id = item.Id,
-                            label = item.Label,
-                            order = item.Orders,
-                            isActive = true
-                        }
-                    )
-                };
+                    (item) => _map.MappingTo(item)
+                )
+            };
                 
         }
     }

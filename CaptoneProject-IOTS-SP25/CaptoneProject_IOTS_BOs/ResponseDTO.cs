@@ -12,7 +12,7 @@ namespace CaptoneProject_IOTS_BOs
         public bool IsSuccess { get; set; }
         public HttpStatusCode StatusCode { get; set; }
         public string Message { get; set; }
-        public T Data { get; set; }
+        public T? Data { get; set; }
     }
     public class ResponseDTO
     {
