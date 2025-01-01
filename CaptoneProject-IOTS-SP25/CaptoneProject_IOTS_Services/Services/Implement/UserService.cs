@@ -1,4 +1,5 @@
 ﻿using CaptoneProject_IOTS_BOs;
+using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.RoleDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserDTO;
 using CaptoneProject_IOTS_BOs.Models;
@@ -205,6 +206,25 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 Message = "Ok",
                 StatusCode = HttpStatusCode.OK,
                 Data = (await GetUserDetailsById(userId)).Data
+            };
+        }
+
+        public async Task<ResponseDTO> GetUsersPagination(PaginationRequest paginationRequest)
+        {
+            PaginationResponse<User> response = _userRepository.GetPaginate(
+                    filter: null,
+                    orderBy: null,
+                    includeProperties: "UserRoles,UserRoles.Role",
+                    pageIndex: paginationRequest.PageIndex,
+                    pageSize: paginationRequest.PageSize
+            );
+
+            return new ResponseDTO
+            {
+                IsSuccess = true,
+                Message = "Ok",
+                StatusCode = HttpStatusCode.OK,
+                Data = PaginationMapper<User, UserDetailsResponseDTO>.mappingTo(UserMapper.mapToUserDetailResponse, source: response)
             };
         }
     }

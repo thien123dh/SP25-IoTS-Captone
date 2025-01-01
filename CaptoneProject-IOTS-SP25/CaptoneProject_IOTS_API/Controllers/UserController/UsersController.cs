@@ -1,6 +1,7 @@
 ﻿using Azure;
 using Azure.Core;
 using CaptoneProject_IOTS_BOs;
+using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserDTO;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Mvc;
@@ -38,10 +39,10 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
             return Ok(response);
         }
 
-        [HttpGet("listing")]
-        public async Task<IActionResult> GetAllUsers()
+        [HttpPost("listing")]
+        public async Task<IActionResult> GetAllUsers([FromBody] PaginationRequest paginationRequest)
         {
-            var response = await _userService.GetAllUsers();
+            var response = await _userService.GetUsersPagination(paginationRequest);
 
             return GetActionResult(response);
         }
