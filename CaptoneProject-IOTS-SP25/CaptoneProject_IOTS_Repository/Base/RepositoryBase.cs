@@ -1,8 +1,10 @@
-﻿using CaptoneProject_IOTS_BOs.Models;
+﻿using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
+using CaptoneProject_IOTS_BOs.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -55,6 +57,54 @@ namespace CaptoneProject_IOTS_Repository.Base
 
         #endregion Separating asign entity and save operators
 
+        public virtual PaginationResponse<T> GetPaginate(
+            Expression<Func<T, bool>> filter = null,
+            Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null,
+            string? includeProperties = "",
+            int pageIndex = 0,
+            int pageSize = 0)
+        {
+            IQueryable<T> query = _dbSet;
+
+            if (filter != null)
+            {
+                query = query.Where(filter);
+            }
+
+            if (includeProperties != null)
+            {
+                foreach (var includeProperty in includeProperties.Split
+                (new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    query = query.Include(includeProperty);
+                }
+            }
+
+            if (orderBy != null)
+            {
+                query = orderBy(query);
+            }
+
+            //Get total count before pagination
+            int totalCount = query.Count();
+
+            //if (pageIndex.HasValue && pageSize.HasValue)
+            //{
+            int validPageIndex = pageIndex > 0 ? pageIndex - 1 : 0;
+            int validPageSize = pageSize > 0 ? pageSize : 10;
+
+            query = query.Skip(validPageIndex * validPageSize).Take(validPageSize);
+            //}
+
+            return
+                new PaginationResponse<T>
+                {
+                    PageIndex = pageIndex,
+                    PageSize = pageSize,
+                    TotalCount = totalCount,
+                    Data = query.AsEnumerable()
+                };
+        }
 
         public List<T> GetAll()
         {
