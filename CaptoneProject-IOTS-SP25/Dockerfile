@@ -14,13 +14,13 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:8.0-nanoserver-1809 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["CaptoneProject_IOTS_API/CaptoneProject_IOTS_API.csproj", "CaptoneProject_IOTS_API/"]
-COPY ["CaptoneProject_IOTS_Services/CaptoneProject_IOTS_Service.csproj", "CaptoneProject_IOTS_Services/"]
-COPY ["CaptoneProject_IOTS_BOs/CaptoneProject_IOTS_BOs.csproj", "CaptoneProject_IOTS_BOs/"]
-COPY ["CaptoneProject_IOTS_Repository/CaptoneProject_IOTS_Repository.csproj", "CaptoneProject_IOTS_Repository/"]
-RUN dotnet restore "./CaptoneProject_IOTS_API/CaptoneProject_IOTS_API.csproj"
+COPY ["CaptoneProject-IOTS-SP25/CaptoneProject_IOTS_API/CaptoneProject_IOTS_API.csproj", "CaptoneProject-IOTS-SP25/CaptoneProject_IOTS_API/"]
+COPY ["CaptoneProject-IOTS-SP25/CaptoneProject_IOTS_Services/CaptoneProject_IOTS_Service.csproj", "CaptoneProject-IOTS-SP25/CaptoneProject_IOTS_Services/"]
+COPY ["CaptoneProject-IOTS-SP25/CaptoneProject_IOTS_BOs/CaptoneProject_IOTS_BOs.csproj", "CaptoneProject-IOTS-SP25/CaptoneProject_IOTS_BOs/"]
+COPY ["CaptoneProject-IOTS-SP25/CaptoneProject_IOTS_Repository/CaptoneProject_IOTS_Repository.csproj", "CaptoneProject-IOTS-SP25/CaptoneProject_IOTS_Repository/"]
+RUN dotnet restore "./CaptoneProject-IOTS-SP25/CaptoneProject_IOTS_API/CaptoneProject_IOTS_API.csproj"
 COPY . .
-WORKDIR "/src/CaptoneProject_IOTS_API"
+WORKDIR "/src/CaptoneProject-IOTS-SP25/CaptoneProject_IOTS_API"
 RUN dotnet build "./CaptoneProject_IOTS_API.csproj" -c %BUILD_CONFIGURATION% -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
