@@ -18,7 +18,6 @@ COPY ["CaptoneProject_IOTS_API/CaptoneProject_IOTS_API.csproj", "CaptoneProject_
 COPY ["CaptoneProject_IOTS_Services/CaptoneProject_IOTS_Service.csproj", "CaptoneProject_IOTS_Services/"]
 COPY ["CaptoneProject_IOTS_BOs/CaptoneProject_IOTS_BOs.csproj", "CaptoneProject_IOTS_BOs/"]
 COPY ["CaptoneProject_IOTS_Repository/CaptoneProject_IOTS_Repository.csproj", "CaptoneProject_IOTS_Repository/"]
-COPY ["CaptoneProject_IOTS_DAO/CaptoneProject_IOTS_DAO.csproj", "CaptoneProject_IOTS_DAO/"]
 RUN dotnet restore "./CaptoneProject_IOTS_API/CaptoneProject_IOTS_API.csproj"
 COPY . .
 WORKDIR "/src/CaptoneProject_IOTS_API"
