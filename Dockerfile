@@ -18,6 +18,9 @@ COPY ["CaptoneProject-IOTS-SP25/CaptoneProject_IOTS_API/CaptoneProject_IOTS_API.
 COPY ["CaptoneProject-IOTS-SP25/CaptoneProject_IOTS_Services/CaptoneProject_IOTS_Service.csproj", "CaptoneProject-IOTS-SP25/CaptoneProject_IOTS_Services/"]
 COPY ["CaptoneProject-IOTS-SP25/CaptoneProject_IOTS_BOs/CaptoneProject_IOTS_BOs.csproj", "CaptoneProject-IOTS-SP25/CaptoneProject_IOTS_BOs/"]
 COPY ["CaptoneProject-IOTS-SP25/CaptoneProject_IOTS_Repository/CaptoneProject_IOTS_Repository.csproj", "CaptoneProject-IOTS-SP25/CaptoneProject_IOTS_Repository/"]
+
+USER root
+
 RUN dotnet restore "./CaptoneProject-IOTS-SP25/CaptoneProject_IOTS_API/CaptoneProject_IOTS_API.csproj"
 COPY . .
 WORKDIR "/src/CaptoneProject-IOTS-SP25/CaptoneProject_IOTS_API"
