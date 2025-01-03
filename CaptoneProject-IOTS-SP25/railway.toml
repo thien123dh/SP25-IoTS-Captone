@@ -1,8 +1,8 @@
 [build]
 builder = "dockerFile"
-dockerFilePath = "./CaptoneProject_IOTS_API/DockerFile"
+dockerFilePath = "./CaptoneProject-IOTS-SP25/CaptoneProject_IOTS_API/DockerFile"
 
 [deploy]
-startCommand = "./CaptoneProject_IOTS_API.dll"
+startCommand = "./CaptoneProject-IOTS-SP25/CaptoneProject_IOTS_API.dll"
 restartPolicyType = "always"
 healthcheckPath = "health"
