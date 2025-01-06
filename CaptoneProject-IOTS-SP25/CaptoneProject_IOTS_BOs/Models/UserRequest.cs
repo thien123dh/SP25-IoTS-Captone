@@ -7,7 +7,7 @@ public partial class UserRequest
 {
     public int Id { get; set; }
 
-    public int UserId { get; set; }
+    public int Email { get; set; }
 
     public int RoleId { get; set; }
 
@@ -19,6 +19,10 @@ public partial class UserRequest
 
     public DateTime? ActionDate { get; set; }
 
+    public string OtpCode { get; set; }
+
+    public DateTime? ExpiredDate { get; set; }
+
     public int? Status { get; set; }
 
     public string Remark { get; set; }
@@ -26,8 +30,6 @@ public partial class UserRequest
     public virtual Role Role { get; set; }
 
     public virtual UserRequestStatus StatusNavigation { get; set; }
-
-    public virtual User User { get; set; }
 
     public virtual ICollection<UserRequestAttachment> UserRequestAttachments { get; set; } = new List<UserRequestAttachment>();
 }
