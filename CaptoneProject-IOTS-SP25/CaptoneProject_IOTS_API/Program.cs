@@ -40,6 +40,7 @@ builder.Services.AddScoped<UserRepository>(provider =>
 });
 builder.Services.AddScoped<RoleRepository>();
 builder.Services.AddScoped<UserRoleRepository>();
+builder.Services.AddScoped<UserRequestRepository>();
 // Configure DbContext with SQL Server
 builder.Services.AddDbContext<IoTTraddingSystemContext>(options =>
     options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
@@ -48,6 +49,7 @@ builder.Services.AddDbContext<IoTTraddingSystemContext>(options =>
 builder.Services.AddScoped<IUserServices, UserService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped(typeof(IMapService<,>), typeof(MapService<,>));
+builder.Services.AddScoped<IUserRequestService, UserRequestService>();
 //builder.Services.AddScoped<AutoMapper>();
 
 builder.Services.AddCors(options =>
