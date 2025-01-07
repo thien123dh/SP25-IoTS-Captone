@@ -209,10 +209,20 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             };
         }
 
-        public async Task<ResponseDTO> GetUsersPagination(PaginationRequest paginationRequest)
+        public async Task<ResponseDTO> GetUsersPagination(PaginationRequest paginationRequest, int? roleId)
         {
             PaginationResponse<User> response = _userRepository.GetPaginate(
-                    filter: null,
+                    filter: user => (
+                        ((roleId == null) || user.UserRoles.SingleOrDefault(userRole => userRole.RoleId == roleId) != null)
+                        &&
+                        (
+                            user.Email.Contains(paginationRequest.searchKeyword)
+                            ||
+                            user.Username.Contains(paginationRequest.searchKeyword)
+                            ||
+                            user.Fullname.Contains(paginationRequest.searchKeyword)
+                        )
+                    ),
                     orderBy: null,
                     includeProperties: "UserRoles,UserRoles.Role",
                     pageIndex: paginationRequest.PageIndex,

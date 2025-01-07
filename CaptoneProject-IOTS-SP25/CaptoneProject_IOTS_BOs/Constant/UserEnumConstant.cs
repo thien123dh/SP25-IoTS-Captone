@@ -14,7 +14,8 @@ namespace CaptoneProject_IOTS_BOs.Constant
             STAFF = 2,
             MANAGER = 3,
             TRAINER = 4,
-            CUSTOMER = 5
+            CUSTOMER = 5,
+            STORE = 6
         }
 
 
