@@ -10,7 +10,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.RoleDTO
     {
         public int Id { set; get; }
         public string Label { set; get; }
-        public int? Order { set; get; }
+        public int? Orders { set; get; }
         public int? IsActive { set; get; }
     }
 }

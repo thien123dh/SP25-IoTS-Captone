@@ -16,6 +16,7 @@ namespace CaptoneProject_IOTS_Service.Mapper
             {
                 PageIndex = source.PageIndex,
                 PageSize = source.PageSize,
+                TotalCount = source.TotalCount,
                 Data = source.Data?.Select(data => function(data))
             };
         }
