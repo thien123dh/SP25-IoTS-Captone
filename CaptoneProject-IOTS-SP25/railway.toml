@@ -1,7 +1,0 @@
-[build]
-builder = "dockerfile"
-dockerfilePath = "./Dockerfile"
-
-[deploy]
-startCommand = "./CaptoneProject_IOTS_API.dll"
-restartPolicyType = "always"
