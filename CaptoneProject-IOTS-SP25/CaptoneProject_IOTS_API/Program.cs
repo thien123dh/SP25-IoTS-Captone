@@ -136,7 +136,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 // app.UseHttpsRedirection();
-app.UseMiddleware<AuthorizeMiddleware>();
+//app.UseMiddleware<AuthorizeMiddleware>();
 app.UseCors("AllowAll");
 
 app.UseStaticFiles();
