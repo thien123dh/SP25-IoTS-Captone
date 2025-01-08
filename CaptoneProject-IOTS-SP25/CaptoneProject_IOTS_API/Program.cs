@@ -33,11 +33,11 @@ var durationInMinutes = int.Parse(jwtSettings["DurationInMinutes"]);
 
 var configuration = builder.Configuration;
 // Register UserDAO with a factory method to inject the connection string
-builder.Services.AddScoped<UserRepository>(provider =>
-{
-    var connectionString = configuration.GetConnectionString("DefaultConnection");
-    return new UserRepository(connectionString);
-});
+//builder.Services.AddScoped<UserRepository>(provider =>
+//{
+//    var connectionString = configuration.GetConnectionString("DefaultConnection");
+//    return new UserRepository(connectionString);
+//});
 builder.Services.AddScoped<RoleRepository>();
 builder.Services.AddScoped<UserRoleRepository>();
 builder.Services.AddScoped<UserRequestRepository>();
@@ -138,13 +138,6 @@ if (app.Environment.IsDevelopment())
 // app.UseHttpsRedirection();
 app.UseMiddleware<AuthorizeMiddleware>();
 app.UseCors("AllowAll");
-
-app.UseCors(policy =>
-{
-    policy.AllowAnyOrigin()
-          .AllowAnyHeader()
-          .AllowAnyMethod();
-});
 
 app.UseHttpsRedirection();
 
