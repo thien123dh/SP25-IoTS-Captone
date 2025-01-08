@@ -139,6 +139,15 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<AuthorizeMiddleware>();
 app.UseCors("AllowAll");
 
+app.UseCors(policy =>
+{
+    policy.AllowAnyOrigin()
+          .AllowAnyHeader()
+          .AllowAnyMethod();
+});
+
+app.UseHttpsRedirection();
+
 app.UseStaticFiles();
 app.UseHttpsRedirection();
 app.UseAuthentication();
