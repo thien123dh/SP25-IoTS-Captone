@@ -11,13 +11,6 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
 {
     public class UserRepository : RepositoryBase<User>
     {
-        private readonly string _loginRepository;
-
-        public UserRepository(string loginRepository)
-        {
-            _loginRepository = loginRepository;
-        }
-
         public async Task<User> CheckLoginAsync(string email, string password)
         {
             var user = await _dbSet
