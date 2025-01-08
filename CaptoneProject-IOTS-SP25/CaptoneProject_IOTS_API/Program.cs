@@ -136,8 +136,17 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 // app.UseHttpsRedirection();
-//app.UseMiddleware<AuthorizeMiddleware>();
+app.UseMiddleware<AuthorizeMiddleware>();
 app.UseCors("AllowAll");
+
+app.UseCors(policy =>
+{
+    policy.AllowAnyOrigin()
+          .AllowAnyHeader()
+          .AllowAnyMethod();
+});
+
+app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 app.UseHttpsRedirection();
