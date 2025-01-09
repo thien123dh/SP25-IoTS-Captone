@@ -11,7 +11,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
 {
     public interface IUserRequestService
     {
-        Task<ResponseDTO> CreateOrUpdateUserRequest(string email, int userRequestStatus, string decision, string reason);
+        Task<ResponseDTO> CreateOrUpdateUserRequest(string email, int userRequestStatus/*, string decision, string reason*/);
         Task<ResponseDTO> GetUserRequestPagination(
             PaginationRequest paginationRequest
         );

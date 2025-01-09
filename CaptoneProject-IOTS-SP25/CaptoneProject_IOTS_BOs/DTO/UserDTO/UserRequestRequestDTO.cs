@@ -10,7 +10,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.UserDTO
     {
         public string Email { get; set; }
         public int UserRequestStatus { get; set; }
-        public string? Decision { get; set; }
-        public string? Reason { get; set; }
+/*        public string? Decision { get; set; }
+        public string? Reason { get; set; }*/
     }
 }
