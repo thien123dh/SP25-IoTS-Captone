@@ -1,4 +1,5 @@
-﻿using CaptoneProject_IOTS_BOs;
+﻿using Azure;
+using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserDTO;
@@ -18,7 +19,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
     public class UserRequestService : IUserRequestService
     {
         UserRequestRepository userRequestRepository;
-        const int OTP_EXPIRED_MINUTES = 2;
+        const int OTP_EXPIRED_MINUTES = 60;
         public UserRequestService
         (
             UserRequestRepository userRequestRepository
@@ -41,7 +42,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return otp;
         }
 
-        public async Task<ResponseDTO> CreateOrUpdateUserRequest(
+        public async Task<GenericResponseDTO<UserRequestResponseDTO>> CreateOrUpdateUserRequest(
             string email, 
             int userRequestStatus
         )
@@ -52,27 +53,20 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             userRequest.Status = userRequestStatus;
 
-            Console.WriteLine("UserStatus: " + userRequestStatus);
-
             userRequest.Email = email;
-
-            Console.WriteLine("Enum: " + UserRequestConstant.UserRequestStatusEnum.PENDING_TO_VERIFY_OTP);
 
             if (userRequestStatus == (int) UserRequestConstant.UserRequestStatusEnum.PENDING_TO_VERIFY_OTP)
             {
-                
                 string otp = GenerateOTP();
 
                 Console.WriteLine("OTP: " + otp);
 
-                userRequest.OtpCode = otp;
+                userRequest.OtpCode = otp.Trim();
 
                 userRequest.ExpiredDate = DateTime.Now.AddMinutes(OTP_EXPIRED_MINUTES);
 
                 //userRequest.RoleId = role;
             }
-
-            Console.WriteLine("No access if");
 
             if (userRequest.Id > 0)
             {
@@ -88,10 +82,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             MapService<UserRequest, UserRequestResponseDTO> mapper = new MapService<UserRequest, UserRequestResponseDTO>();
             
             UserRequest response = await userRequestRepository.GetByEmail(email);
-
-            //Console.WriteLine("Response: " + response);
             
-            return new ResponseDTO
+            return new GenericResponseDTO<UserRequestResponseDTO>
             {
                 IsSuccess = true,
                 Data = mapper.MappingTo(response)
@@ -113,6 +105,49 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 IsSuccess = true,
                 StatusCode = HttpStatusCode.OK,
                 Data = response
+            };
+        }
+
+        public async Task<ResponseDTO> VerifyOTP(string email, string otp)
+        {
+            UserRequest userRequest = await userRequestRepository.GetByEmail(email);
+
+            if (userRequest == null)
+            {
+                return new ResponseDTO
+                {
+                    IsSuccess = false,
+                    StatusCode = HttpStatusCode.BadRequest,
+                    Message = "Request doesn't exist"
+                };
+            }
+
+            if (otp.Trim().CompareTo(userRequest.OtpCode.Trim()) == 0)
+            {
+                if (DateTime.Now > userRequest.ExpiredDate)
+                {
+                    return new ResponseDTO
+                    {
+                        IsSuccess = false,
+                        StatusCode = HttpStatusCode.BadRequest,
+                        Message = "The OTP is expired"
+                    };
+                } else
+                {
+                    return new ResponseDTO
+                    {
+                        IsSuccess = true,
+                        StatusCode = HttpStatusCode.OK,
+                        Message = "Ok"
+                    };
+                }
+            }
+
+            return new ResponseDTO
+            {
+                IsSuccess = false,
+                StatusCode = HttpStatusCode.BadRequest,
+                Message = "OTP is not correct"
             };
         }
     }

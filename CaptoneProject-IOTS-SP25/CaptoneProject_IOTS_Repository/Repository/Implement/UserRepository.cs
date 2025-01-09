@@ -37,5 +37,15 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
             return user;
         }
 
+        public async Task<User> GetUserByEmail(string email)
+        {
+            var user = await _dbSet
+                .Include(x => x.UserRoles)
+                .ThenInclude(ur => ur.Role)
+                .FirstOrDefaultAsync(x => x.Email == email);
+
+            return user;
+        }
+
     }
 }
