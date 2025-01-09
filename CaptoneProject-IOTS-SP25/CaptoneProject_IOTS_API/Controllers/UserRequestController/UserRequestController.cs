@@ -49,7 +49,9 @@ namespace CaptoneProject_IOTS_API.Controllers.UserRequestController
             return GetActionResult(
                 await userRequestService.CreateOrUpdateUserRequest(
                     request.Email, 
-                    (int) UserRequestStatusEnum.PENDING_TO_VERIFY_OTP
+                    (int) UserRequestStatusEnum.PENDING_TO_VERIFY_OTP,
+                    request?.Reason,
+                    request?.Decision
                 )
             );
         }
