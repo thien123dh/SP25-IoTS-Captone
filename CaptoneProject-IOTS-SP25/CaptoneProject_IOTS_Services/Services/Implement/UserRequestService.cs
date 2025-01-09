@@ -18,13 +18,16 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
     public class UserRequestService : IUserRequestService
     {
         UserRequestRepository userRequestRepository;
+        private readonly IEmailService _emailService;
         const int OTP_EXPIRED_MINUTES = 2;
         public UserRequestService
         (
-            UserRequestRepository userRequestRepository
+            UserRequestRepository userRequestRepository,
+            IEmailService emailService
         )
         {
             this.userRequestRepository = userRequestRepository;
+            _emailService = emailService;
         }
 
         private string GenerateOTP()
@@ -44,6 +47,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         public async Task<ResponseDTO> CreateOrUpdateUserRequest(
             string email, 
             int userRequestStatus
+/*            string decision, string reason*/
         )
         {
             UserRequest? userRequest = await userRequestRepository.GetByEmail(email);
@@ -84,6 +88,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             else
             {
                 userRequestRepository.Create(userRequest);
+/*                var subject = decision;  // Set the email's subject to the decision
+                var body = $"Dear {userRequest.Email},\n\n" +
+                           $"Test.\n\n" +
+                           $"OTP: {userRequest.OtpCode}\n\n" +
+                           $"Best regards,\nThe Admin Team";
+
+                await _emailService.SendEmailAsync(userRequest.Email, subject, body);*/
+
             }
             MapService<UserRequest, UserRequestResponseDTO> mapper = new MapService<UserRequest, UserRequestResponseDTO>();
             
