@@ -6,11 +6,20 @@ using System.Text;
 using System.Threading.Tasks;
 using CaptoneProject_IOTS_Repository.Base;
 using CaptoneProject_IOTS_BOs.DTO.MaterialCategotyDTO;
+using Microsoft.EntityFrameworkCore;
 
 namespace CaptoneProject_IOTS_Repository.Repository.Implement
 {
-    public class MaterialCategoryRepository : RepositoryBase<MatertialCategoryRequestDTO>
+    public class MaterialCategoryRepository : RepositoryBase<MaterialCategory>
     {
-        public MaterialCategoryRepository() { }
+        public async Task<MaterialCategory> GetCategoryMaterialById(int id)
+        {
+            return await _dbSet.FindAsync(id);
+        }
+
+        public async Task<List<MaterialCategory>> GetAllMaterialCaterial()
+        {
+            return await _dbSet.ToListAsync();
+        }
     }
 }
