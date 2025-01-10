@@ -114,10 +114,12 @@ namespace CaptoneProject_IOTS_Repository.Base
         {
             return await _dbSet.ToListAsync();
         }
-        public void Create(T entity)
+        public T Create(T entity)
         {
             _dbSet.Add(entity);
             _context.SaveChanges();
+
+            return entity;
         }
 
         public async Task<int> CreateAsync(IEnumerable<T> entity)
@@ -126,11 +128,13 @@ namespace CaptoneProject_IOTS_Repository.Base
             return await _context.SaveChangesAsync();
         }
 
-        public void Update(T entity)
+        public T Update(T entity)
         {
             var tracker = _context.Attach(entity);
             tracker.State = EntityState.Modified;
             _context.SaveChanges();
+
+            return entity;
         }
 
         public async Task<int> UpdateAsync(IEnumerable<T> entity)

@@ -1,6 +1,7 @@
 ﻿using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserDTO;
+using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
 using CaptoneProject_IOTS_Service.Services.Implement;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Http;
@@ -50,6 +51,8 @@ namespace CaptoneProject_IOTS_API.Controllers.UserRequestController
                 await userRequestService.CreateOrUpdateUserRequest(
                     request.Email, 
                     (int) UserRequestStatusEnum.PENDING_TO_VERIFY_OTP
+/*                    request?.Reason,
+                    request?.Decision*/
                 )
             );
         }
@@ -64,5 +67,16 @@ namespace CaptoneProject_IOTS_API.Controllers.UserRequestController
             );
         }
 
+        [HttpPost("verify-otp")]
+        public async Task<IActionResult> VerifyOTP([FromBody] VerifyOTPRequestDTO payload)
+        {
+            return GetActionResult(await userRequestService.VerifyOTP(payload.Email, payload.OTP));
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetUserRequestDetailsById(int id)
+        {
+            return GetActionResult(await userRequestService.GetUserRequestById(id));
+        }
     }
 }

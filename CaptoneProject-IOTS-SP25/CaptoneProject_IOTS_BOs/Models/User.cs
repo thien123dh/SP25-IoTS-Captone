@@ -47,7 +47,7 @@ public partial class User
 
     public virtual ICollection<ProductRequest> ProductRequestUpdatedByNavigations { get; set; } = new List<ProductRequest>();
 
-    public virtual ICollection<Store> Stores { get; set; } = new List<Store>();
+    public virtual ICollection<Store>? Stores { get; set; } = new List<Store>();
 
-    public virtual ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+    public virtual ICollection<UserRole>? UserRoles { get; set; } = new List<UserRole>();
 }

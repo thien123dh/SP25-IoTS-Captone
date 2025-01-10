@@ -4,9 +4,13 @@ using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserDTO;
+using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
 using CaptoneProject_IOTS_Service.Services.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using static CaptoneProject_IOTS_BOs.Constant.UserRequestConstant;
+using System.Security.Claims;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -17,7 +21,7 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
     public class UsersController : ControllerBase
     {
         private readonly IUserServices _userService;
-
+        //================ COMMON =====================
         public UsersController(IUserServices userService)
         {
             this._userService = userService;
@@ -39,7 +43,9 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
 
             return Ok(response);
         }
+
         [HttpPost("listing")]
+/*        [Authorize(Roles = "Admin")]*/
         public async Task<IActionResult> GetUserPagination(
             [FromBody] PaginationRequest paginationRequest,
             [FromQuery] int? role
@@ -79,6 +85,45 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
             var response = await _userService.UpdateUserStatus(id, isActive: 0);
 
             return GetActionResult(response);
+        }
+        //================ COMMON =====================
+
+        //================ ADMIN ======================
+        [HttpPost("create-staff-manager-request")]
+        public async Task<IActionResult> CreateStaffRequest([FromBody] UserCreateOrUpdateRequestDTO payload)
+        {
+            return GetActionResult(
+
+                await _userService.CreateStaffOrManager(payload)
+
+            );
+        }
+
+        //================ ADMIN ======================
+        //================ STAFF/MANAGER ======================
+        [HttpPost("verify-otp-active-user")]
+        public async Task<IActionResult> VerifyOtp (
+            [FromBody] StaffManagerVerifyOtpRequest payload
+        )
+        {
+            return GetActionResult(
+                await _userService.StaffManagerVerifyOTP (
+                    payload.OTP, 
+                    payload.RequestId, 
+                    (int)UserRequestStatusEnum.APPROVED, 
+                    payload.password
+            )
+            );
+        }
+        //================ STAFF/MANAGER ======================
+
+        //================ Decode lay role =================/
+        [Authorize]
+        [HttpGet("/Get-user-login-info")]
+        public async Task<IActionResult> GetUserLoginInfo()
+        {
+            var response = await _userService.GetUserLoginInfo(User);
+            return Ok(response);
         }
     }
 }

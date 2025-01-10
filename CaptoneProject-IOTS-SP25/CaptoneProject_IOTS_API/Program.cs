@@ -48,6 +48,8 @@ builder.Services.AddDbContext<IoTTraddingSystemContext>(options =>
 // Đăng ký dịch vụ
 builder.Services.AddScoped<IUserServices, UserService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<IMaterialCategoryService, MatertialCategoryService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped(typeof(IMapService<,>), typeof(MapService<,>));
 builder.Services.AddScoped<IUserRequestService, UserRequestService>();
 //builder.Services.AddScoped<AutoMapper>();

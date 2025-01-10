@@ -1,9 +1,12 @@
-﻿using CaptoneProject_IOTS_BOs;
+﻿using Azure;
+using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserDTO;
+using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
+using CaptoneProject_IOTS_Service.Mapper;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using OtpNet;
 using System;
@@ -18,13 +21,19 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
     public class UserRequestService : IUserRequestService
     {
         UserRequestRepository userRequestRepository;
-        const int OTP_EXPIRED_MINUTES = 2;
+        UserRepository userRepository;
+        const int OTP_EXPIRED_MINUTES = 60;
+        private readonly IEmailService _emailService;
         public UserRequestService
         (
-            UserRequestRepository userRequestRepository
+            UserRequestRepository userRequestRepository,
+            IEmailService emailService,
+            UserRepository userRepository
         )
         {
             this.userRequestRepository = userRequestRepository;
+            _emailService = emailService;
+            this.userRepository = userRepository;
         }
 
         private string GenerateOTP()
@@ -41,9 +50,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return otp;
         }
 
-        public async Task<ResponseDTO> CreateOrUpdateUserRequest(
+        public async Task<GenericResponseDTO<UserRequestResponseDTO>> CreateOrUpdateUserRequest(
             string email, 
             int userRequestStatus
+/*            string decision, string reason*/
         )
         {
             UserRequest? userRequest = await userRequestRepository.GetByEmail(email);
@@ -52,46 +62,45 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             userRequest.Status = userRequestStatus;
 
-            Console.WriteLine("UserStatus: " + userRequestStatus);
-
             userRequest.Email = email;
-
-            Console.WriteLine("Enum: " + UserRequestConstant.UserRequestStatusEnum.PENDING_TO_VERIFY_OTP);
 
             if (userRequestStatus == (int) UserRequestConstant.UserRequestStatusEnum.PENDING_TO_VERIFY_OTP)
             {
-                
                 string otp = GenerateOTP();
 
                 Console.WriteLine("OTP: " + otp);
 
-                userRequest.OtpCode = otp;
+                userRequest.OtpCode = otp.Trim();
 
                 userRequest.ExpiredDate = DateTime.Now.AddMinutes(OTP_EXPIRED_MINUTES);
 
                 //userRequest.RoleId = role;
             }
 
-            Console.WriteLine("No access if");
-
             if (userRequest.Id > 0)
             {
                 userRequest.ActionDate = DateTime.Now;
 
                 userRequestRepository.Update(userRequest);
-                
             }
             else
             {
                 userRequestRepository.Create(userRequest);
             }
+
             MapService<UserRequest, UserRequestResponseDTO> mapper = new MapService<UserRequest, UserRequestResponseDTO>();
             
             UserRequest response = await userRequestRepository.GetByEmail(email);
 
-            //Console.WriteLine("Response: " + response);
-            
-            return new ResponseDTO
+            var subject = "Verify Account";  // Set the email's subject to the decision
+            var body = $"Dear {userRequest.Email},\n\n" +
+                       $"Test.\n\n" +
+                       $"OTP: {userRequest.OtpCode}\n\n" +
+                       $"Best regards,\nThe Admin Team";
+
+            await _emailService.SendEmailAsync(userRequest.Email, subject, body);
+
+            return new GenericResponseDTO<UserRequestResponseDTO>
             {
                 IsSuccess = true,
                 Data = mapper.MappingTo(response)
@@ -109,6 +118,81 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             );
 
             return new ResponseDTO
+            {
+                IsSuccess = true,
+                StatusCode = HttpStatusCode.OK,
+                Data = response
+            };
+        }
+
+        public async Task<ResponseDTO> VerifyOTP(string email, string otp)
+        {
+            UserRequest userRequest = await userRequestRepository.GetByEmail(email);
+
+            if (userRequest == null)
+            {
+                return new ResponseDTO
+                {
+                    IsSuccess = false,
+                    StatusCode = HttpStatusCode.BadRequest,
+                    Message = "Request doesn't exist"
+                };
+            }
+
+            if (otp.Trim().CompareTo(userRequest.OtpCode.Trim()) == 0)
+            {
+                if (DateTime.Now > userRequest.ExpiredDate)
+                {
+                    return new ResponseDTO
+                    {
+                        IsSuccess = false,
+                        StatusCode = HttpStatusCode.BadRequest,
+                        Message = "The OTP is expired"
+                    };
+                } else
+                {
+                    return new ResponseDTO
+                    {
+                        IsSuccess = true,
+                        StatusCode = HttpStatusCode.OK,
+                        Message = "Ok"
+                    };
+                }
+            }
+
+            return new ResponseDTO
+            {
+                IsSuccess = false,
+                StatusCode = HttpStatusCode.BadRequest,
+                Message = "OTP is not correct"
+            };
+        }
+
+        public async Task<GenericResponseDTO<UserRequestDetailsResponse>> GetUserRequestById(int requestId)
+        {
+            UserRequest userRequest = userRequestRepository.GetById(requestId);
+
+            if (userRequest == null)
+            {
+                return new GenericResponseDTO<UserRequestDetailsResponse>
+                {
+                    IsSuccess = true,
+                    StatusCode = HttpStatusCode.NotFound,
+                    Message = ExceptionMessage.USER_REQUEST_NOT_FOUND
+                };
+            }
+
+            User user = await userRepository.GetUserByEmail(userRequest.Email);
+
+            UserRequestDetailsResponse response = new UserRequestDetailsResponse
+            {
+                Id = userRequest.Id,
+                Email = userRequest.Email,
+                StatusNavigation = userRequest.StatusNavigation,
+                userDetails = UserMapper.mapToUserDetailResponse(user)
+            };
+
+            return new GenericResponseDTO<UserRequestDetailsResponse>
             {
                 IsSuccess = true,
                 StatusCode = HttpStatusCode.OK,
