@@ -17,7 +17,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CaptoneProject_IOTS_BOs\CaptoneProject_IOTS_BOs.csproj" />
-    <ProjectReference Include="..\CaptoneProject_IOTS_Repository\CaptoneProject_IOTS_Repository.csproj" />
   </ItemGroup>
 
 </Project>
