@@ -3,6 +3,7 @@ using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.RoleDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserDTO;
+using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
 using CaptoneProject_IOTS_Service.Mapper;
@@ -23,12 +24,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly ITokenServices _tokenGenerator;
         private readonly PasswordHasher<string> _passwordHasher;
         private readonly IUserRequestService userRequestService;
+        private readonly UserRequestRepository userRequestRepository;
 
         public UserService(
             UserRepository userService, 
             ITokenServices tokenGenerator,
             UserRoleRepository userRoleRepository,
-            IUserRequestService userRequestService
+            IUserRequestService userRequestService,
+            UserRequestRepository userRequestRepository
         )
         {
             _userRepository = userService;
@@ -36,6 +39,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             _tokenGenerator = tokenGenerator;
             _passwordHasher = new PasswordHasher<string>();
             this.userRequestService = userRequestService;
+            this.userRequestRepository = userRequestRepository;
         }
 
         public async Task<ResponseDTO> UpdateUserStatus(int userId, int isActive)
@@ -344,6 +348,59 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     requestId = createRequestResponse?.Data?.Id
                 }
             };
+        }
+
+        public async Task<ResponseDTO> StaffManagerVerifyOTP(
+            string otp, 
+            int requestId, 
+            int requestStatusId, 
+            string password
+        )
+        {
+            UserRequest userRequest = userRequestRepository.GetById(requestId);
+            
+            string email = userRequest.Email;
+
+            if (userRequest == null)
+            {
+                return new ResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = ExceptionMessage.USER_REQUEST_NOT_FOUND,
+                    StatusCode = HttpStatusCode.NotFound
+                };
+            }
+
+            User user = await _userRepository.GetUserByEmail(userRequest.Email);
+
+            ResponseDTO otpResponse = await userRequestService.VerifyOTP(email, otp);
+
+            if (otpResponse.IsSuccess)
+            {
+                if (user != null)
+                {
+                    user.Password = _passwordHasher.HashPassword(null, password);
+                    user.UpdatedDate = DateTime.Now;
+                    user.IsActive = 1;
+                    //Update user status to active
+                    _userRepository.Update(user);
+                }
+
+                userRequest.Status = requestStatusId;
+                UserRequest response = userRequestRepository.Update(userRequest);
+
+                return new ResponseDTO
+                {
+                    IsSuccess = true,
+                    StatusCode = HttpStatusCode.OK,
+                    Data = new
+                    {
+                        RequestId = response.Id
+                    }
+                };
+            }
+
+            return otpResponse;
         }
     }
 }

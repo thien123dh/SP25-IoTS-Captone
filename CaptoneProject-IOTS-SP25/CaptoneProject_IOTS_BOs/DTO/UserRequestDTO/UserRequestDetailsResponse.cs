@@ -1,18 +1,19 @@
-﻿using CaptoneProject_IOTS_BOs.Models;
+﻿using CaptoneProject_IOTS_BOs.DTO.UserDTO;
+using CaptoneProject_IOTS_BOs.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CaptoneProject_IOTS_BOs.DTO.UserDTO
+namespace CaptoneProject_IOTS_BOs.DTO.UserRequestDTO
 {
-    public class UserRequestResponseDTO
+    public class UserRequestDetailsResponse
     {
         public int Id { set; get; }
         public string Email { set; get; }
         public UserRequestStatus? StatusNavigation { set; get; }
 
-        //public UserDetailsResponseDTO userDetails;
+        public UserDetailsResponseDTO userDetails;
     }
 }

@@ -21,6 +21,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserDetailsById(int id);
         //Task<GenericResponseDTO<UserDetailsResponseDTO>> CreateOrUpdateUser(int id, UserCreateOrUpdateRequestDTO payload);
         Task<ResponseDTO> CreateStaffOrManager(UserCreateOrUpdateRequestDTO payload);
+        Task<ResponseDTO> StaffManagerVerifyOTP(string otp, int requestId, int requestStatusId, string password);
         Task<GenericResponseDTO<User>> GetLoginUser();
     }
 }

@@ -68,9 +68,15 @@ namespace CaptoneProject_IOTS_API.Controllers.UserRequestController
         }
 
         [HttpPost("verify-otp")]
-        public async Task<IActionResult> VerifyOTP ([FromBody] VerifyOTPRequestDTO payload)
+        public async Task<IActionResult> VerifyOTP([FromBody] VerifyOTPRequestDTO payload)
         {
             return GetActionResult(await userRequestService.VerifyOTP(payload.Email, payload.OTP));
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetUserRequestDetailsById(int id)
+        {
+            return GetActionResult(await userRequestService.GetUserRequestById(id));
         }
     }
 }

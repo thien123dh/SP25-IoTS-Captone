@@ -4,9 +4,11 @@ using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserDTO;
+using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using static CaptoneProject_IOTS_BOs.Constant.UserRequestConstant;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -94,5 +96,21 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         }
 
         //================ ADMIN ======================
+        //================ STAFF/MANAGER ======================
+        [HttpPost("verify-otp-active-user")]
+        public async Task<IActionResult> VerifyOtp (
+            [FromBody] StaffManagerVerifyOtpRequest payload
+        )
+        {
+            return GetActionResult(
+                await _userService.StaffManagerVerifyOTP (
+                    payload.OTP, 
+                    payload.RequestId, 
+                    (int)UserRequestStatusEnum.APPROVED, 
+                    payload.password
+            )
+            );
+        }
+        //================ STAFF/MANAGER ======================
     }
 }
