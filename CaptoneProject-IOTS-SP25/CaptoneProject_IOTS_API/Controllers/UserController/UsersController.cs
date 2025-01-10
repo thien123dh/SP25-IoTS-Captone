@@ -17,7 +17,7 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
     public class UsersController : ControllerBase
     {
         private readonly IUserServices _userService;
-
+        //================ COMMON =====================
         public UsersController(IUserServices userService)
         {
             this._userService = userService;
@@ -80,5 +80,19 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
 
             return GetActionResult(response);
         }
+        //================ COMMON =====================
+
+        //================ ADMIN ======================
+        [HttpPost("create-staff-manager-request")]
+        public async Task<IActionResult> CreateStaffRequest([FromBody] UserCreateOrUpdateRequestDTO payload)
+        {
+            return GetActionResult(
+
+                await _userService.CreateStaffOrManager(payload)
+
+            );
+        }
+
+        //================ ADMIN ======================
     }
 }
