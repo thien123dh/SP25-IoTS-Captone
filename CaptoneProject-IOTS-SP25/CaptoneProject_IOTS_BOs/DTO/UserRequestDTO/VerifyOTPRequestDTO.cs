@@ -11,4 +11,11 @@ namespace CaptoneProject_IOTS_BOs.DTO.UserRequestDTO
         public string OTP { set; get; }
         public string Email { set; get; }
     }
+
+    public class StaffManagerVerifyOtpRequest
+    {
+        public string OTP { set; get; }
+        public int RequestId { set; get; }
+        public string password { set; get; }
+    }
 }

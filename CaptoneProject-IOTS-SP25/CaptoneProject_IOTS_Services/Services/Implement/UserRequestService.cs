@@ -3,8 +3,10 @@ using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserDTO;
+using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
+using CaptoneProject_IOTS_Service.Mapper;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using OtpNet;
 using System;
@@ -19,16 +21,19 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
     public class UserRequestService : IUserRequestService
     {
         UserRequestRepository userRequestRepository;
+        UserRepository userRepository;
         const int OTP_EXPIRED_MINUTES = 60;
         private readonly IEmailService _emailService;
         public UserRequestService
         (
             UserRequestRepository userRequestRepository,
-            IEmailService emailService
+            IEmailService emailService,
+            UserRepository userRepository
         )
         {
             this.userRequestRepository = userRequestRepository;
             _emailService = emailService;
+            this.userRepository = userRepository;
         }
 
         private string GenerateOTP()
@@ -77,24 +82,24 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 userRequest.ActionDate = DateTime.Now;
 
                 userRequestRepository.Update(userRequest);
-                
             }
             else
             {
                 userRequestRepository.Create(userRequest);
-/*                var subject = decision;  // Set the email's subject to the decision
-                var body = $"Dear {userRequest.Email},\n\n" +
-                           $"Test.\n\n" +
-                           $"OTP: {userRequest.OtpCode}\n\n" +
-                           $"Best regards,\nThe Admin Team";
-
-                await _emailService.SendEmailAsync(userRequest.Email, subject, body);*/
-
             }
+
             MapService<UserRequest, UserRequestResponseDTO> mapper = new MapService<UserRequest, UserRequestResponseDTO>();
             
             UserRequest response = await userRequestRepository.GetByEmail(email);
-            
+
+            var subject = "Verify Account";  // Set the email's subject to the decision
+            var body = $"Dear {userRequest.Email},\n\n" +
+                       $"Test.\n\n" +
+                       $"OTP: {userRequest.OtpCode}\n\n" +
+                       $"Best regards,\nThe Admin Team";
+
+            await _emailService.SendEmailAsync(userRequest.Email, subject, body);
+
             return new GenericResponseDTO<UserRequestResponseDTO>
             {
                 IsSuccess = true,
@@ -160,6 +165,38 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 IsSuccess = false,
                 StatusCode = HttpStatusCode.BadRequest,
                 Message = "OTP is not correct"
+            };
+        }
+
+        public async Task<GenericResponseDTO<UserRequestDetailsResponse>> GetUserRequestById(int requestId)
+        {
+            UserRequest userRequest = userRequestRepository.GetById(requestId);
+
+            if (userRequest == null)
+            {
+                return new GenericResponseDTO<UserRequestDetailsResponse>
+                {
+                    IsSuccess = true,
+                    StatusCode = HttpStatusCode.NotFound,
+                    Message = ExceptionMessage.USER_REQUEST_NOT_FOUND
+                };
+            }
+
+            User user = await userRepository.GetUserByEmail(userRequest.Email);
+
+            UserRequestDetailsResponse response = new UserRequestDetailsResponse
+            {
+                Id = userRequest.Id,
+                Email = userRequest.Email,
+                StatusNavigation = userRequest.StatusNavigation,
+                userDetails = UserMapper.mapToUserDetailResponse(user)
+            };
+
+            return new GenericResponseDTO<UserRequestDetailsResponse>
+            {
+                IsSuccess = true,
+                StatusCode = HttpStatusCode.OK,
+                Data = response
             };
         }
     }
