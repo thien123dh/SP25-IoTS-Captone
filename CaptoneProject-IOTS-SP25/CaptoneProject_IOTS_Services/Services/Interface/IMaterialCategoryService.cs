@@ -12,12 +12,10 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
 {
     public interface IMaterialCategoryService
     {
-        Task<IBusinessResult> GetAllMaterialCategory(PaginationRequest paginationRequest);
-        Task<IBusinessResult> GetByIdAsync(string id);
-        Task<IBusinessResult> UpdateAsync(MaterialCategory categoryMaterial);
+        Task<IBusinessResult> UpdateMaterialCategoryAsync(MaterialCategoryResponeDTO categoryMaterial);
         Task<IBusinessResult> CreateMaterialCategory(MatertialCategoryRequestDTO categoryMaterial);
-        Task<IBusinessResult> DeleteAsync(int id);
-        Task<IBusinessResult> GetAllCategories();
-        Task<IBusinessResult> GetById(int id);
+        Task<IBusinessResult> DeleteMaterialCategoryAsync(int id);
+        Task<IBusinessResult> GetAllMaterialCategory();
+        Task<IBusinessResult> GetByMaterialCategoryId(int id);
     }
 }
