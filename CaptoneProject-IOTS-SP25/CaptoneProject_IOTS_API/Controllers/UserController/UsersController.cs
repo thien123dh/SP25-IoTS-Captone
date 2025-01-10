@@ -41,7 +41,9 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
 
             return Ok(response);
         }
+
         [HttpPost("listing")]
+/*        [Authorize(Roles = "Admin")]*/
         public async Task<IActionResult> GetUserPagination(
             [FromBody] PaginationRequest paginationRequest,
             [FromQuery] int? role
