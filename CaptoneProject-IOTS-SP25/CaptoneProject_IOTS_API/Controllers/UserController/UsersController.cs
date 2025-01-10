@@ -6,9 +6,11 @@ using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
 using CaptoneProject_IOTS_Service.Services.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using static CaptoneProject_IOTS_BOs.Constant.UserRequestConstant;
+using System.Security.Claims;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -41,7 +43,9 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
 
             return Ok(response);
         }
+
         [HttpPost("listing")]
+/*        [Authorize(Roles = "Admin")]*/
         public async Task<IActionResult> GetUserPagination(
             [FromBody] PaginationRequest paginationRequest,
             [FromQuery] int? role
@@ -112,5 +116,14 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
             );
         }
         //================ STAFF/MANAGER ======================
+
+        //================ Decode lay role =================/
+        [Authorize]
+        [HttpGet("/Get-user-login-info")]
+        public async Task<IActionResult> GetUserLoginInfo()
+        {
+            var response = await _userService.GetUserLoginInfo(User);
+            return Ok(response);
+        }
     }
 }

@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Identity.Client;
 using System.Net;
+using System.Security.Claims;
 using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
 using static CaptoneProject_IOTS_BOs.Constant.UserRequestConstant;
 
@@ -42,6 +43,32 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             this.userRequestRepository = userRequestRepository;
         }
 
+        public async Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserLoginInfo(ClaimsPrincipal user)
+        {
+            if (user == null || !user.Identity?.IsAuthenticated == true)
+            {
+                return new GenericResponseDTO<UserDetailsResponseDTO>
+                {
+                    IsSuccess = false,
+                    Message = "User not authenticated",
+                    StatusCode = HttpStatusCode.Unauthorized,
+                    Data = null
+                };
+            }
+
+            var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var roles = user.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList();
+
+            User userDb = await _userRepository.GetUserById(int.Parse(userId));
+
+            return new GenericResponseDTO<UserDetailsResponseDTO>
+            {
+                IsSuccess = true,
+                Message = "Role check success",
+                StatusCode = HttpStatusCode.OK,
+                Data = UserMapper.mapToUserDetailResponse(userDb)
+            };
+        }
         public async Task<ResponseDTO> UpdateUserStatus(int userId, int isActive)
         {
             User u = _userRepository.GetById(userId);

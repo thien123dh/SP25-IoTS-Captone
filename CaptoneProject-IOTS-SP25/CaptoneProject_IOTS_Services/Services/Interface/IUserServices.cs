@@ -6,6 +6,7 @@ using CaptoneProject_IOTS_Service.Business;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -23,5 +24,6 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         Task<ResponseDTO> CreateStaffOrManager(UserCreateOrUpdateRequestDTO payload);
         Task<ResponseDTO> StaffManagerVerifyOTP(string otp, int requestId, int requestStatusId, string password);
         Task<GenericResponseDTO<User>> GetLoginUser();
+        Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserLoginInfo(ClaimsPrincipal user);
     }
 }
