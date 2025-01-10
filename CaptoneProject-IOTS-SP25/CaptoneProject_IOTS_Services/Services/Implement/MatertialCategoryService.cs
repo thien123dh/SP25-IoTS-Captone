@@ -20,19 +20,17 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             _unitOfWork ??= new UnitOfWork();
         }
 
-        public async Task<IBusinessResult> CreateMaterialCategory(MatertialCategoryRequestDTO categoryMaterial)
+        public async Task<IBusinessResult> CreateMaterialCategory(MatertialCategoryRequestDTO category)
         {
             try
             {
-                int result = await _unitOfWork.MaterialCategoryRepository.CreateAsync(new List<MatertialCategoryRequestDTO> { categoryMaterial });
-                if (result > 0)
+                var materialCategory = new MaterialCategory
                 {
-                    return new BusinessResult(1, "success");
-                }
-                else
-                {
-                    return new BusinessResult(2, "fail");
-                }
+                    Label = category.Label,
+                    IsActive = category.IsActive
+                };
+                _unitOfWork.MaterialCategoryRepository.Create(materialCategory);
+                return new BusinessResult(1, "Create Category Material success");
             }
             catch (Exception ex)
             {
@@ -40,32 +38,24 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
-        public Task<IBusinessResult> DeleteAsync(int id)
+        public Task<IBusinessResult> DeleteMaterialCategoryAsync(int id)
         {
             throw new NotImplementedException();
         }
 
-        public Task<IBusinessResult> GetAllCategories()
+        public async Task<IBusinessResult> GetAllMaterialCategory()
         {
-            throw new NotImplementedException();
+            return new BusinessResult(1, "Get all category success", await _unitOfWork.MaterialCategoryRepository.GetAllMaterialCaterial());
         }
 
-        public Task<IBusinessResult> GetAllMaterialCategory(PaginationRequest paginationRequest)
+        public async Task<IBusinessResult> GetByMaterialCategoryId(int id)
         {
-            throw new NotImplementedException();
+            var category = await _unitOfWork.MaterialCategoryRepository.GetCategoryMaterialById(id);
+            if (category == null) return new BusinessResult(4, "category not found");
+            return new BusinessResult(1, "Get Category success", category);
         }
 
-        public Task<IBusinessResult> GetById(int id)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<IBusinessResult> GetByIdAsync(string id)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<IBusinessResult> UpdateAsync(MaterialCategory categoryMaterial)
+        public Task<IBusinessResult> UpdateMaterialCategoryAsync(MaterialCategoryResponeDTO categoryMaterial)
         {
             throw new NotImplementedException();
         }
