@@ -5,8 +5,10 @@ using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserDTO;
 using CaptoneProject_IOTS_Service.Services.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using System.Security.Claims;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -94,5 +96,15 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         }
 
         //================ ADMIN ======================
+
+
+        //================ Decode lay role =================/
+        [Authorize]
+        [HttpGet("/Get-user-login-info")]
+        public async Task<IActionResult> GetUserLoginInfo()
+        {
+            var response = await _userService.GetUserLoginInfo(User);
+            return Ok(response);
+        }
     }
 }

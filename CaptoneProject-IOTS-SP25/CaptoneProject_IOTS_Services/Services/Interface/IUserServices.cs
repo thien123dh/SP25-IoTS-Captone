@@ -6,6 +6,7 @@ using CaptoneProject_IOTS_Service.Business;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -22,5 +23,6 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         //Task<GenericResponseDTO<UserDetailsResponseDTO>> CreateOrUpdateUser(int id, UserCreateOrUpdateRequestDTO payload);
         Task<ResponseDTO> CreateStaffOrManager(UserCreateOrUpdateRequestDTO payload);
         Task<GenericResponseDTO<User>> GetLoginUser();
+        Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserLoginInfo(ClaimsPrincipal user);
     }
 }
