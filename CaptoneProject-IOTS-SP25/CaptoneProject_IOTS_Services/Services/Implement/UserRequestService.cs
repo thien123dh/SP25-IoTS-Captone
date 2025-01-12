@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -47,7 +48,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 otp += random.Next(0, 10);
             }
 
-            return otp;
+            //return otp;
+            //return otp.Trim();
+            return "123456";
         }
 
         public async Task<GenericResponseDTO<UserRequestResponseDTO>> CreateOrUpdateUserRequest(
@@ -60,6 +63,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             userRequest = (userRequest == null) ? new UserRequest() : userRequest;
 
+            userRequest.ActionBy = userRepository.GetLoginUser()?.Id;
+
             userRequest.Status = userRequestStatus;
 
             userRequest.Email = email;
@@ -67,8 +72,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (userRequestStatus == (int) UserRequestConstant.UserRequestStatusEnum.PENDING_TO_VERIFY_OTP)
             {
                 string otp = GenerateOTP();
-
-                Console.WriteLine("OTP: " + otp);
 
                 userRequest.OtpCode = otp.Trim();
 
@@ -80,6 +83,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (userRequest.Id > 0)
             {
                 userRequest.ActionDate = DateTime.Now;
+                
 
                 userRequestRepository.Update(userRequest);
             }
@@ -98,7 +102,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                        $"OTP: {userRequest.OtpCode}\n\n" +
                        $"Best regards,\nThe Admin Team";
 
-            await _emailService.SendEmailAsync(userRequest.Email, subject, body);
+            _emailService.SendEmailAsync(userRequest.Email, subject, body);
 
             return new GenericResponseDTO<UserRequestResponseDTO>
             {

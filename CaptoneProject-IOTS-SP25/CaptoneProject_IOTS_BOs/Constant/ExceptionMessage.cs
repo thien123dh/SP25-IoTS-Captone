@@ -15,5 +15,7 @@ namespace CaptoneProject_IOTS_BOs.Constant
         public static string INVALID_STAFF_MANAGER_ROLE = "The role must be staff or manager";
 
         public static string USER_REQUEST_NOT_FOUND = "User request does not exist";
+
+        public static string USER_EMAIL_INVALID = "User email is invalid";
     }
 }

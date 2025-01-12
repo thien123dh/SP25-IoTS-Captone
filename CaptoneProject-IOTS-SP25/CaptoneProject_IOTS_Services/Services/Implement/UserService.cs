@@ -1,16 +1,12 @@
 ﻿using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
-using CaptoneProject_IOTS_BOs.DTO.RoleDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserDTO;
-using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
 using CaptoneProject_IOTS_Service.Mapper;
 using CaptoneProject_IOTS_Service.Services.Interface;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Identity.Client;
 using System.Net;
 using System.Security.Claims;
 using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
@@ -27,7 +23,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly IUserRequestService userRequestService;
         private readonly UserRequestRepository userRequestRepository;
 
-        public UserService(
+        public UserService (
             UserRepository userService, 
             ITokenServices tokenGenerator,
             UserRoleRepository userRoleRepository,
@@ -43,6 +39,31 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             this.userRequestRepository = userRequestRepository;
         }
 
+        private async Task<ResponseDTO> UpdateUserPassword(int userId, string password)
+        {
+            if (userId == 0)
+            {
+                return new ResponseDTO
+                {
+                    IsSuccess = false,
+                    StatusCode = HttpStatusCode.BadRequest,
+                    Message = "User id is invalid"
+                };
+            }
+            GenericResponseDTO<UserDetailsResponseDTO> loginUser = await GetLoginUser();
+            User user = _userRepository.GetById(userId);
+            user.Password = _passwordHasher.HashPassword(null, password);
+            user.UpdatedBy = loginUser?.Data?.Id;
+
+            _userRepository.Update(user);
+
+            return new ResponseDTO
+            {
+                IsSuccess = true,
+                StatusCode = HttpStatusCode.OK,
+            };
+
+        }
         public async Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserLoginInfo(ClaimsPrincipal user)
         {
             if (user == null || !user.Identity?.IsAuthenticated == true)
@@ -215,16 +236,17 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     StatusCode = HttpStatusCode.NotFound
                 };
 
-            List<UserRole> userRoleList = user.UserRoles.ToList();
+            List<UserRole>? userRoleList = user.UserRoles?.ToList();
 
             //Get the user role doesn't exist in input user role list
-            IEnumerable<UserRole> deleteUserRoleList = userRoleList.Where(ur => !roleList.Contains(ur.RoleId));
+            IEnumerable<UserRole>? deleteUserRoleList = userRoleList?.Where(ur => !roleList.Contains(ur.RoleId));
             //REMOVE user role
-            await _userRoleRepository.RemoveAsync(deleteUserRoleList);
+            if (deleteUserRoleList != null)
+                await _userRoleRepository.RemoveAsync(deleteUserRoleList);
 
             var insertUserRoleList = roleList
             .Where(
-                r => (userRoleList.FirstOrDefault(ur => ur.RoleId == r) == null)
+                r => (userRoleList?.FirstOrDefault(ur => ur.RoleId == r) == null)
             )
             .Select(r => new UserRole
             {
@@ -275,8 +297,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 Data = PaginationMapper<User, UserDetailsResponseDTO>.mappingTo(UserMapper.mapToUserDetailResponse, source: response)
             };
         }
-
-        public async Task<GenericResponseDTO<UserDetailsResponseDTO>> CreateOrUpdateUser(int id, UserCreateOrUpdateRequestDTO payload)
+        
+        //set id = 0 to create new
+        public async Task<GenericResponseDTO<UserDetailsResponseDTO>> CreateOrUpdateUser(int id, UserDetailsRequestDTO payload, int isActive)
         {
             User user = await _userRepository.GetUserByEmail(payload.Email);
 
@@ -290,21 +313,25 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 };
             }
 
-            User? loginUser = (await GetLoginUser()).Data;
+            UserDetailsResponseDTO? loginUser = (await GetLoginUser()).Data;
 
             user = new User
             {
                 Email = payload.Email,
                 Fullname = payload.Fullname,
                 Username = payload.Email,
+                Password = (user == null) ? "" : user.Password,
                 Phone = payload.Phone,
                 Address = payload.Address,
-                Password = payload.Password == null ? "" : payload.Password,
                 CreatedBy = loginUser?.Id,
                 CreatedDate = DateTime.Now,
                 UpdatedBy = loginUser?.Id,
-                UpdatedDate = DateTime.Now
+                UpdatedDate = DateTime.Now,
+                IsActive = isActive
             };
+
+            user.Id = (id > 0) ? id : user.Id;
+
             User newUser;
             try
             {
@@ -333,20 +360,24 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             };
         }
 
-        public async Task<GenericResponseDTO<User>> GetLoginUser()
+        //TODO GET LOGIN USER
+        public async Task<GenericResponseDTO<UserDetailsResponseDTO>> GetLoginUser()
         {
-            return new GenericResponseDTO<User>
-            {
-                IsSuccess = true,
-                StatusCode = HttpStatusCode.OK,
-                Data = new User
-                {
-                    Id = 1
-                }
-            };
+            User loginUser = _userRepository.GetLoginUser();
+
+            return await GetUserDetailsById(loginUser.Id);
+            //var user = _httpContextAccessor.HttpContext?.User;
+
+            //string? userId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            //int loginUserId = userId == null ? 0 : int.Parse(userId);
+
+            //GenericResponseDTO<UserDetailsResponseDTO> response = await GetUserDetailsById(loginUserId);
+
+            //return response;
         }
 
-        public async Task<ResponseDTO> CreateStaffOrManager(UserCreateOrUpdateRequestDTO payload)
+        public async Task<ResponseDTO> CreateStaffOrManager(UserDetailsRequestDTO payload)
         {
             if (payload.RoleId != (int)RoleEnum.MANAGER && payload.RoleId != (int)RoleEnum.STAFF)
             {
@@ -358,7 +389,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 };
             }
 
-            GenericResponseDTO<UserDetailsResponseDTO> createUserResponse = await CreateOrUpdateUser(0, payload);
+            GenericResponseDTO<UserDetailsResponseDTO> createUserResponse = await CreateOrUpdateUser(0, payload, isActive: 0);
 
             if (!createUserResponse.IsSuccess)
                 return createUserResponse;
@@ -428,6 +459,37 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
 
             return otpResponse;
+        }
+
+        public async Task<ResponseDTO> RegisterUser(UserRegisterDTO payload)
+        {
+            string otp = payload.Otp;
+            UserDetailsRequestDTO userInfo = payload.UserInfomation;
+
+            if (userInfo.Email == "" || userInfo.Email == null)
+            {
+                return new ResponseDTO
+                {
+                    IsSuccess = false,
+                    StatusCode = HttpStatusCode.BadRequest,
+                    Message = ExceptionMessage.USER_EMAIL_INVALID
+                };
+            }
+
+            ResponseDTO verifyOtpResponse = await userRequestService.VerifyOTP(userInfo.Email, otp);
+
+            if (!verifyOtpResponse.IsSuccess)
+                return verifyOtpResponse;
+            
+            GenericResponseDTO<UserDetailsResponseDTO> response = await this.CreateOrUpdateUser(0, userInfo, isActive: 1);
+
+            if (!response.IsSuccess)
+                return response;
+
+            //Change user request to approve
+            userRequestService?.CreateOrUpdateUserRequest(userInfo.Email, (int)UserRequestStatusEnum.APPROVED);
+
+            return await UpdateUserPassword(response.Data?.Id == null ? 0 : response.Data.Id, payload.Password);
         }
     }
 }

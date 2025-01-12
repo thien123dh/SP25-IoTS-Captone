@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using static CaptoneProject_IOTS_BOs.Constant.UserRequestConstant;
 using System.Security.Claims;
+using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -90,7 +91,7 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
 
         //================ ADMIN ======================
         [HttpPost("create-staff-manager-request")]
-        public async Task<IActionResult> CreateStaffRequest([FromBody] UserCreateOrUpdateRequestDTO payload)
+        public async Task<IActionResult> CreateStaffRequest([FromBody] UserDetailsRequestDTO payload)
         {
             return GetActionResult(
 
@@ -101,7 +102,7 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
 
         //================ ADMIN ======================
         //================ STAFF/MANAGER ======================
-        [HttpPost("verify-otp-active-user")]
+        [HttpPost("verify-staff-manager-otp")]
         public async Task<IActionResult> VerifyOtp (
             [FromBody] StaffManagerVerifyOtpRequest payload
         )
@@ -117,13 +118,42 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         }
         //================ STAFF/MANAGER ======================
 
+        //================ CUSTOMER ===========================
+        //[HttpPost("create-verify-customer-user")]
+        //public async Task<IActionResult> 
+
+
+        //================ CUSTOMER ===========================
+        [HttpPost("register-customer")]
+        public async Task<IActionResult> RegisterCustomerAccount([FromBody] UserRegisterDTO payload)
+        {
+            if (payload.UserInfomation.RoleId != (int)RoleEnum.CUSTOMER)
+            {
+                return GetActionResult(
+                    new ResponseDTO
+                    {
+                        IsSuccess = false,
+                        StatusCode = HttpStatusCode.BadRequest,
+                        Message = "User role is not customer"
+                    }
+                );
+            }
+                
+            return GetActionResult(
+                await _userService.RegisterUser(payload)
+            );
+        }
+        
+        //
         //================ Decode lay role =================/
         [Authorize]
-        [HttpGet("/Get-user-login-info")]
+        [HttpGet("/get-user-login-info")]
         public async Task<IActionResult> GetUserLoginInfo()
         {
             var response = await _userService.GetUserLoginInfo(User);
             return Ok(response);
         }
+
+
     }
 }
