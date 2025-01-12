@@ -33,11 +33,13 @@ var durationInMinutes = int.Parse(jwtSettings["DurationInMinutes"]);
 
 var configuration = builder.Configuration;
 // Register UserDAO with a factory method to inject the connection string
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<UserRepository>(provider =>
 {
     var connectionString = configuration.GetConnectionString("DefaultConnection");
     return new UserRepository(connectionString);
 });
+//builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<RoleRepository>();
 builder.Services.AddScoped<UserRoleRepository>();
 builder.Services.AddScoped<UserRequestRepository>();
@@ -52,7 +54,6 @@ builder.Services.AddScoped<IMaterialCategoryService, MatertialCategoryService>()
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped(typeof(IMapService<,>), typeof(MapService<,>));
 builder.Services.AddScoped<IUserRequestService, UserRequestService>();
-//builder.Services.AddScoped<AutoMapper>();
 
 builder.Services.AddCors(options =>
 {

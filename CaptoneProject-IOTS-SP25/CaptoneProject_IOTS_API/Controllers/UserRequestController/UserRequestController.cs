@@ -41,18 +41,16 @@ namespace CaptoneProject_IOTS_API.Controllers.UserRequestController
             return Ok(response);
         }
 
-        [HttpPost("create-pending-verify-otp-request")]
-        public async Task<IActionResult> CreatePendingVerifyOtpRequest
+        [HttpPost("create-email-verify-request")]
+        public async Task<IActionResult> CreateEmailVerifyRequest
         (
-            [FromBody] UserRequestRequestDTO request
+            [FromBody] CreateUserRequestDTO request
         )
         {
             return GetActionResult(
                 await userRequestService.CreateOrUpdateUserRequest(
                     request.Email, 
                     (int) UserRequestStatusEnum.PENDING_TO_VERIFY_OTP
-/*                    request?.Reason,
-                    request?.Decision*/
                 )
             );
         }
