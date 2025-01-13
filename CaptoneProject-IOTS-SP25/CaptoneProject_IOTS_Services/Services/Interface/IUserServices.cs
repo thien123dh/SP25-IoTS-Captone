@@ -14,10 +14,11 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         Task<ResponseDTO> UpdateUserStatus(int userId, int isActive);
         Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserDetailsById(int id);
         //Task<GenericResponseDTO<UserDetailsResponseDTO>> CreateOrUpdateUser(int id, UserCreateOrUpdateRequestDTO payload);
-        Task<ResponseDTO> CreateStaffOrManager(UserDetailsRequestDTO payload);
+        Task<ResponseDTO> CreateStaffOrManager(CreateUserDTO payload);
         Task<ResponseDTO> StaffManagerVerifyOTP(string otp, int requestId, int requestStatusId, string password);
-        Task<GenericResponseDTO<UserDetailsResponseDTO>> GetLoginUser();
-        Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserLoginInfo(ClaimsPrincipal user);
+        int? GetLoginUser();
+        Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserLoginInfo();
         Task<ResponseDTO> RegisterUser(UserRegisterDTO payload);
+        Task<ResponseDTO> UserChangePassword(ChangePasswordRequestDTO payload);
     }
 }

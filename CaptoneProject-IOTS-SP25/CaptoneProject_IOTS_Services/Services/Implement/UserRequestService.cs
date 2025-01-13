@@ -174,7 +174,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         public async Task<GenericResponseDTO<UserRequestDetailsResponse>> GetUserRequestById(int requestId)
         {
-            UserRequest userRequest = userRequestRepository.GetById(requestId);
+            UserRequest userRequest = await userRequestRepository.GetById(requestId);
 
             if (userRequest == null)
             {
@@ -188,12 +188,16 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             User user = await userRepository.GetUserByEmail(userRequest.Email);
 
-            UserRequestDetailsResponse response = new UserRequestDetailsResponse
+            var response = new UserRequestDetailsResponse
             {
                 Id = userRequest.Id,
                 Email = userRequest.Email,
-                StatusNavigation = userRequest.StatusNavigation,
-                userDetails = UserMapper.mapToUserDetailResponse(user)
+                UserRequestStatus = new UserRequestStatusDTO
+                {
+                    Id = userRequest.StatusNavigation.Id,
+                    Label = userRequest.StatusNavigation.Label
+                },
+                UserDetails = UserMapper.mapToUserDetailResponse(user)
             };
 
             return new GenericResponseDTO<UserRequestDetailsResponse>
