@@ -20,5 +20,14 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
             return response;
         } 
 
+        public async Task<UserRequest> GetById(int id)
+        {
+            UserRequest response = await _dbSet
+                .Include(ur => ur.StatusNavigation)
+                .SingleOrDefaultAsync(ur => ur.Id == id);
+
+            return response;
+        }
+
     }
 }
