@@ -46,6 +46,7 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         }
 
         [HttpPost("listing")]
+
 /*        [Authorize(Roles = "Admin")]*/
         public async Task<IActionResult> GetUserPagination(
             [FromBody] PaginationRequest paginationRequest,
@@ -87,6 +88,13 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
 
             return GetActionResult(response);
         }
+        [HttpGet("get-user-by-email/{email}")]
+        public async Task<IActionResult> GetUserByEmail(string email)
+        {
+            var response = await _userService.GetUserDetailsByEmail(email);
+
+            return GetActionResult(response);
+        }
         //================ COMMON =====================
 
         //================ ADMIN ======================
@@ -124,7 +132,7 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
 
 
         //================ CUSTOMER ===========================
-        [HttpPost("register-customer")]
+        [HttpPost("register-verify-otp-customer")]
         public async Task<IActionResult> RegisterCustomerAccount([FromBody] UserRegisterDTO payload)
         {
             if (payload.UserInfomation.RoleId != (int)RoleEnum.CUSTOMER)
@@ -147,7 +155,7 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         //
         //================ Decode lay role =================/
         [Authorize]
-        [HttpGet("/get-user-login-info")]
+        [HttpGet("get-user-login-info")]
         public async Task<IActionResult> GetUserLoginInfo()
         {
             var response = await _userService.GetUserLoginInfo();

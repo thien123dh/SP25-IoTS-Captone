@@ -13,6 +13,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         Task<ResponseDTO> UpdateUserRole(int userId, List<int>? roleList);
         Task<ResponseDTO> UpdateUserStatus(int userId, int isActive);
         Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserDetailsById(int id);
+        Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserDetailsByEmail(string email);
         //Task<GenericResponseDTO<UserDetailsResponseDTO>> CreateOrUpdateUser(int id, UserCreateOrUpdateRequestDTO payload);
         Task<ResponseDTO> CreateStaffOrManager(CreateUserDTO payload);
         Task<ResponseDTO> StaffManagerVerifyOTP(string otp, int requestId, int requestStatusId, string password);
