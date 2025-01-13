@@ -18,21 +18,6 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
 
         }
 
-        public User GetLoginUser()
-        {
-            //var user = _httpContextAccessor.HttpContext?.User;
-
-            //int userId = int.Parse(user?.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-
-            //return GetById(userId);
-
-            //return _httpContextAccessor.HttpContext?.User
-            return new User
-            {
-                Id = 1
-            };
-        }
-
         public async Task<User> CheckLoginAsync(string email, string password)
         {
             var user = await _dbSet

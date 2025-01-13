@@ -2,6 +2,7 @@
 using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserDTO;
+using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
 using CaptoneProject_IOTS_Service.Mapper;
@@ -141,12 +142,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         StatusCode = HttpStatusCode.Unauthorized,
                     }; // Invalid credentials
                 }
-                else if (user.IsActive != 1)
+                else if (user.IsActive < 1)
                 {
                     return new ResponseDTO
                     {
                         IsSuccess = false,
-                        Message = "Account not allow",
+                        Message = ExceptionMessage.LOGIN_INACTIVE_ACCOUNT,
                         StatusCode = HttpStatusCode.Unauthorized,
                     };
                 }
@@ -474,5 +475,19 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             throw new NotImplementedException();
         }
 
+        public async Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserDetailsByEmail(string email)
+        {
+            User user = await _userRepository.GetUserByEmail(email);
+
+            if (user == null)
+                return new GenericResponseDTO<UserDetailsResponseDTO>
+                {
+                    IsSuccess = false,
+                    Message = ExceptionMessage.USER_DOESNT_EXIST,
+                    StatusCode = HttpStatusCode.NotFound
+                };
+
+            return await GetUserDetailsById(user.Id);
+        }
     }
 }
