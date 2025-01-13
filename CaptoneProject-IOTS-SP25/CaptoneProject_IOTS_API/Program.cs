@@ -48,6 +48,8 @@ builder.Services.AddDbContext<IoTTraddingSystemContext>(options =>
     options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
 // Đăng ký dịch vụ
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<MyHttpAccessor>();
 builder.Services.AddScoped<IUserServices, UserService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IMaterialCategoryService, MatertialCategoryService>();

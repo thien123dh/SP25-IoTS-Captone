@@ -91,7 +91,7 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
 
         //================ ADMIN ======================
         [HttpPost("create-staff-manager-request")]
-        public async Task<IActionResult> CreateStaffRequest([FromBody] UserDetailsRequestDTO payload)
+        public async Task<IActionResult> CreateStaffRequest([FromBody] CreateUserDTO payload)
         {
             return GetActionResult(
 
@@ -150,7 +150,7 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         [HttpGet("/get-user-login-info")]
         public async Task<IActionResult> GetUserLoginInfo()
         {
-            var response = await _userService.GetUserLoginInfo(User);
+            var response = await _userService.GetUserLoginInfo();
             return Ok(response);
         }
 

@@ -522,7 +522,8 @@ public partial class IoTTraddingSystemContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_UserRequest_Role");
 
-            entity.HasOne(d => d.StatusNavigation).WithMany(p => p.UserRequests)
+            entity.HasOne(d => d.StatusNavigation)
+            .WithMany(p => p.UserRequests)
                 .HasForeignKey(d => d.Status)
                 .HasConstraintName("FK_UserRequest_UserRequestStatus");
         });

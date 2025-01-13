@@ -29,7 +29,7 @@ public partial class UserRequest
 
     public virtual Role? Role { get; set; }
 
-    public virtual UserRequestStatus? StatusNavigation { get; set; }
+    public virtual UserRequestStatus StatusNavigation { get; set; }
 
     public virtual ICollection<UserRequestAttachment> UserRequestAttachments { get; set; } = new List<UserRequestAttachment>();
 }

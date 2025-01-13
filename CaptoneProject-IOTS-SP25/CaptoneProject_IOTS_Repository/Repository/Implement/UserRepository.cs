@@ -1,14 +1,15 @@
 ﻿
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Base;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace CaptoneProject_IOTS_Repository.Repository.Implement
 {
     public class UserRepository : RepositoryBase<User>
     {
         private readonly string _loginRepository;
-        //private readonly IHttpContextAccessor _httpContextAccessor;
         public UserRepository(
             string loginRepository
         )
@@ -19,7 +20,13 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
 
         public User GetLoginUser()
         {
+            //var user = _httpContextAccessor.HttpContext?.User;
 
+            //int userId = int.Parse(user?.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+
+            //return GetById(userId);
+
+            //return _httpContextAccessor.HttpContext?.User
             return new User
             {
                 Id = 1

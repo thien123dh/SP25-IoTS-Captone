@@ -7,20 +7,23 @@ using System.Threading.Tasks;
 
 namespace CaptoneProject_IOTS_BOs.DTO.UserDTO
 {
-    public class UserDetailsRequestDTO
+    public class CreateUserDTO
     {
+        [Required]
         public string Email { get; set; }
+        [Required]
         public string Fullname { set; get; }
         //public string Password { get; set; }
         public string? Phone { get; set; }
         public string? Address { get; set; }
+        [Required]
         public int RoleId {get; set;}
     }
 
     public class UserRegisterDTO
     {
         [Required]
-        public UserDetailsRequestDTO UserInfomation { get; set; }
+        public CreateUserDTO UserInfomation { get; set; }
         [Required]
         public string Otp { set; get; }
         [Required]

@@ -18,6 +18,9 @@ namespace CaptoneProject_IOTS_Service.Mapper
 
         public static UserDetailsResponseDTO mapToUserDetailResponse(User user)
         {
+            if (user == null)
+                return null;
+
             UserDetailsResponseDTO data = _userMapper.MappingTo(user);
             List<Role> roleList = user.UserRoles.Select(ur => ur.Role).ToList();
             data.Roles = roleList?.Select(role => _roleMapper.MappingTo(role))?.ToList();
