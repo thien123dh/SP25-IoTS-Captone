@@ -18,7 +18,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.PaginationDTO
     {
         public int PageIndex { set; get; }
         public int PageSize { set; get; }
-        public string? searchKeyword { set; get; } = "";
+        public string searchKeyword { set; get; } = "";
         //public IEnumerable<string>? SortProperties { set; get; }
     }
 }

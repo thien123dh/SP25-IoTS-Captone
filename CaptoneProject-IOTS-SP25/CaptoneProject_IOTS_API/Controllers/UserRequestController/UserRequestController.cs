@@ -1,11 +1,11 @@
 ﻿using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
-using CaptoneProject_IOTS_BOs.DTO.UserDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
 using CaptoneProject_IOTS_Service.Services.Implement;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel;
 using System.Net;
 using static CaptoneProject_IOTS_BOs.Constant.UserRequestConstant;
 
@@ -41,8 +41,9 @@ namespace CaptoneProject_IOTS_API.Controllers.UserRequestController
             return Ok(response);
         }
 
-        [HttpPost("create-email-verify-request")]
-        public async Task<IActionResult> CreateEmailVerifyRequest
+        //[Description"Using api for sending otp to email to verify email")]
+        [HttpPost("create-request-verify-email-otp")]
+        public async Task<IActionResult> CreateRequestVerifyOtpEmail
         (
             [FromBody] CreateUserRequestDTO request
         )
@@ -57,19 +58,20 @@ namespace CaptoneProject_IOTS_API.Controllers.UserRequestController
 
         [HttpPost("listing")]
         public async Task<IActionResult> GetPaginationUserRequest(
+            [FromQuery] int? statusFilter,
             [FromBody] PaginationRequest paginationRequest
         )
         {
             return GetActionResult(
-                await userRequestService.GetUserRequestPagination(paginationRequest)
+                await userRequestService.GetUserRequestPagination(statusFilter, paginationRequest)
             );
         }
 
-        [HttpPost("verify-otp")]
-        public async Task<IActionResult> VerifyOTP([FromBody] VerifyOTPRequestDTO payload)
-        {
-            return GetActionResult(await userRequestService.VerifyOTP(payload.Email, payload.OTP));
-        }
+        //[HttpPost("verify-otp")]
+        //public async Task<IActionResult> VerifyOTP([FromBody] VerifyOTPRequestDTO payload)
+        //{
+        //    return GetActionResult(await userRequestService.VerifyOTP(payload.Email, payload.OTP));
+        //}
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUserRequestDetailsById(int id)

@@ -8,6 +8,7 @@ using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
 using CaptoneProject_IOTS_Service.Mapper;
 using CaptoneProject_IOTS_Service.Services.Interface;
+using Microsoft.AspNetCore.Http;
 using OtpNet;
 using System;
 using System.Collections.Generic;
@@ -25,16 +26,19 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         UserRepository userRepository;
         const int OTP_EXPIRED_MINUTES = 60;
         private readonly IEmailService _emailService;
+        private readonly MyHttpAccessor myHttpAccessor;
         public UserRequestService
         (
             UserRequestRepository userRequestRepository,
             IEmailService emailService,
-            UserRepository userRepository
+            UserRepository userRepository,
+            MyHttpAccessor myHttpAccessor
         )
         {
             this.userRequestRepository = userRequestRepository;
             _emailService = emailService;
             this.userRepository = userRepository;
+            this.myHttpAccessor = myHttpAccessor;
         }
 
         private string GenerateOTP()
@@ -56,14 +60,13 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         public async Task<GenericResponseDTO<UserRequestResponseDTO>> CreateOrUpdateUserRequest(
             string email, 
             int userRequestStatus
-/*            string decision, string reason*/
         )
         {
             UserRequest? userRequest = await userRequestRepository.GetByEmail(email);
 
             userRequest = (userRequest == null) ? new UserRequest() : userRequest;
 
-            userRequest.ActionBy = userRepository.GetLoginUser()?.Id;
+            userRequest.ActionBy = myHttpAccessor.GetLoginUserId();
 
             userRequest.Status = userRequestStatus;
 
@@ -84,39 +87,38 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 userRequest.ActionDate = DateTime.Now;
                 
-
                 userRequestRepository.Update(userRequest);
             }
             else
             {
+                userRequest.CreatedDate = DateTime.Now;
                 userRequestRepository.Create(userRequest);
             }
 
-            MapService<UserRequest, UserRequestResponseDTO> mapper = new MapService<UserRequest, UserRequestResponseDTO>();
-            
             UserRequest response = await userRequestRepository.GetByEmail(email);
 
-            var subject = "Verify Account";  // Set the email's subject to the decision
-            var body = $"Dear {userRequest.Email},\n\n" +
-                       $"Test.\n\n" +
-                       $"OTP: {userRequest.OtpCode}\n\n" +
-                       $"Best regards,\nThe Admin Team";
+            var emailTemplate = EmailTemplateConst.CreateStaffOrManagerEmailTemplate(userRequest.Email, userRequest.OtpCode);
 
-            _emailService.SendEmailAsync(userRequest.Email, subject, body);
+            _emailService.SendEmailAsync(userRequest.Email, emailTemplate.Subject, emailTemplate.Body);
 
             return new GenericResponseDTO<UserRequestResponseDTO>
             {
                 IsSuccess = true,
-                Data = mapper.MappingTo(response)
+                StatusCode = HttpStatusCode.OK,
+                Data = (await GetUserRequestById(response.Id)).Data
             };
         }
 
-        public async Task<ResponseDTO> GetUserRequestPagination(PaginationRequest paginationRequest)
+        public async Task<ResponseDTO> GetUserRequestPagination(int? userRequestStatusFilter, PaginationRequest paginationRequest)
         {
-            PaginationResponse<UserRequest> response = userRequestRepository.GetPaginate(
-                filter: null,
+            PaginationResponse<UserRequest> paginationData = userRequestRepository.GetPaginate(
+                filter: ur => (
+                    ur.Email.Contains(paginationRequest.searchKeyword)
+                    &&
+                    (userRequestStatusFilter == null || userRequestStatusFilter == ur.Status)
+                ),
                 orderBy: null,
-                includeProperties: "",
+                includeProperties: "StatusNavigation",
                 pageIndex: paginationRequest.PageIndex,
                 pageSize: paginationRequest.PageSize
             );
@@ -125,7 +127,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 IsSuccess = true,
                 StatusCode = HttpStatusCode.OK,
-                Data = response
+                Data = PaginationMapper<UserRequest, UserRequestResponseDTO>
+                    .mappingTo(UserRequestMapper.MappingToUserRequestResponseDTO, paginationData)
             };
         }
 
@@ -133,13 +136,23 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         {
             UserRequest userRequest = await userRequestRepository.GetByEmail(email);
 
+            if (userRequest.Status != (int)UserRequestConstant.UserRequestStatusEnum.PENDING_TO_VERIFY_OTP)
+            {
+                return new ResponseDTO
+                {
+                    IsSuccess = false,
+                    StatusCode = HttpStatusCode.BadRequest,
+                    Message = ExceptionMessage.EMAIL_ALREADY_VERIFIED
+                };
+            }
+
             if (userRequest == null)
             {
                 return new ResponseDTO
                 {
                     IsSuccess = false,
                     StatusCode = HttpStatusCode.BadRequest,
-                    Message = "Request doesn't exist"
+                    Message = "The verified email request cannot be found"
                 };
             }
 
@@ -151,7 +164,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     {
                         IsSuccess = false,
                         StatusCode = HttpStatusCode.BadRequest,
-                        Message = "The OTP is expired"
+                        Message = ExceptionMessage.EXPIRED_OTP
                     };
                 } else
                 {
@@ -168,17 +181,17 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 IsSuccess = false,
                 StatusCode = HttpStatusCode.BadRequest,
-                Message = "OTP is not correct"
+                Message = ExceptionMessage.INCORRECT_OTP
             };
         }
 
-        public async Task<GenericResponseDTO<UserRequestDetailsResponse>> GetUserRequestById(int requestId)
+        public async Task<GenericResponseDTO<UserRequestResponseDTO>> GetUserRequestById(int requestId)
         {
             UserRequest userRequest = await userRequestRepository.GetById(requestId);
 
             if (userRequest == null)
             {
-                return new GenericResponseDTO<UserRequestDetailsResponse>
+                return new GenericResponseDTO<UserRequestResponseDTO>
                 {
                     IsSuccess = true,
                     StatusCode = HttpStatusCode.NotFound,
@@ -188,19 +201,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             User user = await userRepository.GetUserByEmail(userRequest.Email);
 
-            var response = new UserRequestDetailsResponse
-            {
-                Id = userRequest.Id,
-                Email = userRequest.Email,
-                UserRequestStatus = new UserRequestStatusDTO
-                {
-                    Id = userRequest.StatusNavigation.Id,
-                    Label = userRequest.StatusNavigation.Label
-                },
-                UserDetails = UserMapper.mapToUserDetailResponse(user)
-            };
+            var response = UserRequestMapper.MappingToUserRequestResponseDTO(userRequest);
 
-            return new GenericResponseDTO<UserRequestDetailsResponse>
+            return new GenericResponseDTO<UserRequestResponseDTO>
             {
                 IsSuccess = true,
                 StatusCode = HttpStatusCode.OK,

@@ -13,12 +13,15 @@ namespace CaptoneProject_IOTS_BOs.DTO.UserRequestDTO
         public int Id { set; get; }
         public string Label { set; get; }
     }
-    public class UserRequestDetailsResponse
+    public class UserRequestResponseDTO
     {
         public int Id { set; get; }
         public string Email { set; get; }
 
-        public UserDetailsResponseDTO? UserDetails { set; get; }
+        //public UserDetailsResponseDTO? UserDetails { set; get; }
         public UserRequestStatusDTO? UserRequestStatus { set; get; }
+        public string? Remark { set; get; }
+        public DateTime? CreatedDate { set; get; }
+        public DateTime? ActionDate { set; get; }
     }
 }

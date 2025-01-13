@@ -17,5 +17,14 @@ namespace CaptoneProject_IOTS_BOs.Constant
         public static string USER_REQUEST_NOT_FOUND = "User request does not exist";
 
         public static string USER_EMAIL_INVALID = "User email is invalid";
+
+        public static string EMAIL_ALREADY_VERIFIED = "Your email is already verified";
+
+        public static string EXPIRED_OTP = "The otp was expired";
+
+        public static string INCORRECT_OTP = "The entered otp was incorrect. Please try again";
+
+        public static string LOGIN_INACTIVE_ACCOUNT = "Your account was inactive. Please contact with admin to activate";
+
     }
 }
