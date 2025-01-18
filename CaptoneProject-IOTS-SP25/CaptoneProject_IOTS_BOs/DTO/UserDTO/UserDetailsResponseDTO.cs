@@ -37,5 +37,6 @@ namespace CaptoneProject_IOTS_BOs.DTO.UserDTO
         public int IsActive { get; set; }
 
         public List<RoleResponse>? Roles { set; get; }
+        public string? UserImageUrl { set; get; } = "DEFAULT URL";
     }
 }

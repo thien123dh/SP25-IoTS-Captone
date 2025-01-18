@@ -15,6 +15,8 @@ public partial class IoTTraddingSystemContext : DbContext
     {
     }
 
+    public virtual DbSet<ActivityLog> ActivityLogs { get; set; }
+
     public virtual DbSet<Blog> Blogs { get; set; }
 
     public virtual DbSet<BlogAttachment> BlogAttachments { get; set; }
@@ -61,6 +63,30 @@ public partial class IoTTraddingSystemContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<ActivityLog>(entity =>
+        {
+            entity.ToTable("ActivityLog");
+
+            entity.Property(e => e.Id)
+                .ValueGeneratedNever()
+                .HasColumnName("id");
+            entity.Property(e => e.Contents)
+                .HasMaxLength(500)
+                .HasColumnName("contents");
+            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
+            entity.Property(e => e.CreatedDate)
+                .HasColumnType("datetime")
+                .HasColumnName("created_date");
+            entity.Property(e => e.EntityId).HasColumnName("entity_id");
+            entity.Property(e => e.EntityType).HasColumnName("entity_type");
+            entity.Property(e => e.Metadata)
+                .HasMaxLength(500)
+                .HasColumnName("metadata");
+            entity.Property(e => e.Title)
+                .HasMaxLength(300)
+                .HasColumnName("title");
+        });
+
         modelBuilder.Entity<Blog>(entity =>
         {
             entity.ToTable("Blog");
@@ -472,6 +498,9 @@ public partial class IoTTraddingSystemContext : DbContext
                 .IsRequired()
                 .HasMaxLength(255)
                 .HasColumnName("email");
+            entity.Property(e => e.Fullname)
+                .HasMaxLength(300)
+                .HasColumnName("fullname");
             entity.Property(e => e.IsActive).HasColumnName("is_active");
             entity.Property(e => e.Password)
                 .IsRequired()
@@ -503,7 +532,10 @@ public partial class IoTTraddingSystemContext : DbContext
             entity.Property(e => e.CreatedDate)
                 .HasColumnType("datetime")
                 .HasColumnName("created_date");
-            entity.Property(e => e.Email).HasColumnName("email");
+            entity.Property(e => e.Email)
+                .IsRequired()
+                .HasMaxLength(255)
+                .HasColumnName("email");
             entity.Property(e => e.ExpiredDate)
                 .HasColumnType("datetime")
                 .HasColumnName("expired_date");
@@ -519,11 +551,9 @@ public partial class IoTTraddingSystemContext : DbContext
 
             entity.HasOne(d => d.Role).WithMany(p => p.UserRequests)
                 .HasForeignKey(d => d.RoleId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_UserRequest_Role");
 
-            entity.HasOne(d => d.StatusNavigation)
-            .WithMany(p => p.UserRequests)
+            entity.HasOne(d => d.StatusNavigation).WithMany(p => p.UserRequests)
                 .HasForeignKey(d => d.Status)
                 .HasConstraintName("FK_UserRequest_UserRequestStatus");
         });

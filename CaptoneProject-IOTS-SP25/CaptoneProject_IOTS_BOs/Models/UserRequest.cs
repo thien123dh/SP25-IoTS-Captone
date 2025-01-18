@@ -13,13 +13,13 @@ public partial class UserRequest
 
     public int? CreatedBy { get; set; }
 
-    public DateTime? CreatedDate { get; set; } = DateTime.Now;
+    public DateTime? CreatedDate { get; set; }
 
     public int? ActionBy { get; set; }
 
-    public DateTime? ActionDate { get; set; } = DateTime.Now;
+    public DateTime? ActionDate { get; set; }
 
-    public string OtpCode { get; set; } = "";
+    public string OtpCode { get; set; }
 
     public DateTime? ExpiredDate { get; set; }
 
@@ -31,5 +31,5 @@ public partial class UserRequest
 
     public virtual UserRequestStatus? StatusNavigation { get; set; }
 
-    public virtual ICollection<UserRequestAttachment> UserRequestAttachments { get; set; } = new List<UserRequestAttachment>();
+    public virtual ICollection<UserRequestAttachment>? UserRequestAttachments { get; set; } = new List<UserRequestAttachment>();
 }
