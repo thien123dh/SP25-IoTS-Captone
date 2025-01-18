@@ -75,13 +75,13 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
              
             return await GetUserDetailsById(loginUserId == null ? 0 : (int)loginUserId);
         }
-        public async Task<ResponseDTO> UpdateUserStatus(int userId, int isActive)
+        public async Task<GenericResponseDTO<UserDetailsResponseDTO>> UpdateUserStatus(int userId, int isActive)
         {
             User u = _userRepository.GetById(userId);
 
             if (u == null)
             {
-                return new ResponseDTO
+                return new GenericResponseDTO<UserDetailsResponseDTO>
                 {
                     IsSuccess = false,
                     Message = "User does not exist",
@@ -92,7 +92,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             u.IsActive = isActive;
             _userRepository.Update(u);
 
-            return new ResponseDTO
+            return new GenericResponseDTO<UserDetailsResponseDTO>
             {
                 IsSuccess = true,
                 Message = "OK",
@@ -261,11 +261,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         ((roleId == null) || user.UserRoles.SingleOrDefault(userRole => userRole.RoleId == roleId) != null)
                         &&
                         (
-                            user.Email.Contains(paginationRequest.searchKeyword)
+                            user.Email.Contains(paginationRequest.SearchKeyword)
                             ||
-                            user.Username.Contains(paginationRequest.searchKeyword)
+                            user.Username.Contains(paginationRequest.SearchKeyword)
                             ||
-                            user.Fullname.Contains(paginationRequest.searchKeyword)
+                            user.Fullname.Contains(paginationRequest.SearchKeyword)
                         )
                     ),
                     orderBy: null,

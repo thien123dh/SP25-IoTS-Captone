@@ -12,6 +12,7 @@ using System.Net;
 using static CaptoneProject_IOTS_BOs.Constant.UserRequestConstant;
 using System.Security.Claims;
 using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
+using CaptoneProject_IOTS_BOs.DTO.ActivityLogDTO;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -22,10 +23,15 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
     public class UsersController : ControllerBase
     {
         private readonly IUserServices _userService;
+        private readonly IActivityLogService activityLogService;
         //================ COMMON =====================
-        public UsersController(IUserServices userService)
+        public UsersController(
+            IUserServices userService,
+            IActivityLogService activityLogService
+        )
         {
             this._userService = userService;
+            this.activityLogService = activityLogService;
         }
         private IActionResult GetActionResult(ResponseDTO response)
         {
@@ -75,9 +81,19 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
             return GetActionResult(response);
         }
         [HttpPut("activate-user/{id}")]
-        public async Task<IActionResult> ActivateUser( int id)
+        public async Task<IActionResult> ActivateUser(int id)
         {
             var response = await _userService.UpdateUserStatus(id, isActive: 1);
+            ResponseDTO activityLogResponse;
+
+            if (response.IsSuccess)
+            {
+                activityLogResponse = await activityLogService.CreateUserHistoryTrackingActivityLog(
+                    "activate",
+                    response.Data?.Fullname,
+                    "activate"
+                );
+            }
 
             return GetActionResult(response);
         }
