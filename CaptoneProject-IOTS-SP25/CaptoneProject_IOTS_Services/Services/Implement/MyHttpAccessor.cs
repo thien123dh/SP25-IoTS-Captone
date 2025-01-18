@@ -27,9 +27,25 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         {
             ClaimsPrincipal? user = httpContextAccessor.HttpContext?.User;
 
-            int? userId = (user == null) ? null : int.Parse(user.FindFirst(ClaimTypes.NameIdentifier).Value);
+            int? userId = null;
+
+            try
+            {
+                userId = (user == null) ? null : int.Parse(user.FindFirst(ClaimTypes.NameIdentifier).Value);
+            }
+            catch (Exception e)
+            {
+
+            }
 
             return userId;
+        }
+
+        public User GetLoginUser()
+        {
+            int? userId = GetLoginUserId();
+
+            return (userId == null) ? null : userRepository.GetById((int)userId);
         }
     }
 }

@@ -113,7 +113,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         {
             PaginationResponse<UserRequest> paginationData = userRequestRepository.GetPaginate(
                 filter: ur => (
-                    ur.Email.Contains(paginationRequest.searchKeyword)
+                    ur.Email.Contains(paginationRequest.SearchKeyword)
                     &&
                     (userRequestStatusFilter == null || userRequestStatusFilter == ur.Status)
                 ),
