@@ -13,9 +13,11 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
 {
     public interface IUserRequestService
     {
-        Task<GenericResponseDTO<UserRequestResponseDTO>> CreateOrUpdateUserRequest(string email, int userRequestStatus);
+        Task<GenericResponseDTO<UserRequestResponseDTO>> CreateOrUpdateUserRequest(UserRequestRequestDTO payload);
         Task<ResponseDTO> GetUserRequestPagination(int? userRequestStatusFilter, PaginationRequest paginationRequest);
         Task<ResponseDTO> VerifyOTP(string email, string otp);
-        Task<GenericResponseDTO<UserRequestResponseDTO>> GetUserRequestById(int requestId);
+        Task<GenericResponseDTO<UserRequestDetailsResponseDTO>> GetUserRequestDetailsById(int requestId);
+        Task<GenericResponseDTO<UserRequestDetailsResponseDTO>> GetUserRequestDetailsByUserId(int userId);
+        Task<ResponseDTO> ApproveOrRejectRequestStatus(int requestId, string? remark, int isApprove);
     }
 }

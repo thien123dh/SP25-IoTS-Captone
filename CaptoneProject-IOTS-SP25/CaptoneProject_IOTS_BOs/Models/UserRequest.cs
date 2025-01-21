@@ -27,7 +27,7 @@ public partial class UserRequest
 
     public string? Remark { get; set; }
 
-    public virtual Role? Role { get; set; }
+    public Role? Role { get; set; }
 
     public virtual UserRequestStatus? StatusNavigation { get; set; }
 

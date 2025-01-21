@@ -17,6 +17,7 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using static CaptoneProject_IOTS_BOs.Constant.UserRequestConstant;
 
 namespace CaptoneProject_IOTS_Service.Services.Implement
 {
@@ -27,18 +28,21 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         const int OTP_EXPIRED_MINUTES = 60;
         private readonly IEmailService _emailService;
         private readonly MyHttpAccessor myHttpAccessor;
+        private readonly IUserServices _userServices;
         public UserRequestService
         (
             UserRequestRepository userRequestRepository,
             IEmailService emailService,
             UserRepository userRepository,
-            MyHttpAccessor myHttpAccessor
+            MyHttpAccessor myHttpAccessor,
+            IUserServices _userServices
         )
         {
             this.userRequestRepository = userRequestRepository;
             _emailService = emailService;
             this.userRepository = userRepository;
             this.myHttpAccessor = myHttpAccessor;
+            this._userServices = _userServices;
         }
 
         private string GenerateOTP()
@@ -57,22 +61,19 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return "123456";
         }
 
-        public async Task<GenericResponseDTO<UserRequestResponseDTO>> CreateOrUpdateUserRequest(
-            string email, 
-            int userRequestStatus
-        )
+        public async Task<GenericResponseDTO<UserRequestResponseDTO>> CreateOrUpdateUserRequest(UserRequestRequestDTO payload)
         {
-            UserRequest? userRequest = await userRequestRepository.GetByEmail(email);
+            UserRequest? userRequest = await userRequestRepository.GetByEmail(payload.Email);
 
             userRequest = (userRequest == null) ? new UserRequest() : userRequest;
 
             userRequest.ActionBy = myHttpAccessor.GetLoginUserId();
 
-            userRequest.Status = userRequestStatus;
+            userRequest.Status = payload.UserRequestStatus;
 
-            userRequest.Email = email;
+            userRequest.Email = payload.Email;
 
-            if (userRequestStatus == (int) UserRequestConstant.UserRequestStatusEnum.PENDING_TO_VERIFY_OTP)
+            if (payload.UserRequestStatus == (int) UserRequestConstant.UserRequestStatusEnum.PENDING_TO_VERIFY_OTP)
             {
                 string otp = GenerateOTP();
 
@@ -80,7 +81,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 userRequest.ExpiredDate = DateTime.Now.AddMinutes(OTP_EXPIRED_MINUTES);
 
-                //userRequest.RoleId = role;
+                userRequest.RoleId = payload.RoleId;
             }
 
             if (userRequest.Id > 0)
@@ -95,7 +96,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 userRequestRepository.Create(userRequest);
             }
 
-            UserRequest response = await userRequestRepository.GetByEmail(email);
+            UserRequest response = await userRequestRepository.GetByEmail(payload.Email);
 
             var emailTemplate = EmailTemplateConst.CreateStaffOrManagerEmailTemplate(userRequest.Email, userRequest.OtpCode);
 
@@ -105,7 +106,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 IsSuccess = true,
                 StatusCode = HttpStatusCode.OK,
-                Data = (await GetUserRequestById(response.Id)).Data
+                Data = UserRequestMapper.MappingToUserRequestResponseDTO(response)
             };
         }
 
@@ -117,8 +118,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     &&
                     (userRequestStatusFilter == null || userRequestStatusFilter == ur.Status)
                 ),
-                orderBy: null,
-                includeProperties: "StatusNavigation",
+                orderBy: ur => ur.OrderByDescending(ur => ur.CreatedDate),
+                includeProperties: "StatusNavigation,Role",
                 pageIndex: paginationRequest.PageIndex,
                 pageSize: paginationRequest.PageSize
             );
@@ -185,30 +186,102 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             };
         }
 
-        public async Task<GenericResponseDTO<UserRequestResponseDTO>> GetUserRequestById(int requestId)
+        public async Task<GenericResponseDTO<UserRequestDetailsResponseDTO>> GetUserRequestDetailsById(int requestId)
         {
             UserRequest userRequest = await userRequestRepository.GetById(requestId);
 
             if (userRequest == null)
-            {
-                return new GenericResponseDTO<UserRequestResponseDTO>
+                return new GenericResponseDTO<UserRequestDetailsResponseDTO>
                 {
-                    IsSuccess = true,
-                    StatusCode = HttpStatusCode.NotFound,
-                    Message = ExceptionMessage.USER_REQUEST_NOT_FOUND
+                    IsSuccess = false,
+                    Message = ExceptionMessage.USER_REQUEST_NOT_FOUND,
+                    StatusCode = HttpStatusCode.NotFound
+                };
+
+            var userResponse = (await _userServices.GetUserDetailsByEmail(userRequest.Email));
+
+            if (!userResponse.IsSuccess)
+                return new GenericResponseDTO<UserRequestDetailsResponseDTO>
+                {
+                    IsSuccess = false,
+                    StatusCode = userResponse.StatusCode,
+                    Message = userResponse.Message
+                };
+
+            UserDetailsResponseDTO? userInfo = userResponse.Data;
+
+            return new GenericResponseDTO<UserRequestDetailsResponseDTO>
+            {
+                IsSuccess = true,
+                Message = "Success",
+                StatusCode = HttpStatusCode.OK,
+                Data = UserRequestMapper.MappingToUserRequestDetailsResponseDTO(userRequest, userInfo)
+            };  
+        }
+
+        public async Task<GenericResponseDTO<UserRequestDetailsResponseDTO>> GetUserRequestDetailsByUserId(int userId)
+        {
+            User user = userRepository.GetById(userId);
+
+            var userRequest = await userRequestRepository.GetByEmail(user.Email);
+
+            return await GetUserRequestDetailsById(userRequest.Id);
+        }
+
+        public async Task<ResponseDTO> ApproveOrRejectRequestStatus(int requestId, string? remark, int isApprove)
+        {
+            var userRequest = await userRequestRepository.GetById(requestId);
+
+            if (userRequest == null)
+                return new ResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = ExceptionMessage.USER_REQUEST_NOT_FOUND,
+                    StatusCode = HttpStatusCode.NotFound
+                };
+
+            if (userRequest.Status != (int)UserRequestStatusEnum.PENDING_TO_APPROVE)
+                return new ResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = "User Request Status must be Pending to Approve",
+                    StatusCode = HttpStatusCode.BadRequest
+                };
+
+            if (isApprove <= 0 && (remark == null || remark.Trim() == ""))
+            {
+                return new ResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = "Please enter the reason why you rejected",
+                    StatusCode = HttpStatusCode.BadRequest
                 };
             }
 
-            User user = await userRepository.GetUserByEmail(userRequest.Email);
-
-            var response = UserRequestMapper.MappingToUserRequestResponseDTO(userRequest);
-
-            return new GenericResponseDTO<UserRequestResponseDTO>
+            try
             {
-                IsSuccess = true,
-                StatusCode = HttpStatusCode.OK,
-                Data = response
-            };
+                userRequest.Status = isApprove > 0 ? (int)UserRequestStatusEnum.APPROVED : (int)UserRequestStatusEnum.REJECTED;
+                userRequest.Remark = remark;
+                userRequest = userRequestRepository.Update(userRequest);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = ex.Message,
+                    StatusCode = HttpStatusCode.BadRequest
+                };
+            }
+
+            if (isApprove > 0)
+            {
+                User user = await userRepository.GetUserByEmail(userRequest.Email);
+
+                await _userServices.UpdateUserStatus(user.Id, 1);
+            }
+
+            return await GetUserRequestDetailsById(userRequest.Id);
         }
     }
 }

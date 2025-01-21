@@ -32,6 +32,7 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
             var user = await _dbSet
                 .Include(x => x.UserRoles)
                 .ThenInclude(ur => ur.Role)
+                .Include(x => x.Stores)
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             return user;

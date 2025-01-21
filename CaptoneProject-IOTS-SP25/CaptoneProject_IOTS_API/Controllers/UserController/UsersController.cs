@@ -23,15 +23,21 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
     public class UsersController : ControllerBase
     {
         private readonly IUserServices _userService;
+        private readonly ICustomerService customerService;
+        private readonly IStaffManagerService staffManagerService;
         private readonly IActivityLogService activityLogService;
         //================ COMMON =====================
         public UsersController(
             IUserServices userService,
-            IActivityLogService activityLogService
+            IActivityLogService activityLogService, 
+            ICustomerService customerService,
+            IStaffManagerService staffManagerService
         )
         {
             this._userService = userService;
             this.activityLogService = activityLogService;
+            this.customerService = customerService;
+            this.staffManagerService = staffManagerService;
         }
         private IActionResult GetActionResult(ResponseDTO response)
         {
@@ -119,7 +125,7 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         {
             return GetActionResult(
 
-                await _userService.CreateStaffOrManager(payload)
+                await staffManagerService.CreateStaffOrManager(payload)
 
             );
         }
@@ -132,7 +138,7 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         )
         {
             return GetActionResult(
-                await _userService.StaffManagerVerifyOTP (
+                await staffManagerService.StaffManagerVerifyOTP (
                     payload.OTP, 
                     payload.RequestId, 
                     (int)UserRequestStatusEnum.APPROVED, 
@@ -164,7 +170,7 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
             }
                 
             return GetActionResult(
-                await _userService.RegisterUser(payload)
+                await customerService.RegisterCustomerUser(payload)
             );
         }
         

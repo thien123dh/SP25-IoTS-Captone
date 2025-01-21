@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel;
 using System.Net;
+using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
 using static CaptoneProject_IOTS_BOs.Constant.UserRequestConstant;
 
 namespace CaptoneProject_IOTS_API.Controllers.UserRequestController
@@ -41,7 +42,6 @@ namespace CaptoneProject_IOTS_API.Controllers.UserRequestController
             return Ok(response);
         }
 
-        //[Description"Using api for sending otp to email to verify email")]
         [HttpPost("create-request-verify-email-otp")]
         public async Task<IActionResult> CreateRequestVerifyOtpEmail
         (
@@ -50,8 +50,12 @@ namespace CaptoneProject_IOTS_API.Controllers.UserRequestController
         {
             return GetActionResult(
                 await userRequestService.CreateOrUpdateUserRequest(
-                    request.Email, 
-                    (int) UserRequestStatusEnum.PENDING_TO_VERIFY_OTP
+                    new UserRequestRequestDTO
+                    {
+                        Email = request.Email,
+                        UserRequestStatus = (int)UserRequestStatusEnum.PENDING_TO_VERIFY_OTP,
+                        RoleId = (int)RoleEnum.CUSTOMER
+                    }
                 )
             );
         }
@@ -70,7 +74,31 @@ namespace CaptoneProject_IOTS_API.Controllers.UserRequestController
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUserRequestDetailsById(int id)
         {
-            return GetActionResult(await userRequestService.GetUserRequestById(id));
+            return GetActionResult(await userRequestService.GetUserRequestDetailsById(id));
+        }
+
+        [HttpGet("get-user-request-details-by-user-id/{userId}")]
+        public async Task<IActionResult> GetUserRequestDetailsByUserId(int userId)
+        {
+            return GetActionResult(await userRequestService.GetUserRequestDetailsByUserId(userId));
+        }
+
+
+        [HttpPost("approve-user-request/{id}")]
+        public async Task<IActionResult> ApproveUserRequest(int id,
+            [FromBody] RemarkDTO payload
+        )
+        {
+            var response = await userRequestService.ApproveOrRejectRequestStatus(id, "", isApprove: 1);
+            return GetActionResult(response);
+        }
+
+        [HttpPost("reject-user-request/{id}")]
+        public async Task<IActionResult> RejectUserRequest(int id,
+            [FromBody] RemarkDTO payload)
+        {
+            var response = await userRequestService.ApproveOrRejectRequestStatus(id, payload.Remark, isApprove: 0);
+            return GetActionResult(response);
         }
     }
 }

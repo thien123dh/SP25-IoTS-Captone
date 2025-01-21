@@ -42,6 +42,8 @@ builder.Services.AddScoped<UserRoleRepository>();
 builder.Services.AddScoped<UserRequestRepository>();
 builder.Services.AddScoped<ActivityLogRepository>();
 builder.Services.AddScoped<MaterialCategoryRepository>();
+builder.Services.AddScoped<StoreRepository>();
+builder.Services.AddScoped<StoreAttachmentRepository>();
 // Configure DbContext with SQL Server
 builder.Services.AddDbContext<IoTTraddingSystemContext>(options =>
     options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
@@ -56,6 +58,9 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped(typeof(IMapService<,>), typeof(MapService<,>));
 builder.Services.AddScoped<IUserRequestService, UserRequestService>();
 builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
+builder.Services.AddScoped<IStoreService, StoreService>();
+builder.Services.AddScoped<IStaffManagerService, StaffManagerService>();
+builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IFileService>(provider =>
 {
     var bucket = configuration.GetConnectionString("Firebase-Storage-Bucket");

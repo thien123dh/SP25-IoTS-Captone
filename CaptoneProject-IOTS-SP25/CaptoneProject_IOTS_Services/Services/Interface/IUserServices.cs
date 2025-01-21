@@ -11,15 +11,13 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         Task<ResponseDTO> GetUsersPagination(PaginationRequest paginationRequest, int? roleId);
         Task<ResponseDTO> GetAllUsers();
         Task<ResponseDTO> UpdateUserRole(int userId, List<int>? roleList);
-        Task<GenericResponseDTO<UserDetailsResponseDTO>> UpdateUserStatus(int userId, int isActive);
+        Task<GenericResponseDTO<UserResponseDTO>> UpdateUserStatus(int userId, int isActive);
+        Task<ResponseDTO> UpdateUserPassword(int userId, string password);
         Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserDetailsById(int id);
         Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserDetailsByEmail(string email);
-        //Task<GenericResponseDTO<UserDetailsResponseDTO>> CreateOrUpdateUser(int id, UserCreateOrUpdateRequestDTO payload);
-        Task<ResponseDTO> CreateStaffOrManager(CreateUserDTO payload);
-        Task<ResponseDTO> StaffManagerVerifyOTP(string otp, int requestId, int requestStatusId, string password);
+        Task<GenericResponseDTO<UserResponseDTO>> CreateUser(int id, CreateUserDTO payload, int isActive);
         int? GetLoginUser();
-        Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserLoginInfo();
-        Task<ResponseDTO> RegisterUser(UserRegisterDTO payload);
+        Task<GenericResponseDTO<UserResponseDTO>> GetUserLoginInfo();
         Task<ResponseDTO> UserChangePassword(ChangePasswordRequestDTO payload);
     }
 }

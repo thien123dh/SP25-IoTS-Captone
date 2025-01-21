@@ -13,7 +13,8 @@ namespace CaptoneProject_IOTS_BOs.Constant
             PENDING_TO_APPROVE = 1,
             APPROVED = 2,
             REJECTED = 3,
-            PENDING_TO_VERIFY_OTP = 4
+            PENDING_TO_VERIFY_OTP = 4,
+            VERIFIED_OTP = 5
             // STAFF/MANAGER ==> PENDING =(otp verify)=> APPROVED
             // CUSTOMER ===> PENDING =(otp verify)=> APPROVED
 
