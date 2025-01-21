@@ -12,5 +12,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
     public interface IFileService
     {
         Task<GenericResponseDTO<FileResponseDTO>> UploadFile(IFormFile files);
+
+        Task<GenericResponseDTO<FileResponseDTO>> UploadBinaryDataFile(BinaryData fileContent);
     }
 }

@@ -8,6 +8,10 @@ namespace CaptoneProject_IOTS_BOs.DTO.FileDTO
 {
     public static class FileDTO
     {
+        public class BinaryDataDTO
+        {
+            public BinaryData FileContent { set; get; }
+        }
         public class FileResponseDTO
         {
             public string Id { get; set; }

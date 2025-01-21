@@ -22,15 +22,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly UserRoleRepository _userRoleRepository;
         private readonly ITokenServices _tokenGenerator;
         private readonly PasswordHasher<string> _passwordHasher;
-        private readonly IUserRequestService userRequestService;
-        private readonly UserRequestRepository userRequestRepository;
         private readonly MyHttpAccessor httpAccessor;
         public UserService (
             UserRepository userService, 
             ITokenServices tokenGenerator,
             UserRoleRepository userRoleRepository,
-            IUserRequestService userRequestService,
-            UserRequestRepository userRequestRepository,
             MyHttpAccessor httpAccessor
         )
         {
@@ -38,12 +34,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             _userRoleRepository = userRoleRepository;
             _tokenGenerator = tokenGenerator;
             _passwordHasher = new PasswordHasher<string>();
-            this.userRequestService = userRequestService;
-            this.userRequestRepository = userRequestRepository;
             this.httpAccessor = httpAccessor;
         }
 
-        private async Task<ResponseDTO> UpdateUserPassword(int userId, string password)
+        public async Task<ResponseDTO> UpdateUserPassword(int userId, string password)
         {
             if (userId == 0)
             {
@@ -69,19 +63,39 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             };
 
         }
-        public async Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserLoginInfo()
+        public async Task<GenericResponseDTO<UserResponseDTO>> GetUserLoginInfo()
         {
             int? loginUserId = GetLoginUser();
-             
-            return await GetUserDetailsById(loginUserId == null ? 0 : (int)loginUserId);
+
+            if (loginUserId == null)
+                return 
+                new GenericResponseDTO<UserResponseDTO>
+                {
+                    IsSuccess = false,
+                    Message = "Not Login User",
+                    StatusCode = HttpStatusCode.BadRequest
+                };
+
+            var user = await _userRepository.GetUserById((int)loginUserId);
+
+            return
+                new GenericResponseDTO<UserResponseDTO>
+                {
+                    IsSuccess = true,
+                    Message = "Success",
+                    StatusCode = HttpStatusCode.OK,
+                    Data = UserMapper.mapToUserResponse(user)
+                };
+
+                
         }
-        public async Task<GenericResponseDTO<UserDetailsResponseDTO>> UpdateUserStatus(int userId, int isActive)
+        public async Task<GenericResponseDTO<UserResponseDTO>> UpdateUserStatus(int userId, int isActive)
         {
             User u = _userRepository.GetById(userId);
 
             if (u == null)
             {
-                return new GenericResponseDTO<UserDetailsResponseDTO>
+                return new GenericResponseDTO<UserResponseDTO>
                 {
                     IsSuccess = false,
                     Message = "User does not exist",
@@ -90,14 +104,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
 
             u.IsActive = isActive;
-            _userRepository.Update(u);
+            u = _userRepository.Update(u);
 
-            return new GenericResponseDTO<UserDetailsResponseDTO>
+            return new GenericResponseDTO<UserResponseDTO>
             {
                 IsSuccess = true,
                 Message = "OK",
                 StatusCode = HttpStatusCode.OK,
-                Data = (await GetUserDetailsById(u.Id)).Data
+                Data = UserMapper.mapToUserResponse(u)
             };
         }
 
@@ -122,7 +136,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     item =>
                     {
                         return
-                        UserMapper.mapToUserDetailResponse(item);
+                        UserMapper.mapToUserResponse(item);
                     }
                 )
             };
@@ -195,7 +209,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 };
             }
 
-            var data = UserMapper.mapToUserDetailResponse(user);
+            var data = UserMapper.mapToUserDetailsResponse(user);
 
             return
                 new GenericResponseDTO<UserDetailsResponseDTO>
@@ -279,18 +293,18 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 IsSuccess = true,
                 Message = "Ok",
                 StatusCode = HttpStatusCode.OK,
-                Data = PaginationMapper<User, UserDetailsResponseDTO>.mappingTo(UserMapper.mapToUserDetailResponse, source: response)
+                Data = PaginationMapper<User, UserResponseDTO>.mappingTo(UserMapper.mapToUserResponse, source: response)
             };
         }
         
         //set id = 0 to create new
-        public async Task<GenericResponseDTO<UserDetailsResponseDTO>> CreateUser(int id, CreateUserDTO payload, int isActive)
+        public async Task<GenericResponseDTO<UserResponseDTO>> CreateUser(int id, CreateUserDTO payload, int isActive)
         {
             User user = await _userRepository.GetUserByEmail(payload.Email);
 
             if (user != null)
             {
-                return new GenericResponseDTO<UserDetailsResponseDTO>
+                return new GenericResponseDTO<UserResponseDTO>
                 {
                     IsSuccess = false,
                     StatusCode = HttpStatusCode.BadRequest,
@@ -331,7 +345,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
             catch (Exception ex)
             {
-                return new GenericResponseDTO<UserDetailsResponseDTO>
+                return new GenericResponseDTO<UserResponseDTO>
                 {
                     IsSuccess = false,
                     StatusCode = HttpStatusCode.BadRequest,
@@ -339,11 +353,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 };
             }
 
-            return new GenericResponseDTO<UserDetailsResponseDTO>
+            return new GenericResponseDTO<UserResponseDTO>
             {
                 IsSuccess = true,
                 StatusCode = HttpStatusCode.OK,
-                Data = (await GetUserDetailsById(newUser.Id))?.Data
+                Data = UserMapper.mapToUserResponse(newUser)
             };
         }
 
@@ -354,122 +368,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             return loginUserId;
         }
-
-        public async Task<ResponseDTO> CreateStaffOrManager(CreateUserDTO payload)
-        {
-            if (payload.RoleId != (int)RoleEnum.MANAGER && payload.RoleId != (int)RoleEnum.STAFF)
-            {
-                return new ResponseDTO
-                {
-                    IsSuccess = false,
-                    StatusCode = HttpStatusCode.BadRequest,
-                    Message = ExceptionMessage.INVALID_STAFF_MANAGER_ROLE
-                };
-            }
-
-            GenericResponseDTO<UserDetailsResponseDTO> createUserResponse = await CreateUser(0, payload, isActive: 0);
-
-            if (!createUserResponse.IsSuccess)
-                return createUserResponse;
-
-            GenericResponseDTO<UserRequestResponseDTO> createRequestResponse = await userRequestService.CreateOrUpdateUserRequest(payload.Email, (int)UserRequestStatusEnum.PENDING_TO_VERIFY_OTP);
-
-            return new ResponseDTO
-            {
-                IsSuccess = createRequestResponse.IsSuccess,
-                StatusCode = createRequestResponse.StatusCode,
-                Message = createRequestResponse.Message,
-                Data = new
-                {
-                    requestId = createRequestResponse?.Data?.Id
-                }
-            };
-        }
-
-        public async Task<ResponseDTO> StaffManagerVerifyOTP(
-            string otp, 
-            int requestId, 
-            int requestStatusId, 
-            string password
-        )
-        {
-            UserRequest userRequest = await userRequestRepository.GetById(requestId);
-            
-            string email = userRequest.Email;
-
-            if (userRequest == null)
-            {
-                return new ResponseDTO
-                {
-                    IsSuccess = false,
-                    Message = ExceptionMessage.USER_REQUEST_NOT_FOUND,
-                    StatusCode = HttpStatusCode.NotFound
-                };
-            }
-
-            User user = await _userRepository.GetUserByEmail(userRequest.Email);
-
-            ResponseDTO otpResponse = await userRequestService.VerifyOTP(email, otp);
-
-            if (otpResponse.IsSuccess)
-            {
-                if (user != null)
-                {
-                    user.Password = _passwordHasher.HashPassword(null, password);
-                    user.UpdatedDate = DateTime.Now;
-                    user.IsActive = 1;
-                    //Update user status to active
-                    _userRepository.Update(user);
-                }
-
-                userRequest.Status = requestStatusId;
-                UserRequest response = userRequestRepository.Update(userRequest);
-
-                return new ResponseDTO
-                {
-                    IsSuccess = true,
-                    StatusCode = HttpStatusCode.OK,
-                    Data = new
-                    {
-                        RequestId = response.Id
-                    }
-                };
-            }
-
-            return otpResponse;
-        }
-
-        public async Task<ResponseDTO> RegisterUser(UserRegisterDTO payload)
-        {
-            string otp = payload.Otp;
-            CreateUserDTO userInfo = payload.UserInfomation;
-
-            if (userInfo.Email == "" || userInfo.Email == null)
-            {
-                return new ResponseDTO
-                {
-                    IsSuccess = false,
-                    StatusCode = HttpStatusCode.BadRequest,
-                    Message = ExceptionMessage.USER_EMAIL_INVALID
-                };
-            }
-
-            ResponseDTO verifyOtpResponse = await userRequestService.VerifyOTP(userInfo.Email, otp);
-
-            if (!verifyOtpResponse.IsSuccess)
-                return verifyOtpResponse;
-            
-            GenericResponseDTO<UserDetailsResponseDTO> response = await this.CreateUser(0, userInfo, isActive: 1);
-
-            if (!response.IsSuccess)
-                return response;
-
-            //Change user request to approve
-            userRequestService?.CreateOrUpdateUserRequest(userInfo.Email, (int)UserRequestStatusEnum.APPROVED);
-
-            return await UpdateUserPassword(response.Data?.Id == null ? 0 : response.Data.Id, payload.Password);
-        }
-
         public Task<ResponseDTO> UserChangePassword(ChangePasswordRequestDTO payload)
         {
             throw new NotImplementedException();

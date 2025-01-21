@@ -10,10 +10,10 @@ namespace CaptoneProject_IOTS_BOs.DTO.UserDTO
     public class CreateUserDTO
     {
         [Required]
+        [EmailAddress]
         public string Email { get; set; }
         [Required]
         public string Fullname { set; get; }
-        //public string Password { get; set; }
         public string? Phone { get; set; }
         public string? Address { get; set; }
         [Required]
