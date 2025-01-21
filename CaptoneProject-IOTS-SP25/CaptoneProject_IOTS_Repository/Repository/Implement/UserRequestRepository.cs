@@ -15,6 +15,7 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
         {
             var response = await _dbSet
                 .Include(ur => ur.StatusNavigation)
+                .Include(ur => ur.Role)
                 .SingleOrDefaultAsync(ur => ur.Email == email);
 
             return response;
@@ -24,6 +25,7 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
         {
             UserRequest response = await _dbSet
                 .Include(ur => ur.StatusNavigation)
+                .Include(ur => ur.Role)
                 .SingleOrDefaultAsync(ur => ur.Id == id);
 
             return response;

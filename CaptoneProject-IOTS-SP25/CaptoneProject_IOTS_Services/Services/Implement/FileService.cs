@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -26,6 +27,48 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         {
             this.bucket = bucket;
         }
+
+        public async Task<GenericResponseDTO<FileResponseDTO>> UploadBinaryDataFile(BinaryData fileContent)
+        {
+            var cancellation = new CancellationTokenSource();
+
+            string guid = $"{Guid.NewGuid().ToString()}.png";
+
+            using (Stream stream = fileContent.ToStream())
+            {
+                var task = new FirebaseStorage(bucket)
+                    .Child("image")
+                    .Child(guid + ".png")
+                    .PutAsync(stream, cancellation.Token);
+
+                try
+                {
+                    string downloadUrl = await task;
+
+                    return new GenericResponseDTO<FileResponseDTO>
+                    {
+                        IsSuccess = true,
+                        StatusCode = System.Net.HttpStatusCode.OK,
+                        Message = "Upload file successfully",
+                        Data = new FileResponseDTO
+                        {
+                            FileName = downloadUrl,
+                            Id = downloadUrl
+                        }
+                    };
+                }
+                catch (Exception ex)
+                {
+                    return new GenericResponseDTO<FileResponseDTO>
+                    {
+                        IsSuccess = false,
+                        StatusCode = System.Net.HttpStatusCode.BadRequest,
+                        Message = "Upload file error",
+                    };
+                }
+            }
+        }
+
         public async Task<GenericResponseDTO<FileResponseDTO>> UploadFile(IFormFile file)
         {
             var cancellation = new CancellationTokenSource();

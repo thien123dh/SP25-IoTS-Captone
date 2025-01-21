@@ -35,12 +35,20 @@ namespace CaptoneProject_IOTS_API.Controllers.FileController
 
             return Ok(response);
         }
+
         [HttpPost("upload-files")]
         public async Task<IActionResult> UploadFile(
-            IFormFile file
+            [FromForm] IFormFile file
         )
         {
             return Ok(await fileService.UploadFile(file));
+        }
+        [HttpPost("upload-files-binary")]
+        public async Task<IActionResult> UploadFileBinary(
+            [FromBody] BinaryDataDTO payload
+        )
+        {
+            return Ok(await fileService.UploadBinaryDataFile(payload.FileContent));
         }
     }
 }

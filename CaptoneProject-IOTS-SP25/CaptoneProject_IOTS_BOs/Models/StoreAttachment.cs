@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace CaptoneProject_IOTS_BOs.Models
@@ -23,9 +24,10 @@ namespace CaptoneProject_IOTS_BOs.Models
         [MaxLength(500)]
         public string? MetaData { set; get; }
         [Column("created_date")]
-        public DateTime CreatedDate { set; get; }
+        public DateTime? CreatedDate { set; get; }
         [Column("created_by")]
-        public int createdBy { set; get; }
+        public int? createdBy { set; get; }
+        [JsonIgnore]
         public virtual Store? StoreNavigation { set; get; }
 
     }

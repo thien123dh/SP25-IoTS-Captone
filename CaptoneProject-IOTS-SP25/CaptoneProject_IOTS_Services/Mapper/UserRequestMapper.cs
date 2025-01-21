@@ -24,7 +24,19 @@ namespace CaptoneProject_IOTS_Service.Mapper
                 },
                 CreatedDate = userRequest.CreatedDate,
                 ActionDate = userRequest.ActionDate,
-                Remark = userRequest.Remark
+                Remark = userRequest.Remark,
+                Role = userRequest.Role
+
+            };
+        }
+
+        public static UserRequestDetailsResponseDTO MappingToUserRequestDetailsResponseDTO(UserRequest userRequest, UserDetailsResponseDTO userDetails)
+        {
+            return new UserRequestDetailsResponseDTO
+            {
+                userRequestInfo = MappingToUserRequestResponseDTO(userRequest),
+                userDetails = userDetails
+
             };
         }
     }

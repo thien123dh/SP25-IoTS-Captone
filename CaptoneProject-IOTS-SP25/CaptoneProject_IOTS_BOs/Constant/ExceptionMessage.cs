@@ -12,6 +12,8 @@ namespace CaptoneProject_IOTS_BOs.Constant
 
         public static string USER_DOESNT_EXIST = "User does not exist";
 
+        public static string INVALID_STORE_ROLE = "The role must be store";
+
         public static string INVALID_STAFF_MANAGER_ROLE = "The role must be staff or manager";
 
         public static string USER_REQUEST_NOT_FOUND = "User request does not exist";
@@ -27,5 +29,7 @@ namespace CaptoneProject_IOTS_BOs.Constant
         public static string LOGIN_INACTIVE_ACCOUNT = "Your account was inactive. Please contact with admin to activate";
 
         public static string MATERIAL_CATEGORY_NOTFOUND = "Cannot find material category";
+
+        public static string STORE_NOTFOUND = "Store cannot be found";
     }
 }
