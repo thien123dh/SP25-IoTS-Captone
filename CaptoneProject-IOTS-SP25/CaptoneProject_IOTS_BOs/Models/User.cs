@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics.Contracts;
 
 namespace CaptoneProject_IOTS_BOs.Models;
 
@@ -28,6 +31,10 @@ public partial class User
     public DateTime? UpdatedDate { get; set; }
 
     public int IsActive { get; set; }
+
+    [MaxLength(500)]
+    [Column("image_url")]
+    public string? ImageURL { set; get; }
 
     public virtual ICollection<Blog>? BlogCreatedByNavigations { get; set; } = new List<Blog>();
 

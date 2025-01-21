@@ -111,7 +111,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         public async Task<ResponseDTO> GetUserRequestPagination(int? userRequestStatusFilter, PaginationRequest paginationRequest)
         {
-            PaginationResponse<UserRequest> paginationData = userRequestRepository.GetPaginate(
+            PaginationResponseDTO<UserRequest> paginationData = userRequestRepository.GetPaginate(
                 filter: ur => (
                     ur.Email.Contains(paginationRequest.SearchKeyword)
                     &&

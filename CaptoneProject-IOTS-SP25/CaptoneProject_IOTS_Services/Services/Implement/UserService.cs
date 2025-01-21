@@ -256,7 +256,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         public async Task<ResponseDTO> GetUsersPagination(PaginationRequest paginationRequest, int? roleId)
         {
-            PaginationResponse<User> response = _userRepository.GetPaginate(
+            PaginationResponseDTO<User> response = _userRepository.GetPaginate(
                     filter: user => (
                         ((roleId == null) || user.UserRoles.SingleOrDefault(userRole => userRole.RoleId == roleId) != null)
                         &&
