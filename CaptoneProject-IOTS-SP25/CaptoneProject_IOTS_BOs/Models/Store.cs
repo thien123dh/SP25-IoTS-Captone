@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CaptoneProject_IOTS_BOs.Models;
 
@@ -20,8 +22,14 @@ public partial class Store
     public DateTime? UpdatedDate { get; set; }
 
     public int? UpdatedBy { get; set; }
+    
+    [MaxLength(500)]
+    [Column("image_url")]
+    public string? ImageUrl { set; get; }
 
-    public string IsActive { get; set; }
+    public int? IsActive { get; set; }
 
     public virtual User Owner { get; set; }
+
+    public virtual IEnumerable<StoreAttachment>? StoreAttachmentsNavigation { set; get; }
 }

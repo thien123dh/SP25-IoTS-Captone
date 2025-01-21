@@ -1,8 +1,7 @@
-﻿using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
-using CaptoneProject_IOTS_BOs;
+﻿using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.DTO.FileDTO;
 using CaptoneProject_IOTS_Service.Services.Interface;
+using Firebase.Storage;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
@@ -17,40 +16,58 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 {
     public class FileService : IFileService
     {
-        BlobServiceClient blobService;
-        BlobContainerClient blobContainerClient;
-        private readonly string loginUser = "matt";
+        private readonly string apiKey = "AIzaSyBO-x8861B68lP0x2B6S3wJGdvN_JHl0Bs";
+        private readonly string bucket;
+        private readonly string authEmail = "iottradingsystem@gmail.com";
+        private readonly string authPassword = "iottradingsystem";
         public FileService(
-            BlobServiceClient blobService
+            string bucket
         )
         {
-            this.blobService = blobService;
-            this.blobContainerClient = this.blobService.GetBlobContainerClient("iot-trading-system-storage-container");
+            this.bucket = bucket;
         }
         public async Task<GenericResponseDTO<FileResponseDTO>> UploadFile(IFormFile file)
         {
-            //var azureResponse = new List<BlobContentInfo>();
-
+            var cancellation = new CancellationTokenSource();
+            
             string guid = $"{Guid.NewGuid().ToString()}.png";
             using (var memoryStream = new MemoryStream())
             {
                 file.CopyTo(memoryStream);
                 memoryStream.Position = 0;
 
-                var _client = await blobContainerClient.UploadBlobAsync(guid, memoryStream, default);
+                var task = new FirebaseStorage(bucket)
+                    .Child("image")
+                    .Child(guid + ".png")
+                    .PutAsync(memoryStream, cancellation.Token);
+
+                try
+                {
+                    string downloadUrl = await task;
+
+                    return new GenericResponseDTO<FileResponseDTO>
+                    {
+                        IsSuccess = true,
+                        StatusCode = System.Net.HttpStatusCode.OK,
+                        Message = "Upload file successfully",
+                        Data = new FileResponseDTO
+                        {
+                            FileName = file.FileName,
+                            Id = downloadUrl
+                        }
+                    };
+                }
+                catch (Exception ex)
+                {
+                    return new GenericResponseDTO<FileResponseDTO>
+                    {
+                        IsSuccess = false,
+                        StatusCode = System.Net.HttpStatusCode.BadRequest,
+                        Message = "Upload file error",
+                    };
+                }
             }
 
-            return new GenericResponseDTO<FileResponseDTO>
-            {
-                IsSuccess = true,
-                Message = "File upload successfully",
-                StatusCode = System.Net.HttpStatusCode.OK,
-                Data = new FileResponseDTO
-                {
-                    Id = guid,
-                    FileName = file.FileName,
-                }
-            };
         }
     }
 }

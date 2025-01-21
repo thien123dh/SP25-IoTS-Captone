@@ -85,7 +85,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             int? entityType, 
             int? userId)
         {
-            PaginationResponse<ActivityLog> pagination = activityLogRepository.GetPaginate(
+            PaginationResponseDTO<ActivityLog> pagination = activityLogRepository.GetPaginate(
                 filter: a => (
                     (entityId == null || a.EntityId == entityId)
                     &&

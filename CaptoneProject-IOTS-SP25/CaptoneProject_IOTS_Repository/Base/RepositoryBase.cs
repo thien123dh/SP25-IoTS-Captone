@@ -57,7 +57,7 @@ namespace CaptoneProject_IOTS_Repository.Base
 
         #endregion Separating asign entity and save operators
 
-        public virtual PaginationResponse<T> GetPaginate(
+        public virtual PaginationResponseDTO<T> GetPaginate(
             Expression<Func<T, bool>> filter = null,
             Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null,
             string? includeProperties = "",
@@ -97,7 +97,7 @@ namespace CaptoneProject_IOTS_Repository.Base
             //}
 
             return
-                new PaginationResponse<T>
+                new PaginationResponseDTO<T>
                 {
                     PageIndex = pageIndex,
                     PageSize = pageSize,

@@ -10,9 +10,9 @@ namespace CaptoneProject_IOTS_Service.Mapper
     public static class PaginationMapper<T, E>
     {
         public delegate E MappingItemFunction(T source);
-        public static PaginationResponse<E> mappingTo(MappingItemFunction function, PaginationResponse<T> source)
+        public static PaginationResponseDTO<E> mappingTo(MappingItemFunction function, PaginationResponseDTO<T> source)
         {
-            return new PaginationResponse<E>
+            return new PaginationResponseDTO<E>
             {
                 PageIndex = source.PageIndex,
                 PageSize = source.PageSize,

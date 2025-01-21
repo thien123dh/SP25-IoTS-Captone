@@ -1,17 +1,15 @@
 ﻿using CaptoneProject_IOTS_API.Middleware;
 using CaptoneProject_IOTS_BOs.Models;
+using CaptoneProject_IOTS_Repository.Base;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
 using CaptoneProject_IOTS_Service.Services.Implement;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Azure;
-using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using System.Text.Json.Serialization;
-using Azure.Storage.Blobs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,9 +17,6 @@ var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 builder.WebHost.UseUrls($"https://*:{port}");
 
 // Add services to the container.
-
-var fileStorageConnectionString = builder.Configuration["ConnectionStrings:FileStorageConnectionString"];
-
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -34,28 +29,19 @@ var issuer = jwtSettings["Issuer"];
 var audience = jwtSettings["Audience"];
 var durationInMinutes = int.Parse(jwtSettings["DurationInMinutes"]);
 
+//Configuration firebase storage
+var firebaseStorageBucket = builder.Configuration["FirebaseStorage:Bucket"];
 
 var configuration = builder.Configuration;
 
-
-//Register azure file storage
-builder.Services.AddAzureClients(azureBuilder =>
-{
-    azureBuilder.AddBlobServiceClient("DefaultEndpointsProtocol=https;AccountName=iottradingsystemstorage;AccountKey=9DVYlwKNju8R6yQ9qY+a70FGoSLbF1H9GGwffO29XUtoopiOBKguLnaCNsRUC+KcqMrMlMy9qSXz+AStWw+otA==;EndpointSuffix=core.windows.net");
-});
-
 // Register UserDAO with a factory method to inject the connection string
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<UserRepository>(provider =>
-{
-    var connectionString = configuration.GetConnectionString("DefaultConnection");
-    return new UserRepository(connectionString);
-});
-//builder.Services.AddScoped<UserRepository>();
+builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<RoleRepository>();
 builder.Services.AddScoped<UserRoleRepository>();
 builder.Services.AddScoped<UserRequestRepository>();
 builder.Services.AddScoped<ActivityLogRepository>();
+builder.Services.AddScoped<MaterialCategoryRepository>();
 // Configure DbContext with SQL Server
 builder.Services.AddDbContext<IoTTraddingSystemContext>(options =>
     options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
@@ -65,12 +51,16 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<MyHttpAccessor>();
 builder.Services.AddScoped<IUserServices, UserService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
-builder.Services.AddScoped<IMaterialCategoryService, MatertialCategoryService>();
+builder.Services.AddScoped<IMaterialCategoryService, MaterialCategoryService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped(typeof(IMapService<,>), typeof(MapService<,>));
 builder.Services.AddScoped<IUserRequestService, UserRequestService>();
 builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
-builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<IFileService>(provider =>
+{
+    var bucket = configuration.GetConnectionString("Firebase-Storage-Bucket");
+    return new FileService(bucket);
+});
 
 builder.Services.AddCors(options =>
 {
