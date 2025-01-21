@@ -1,8 +1,11 @@
-﻿using CaptoneProject_IOTS_BOs.DTO.MaterialCategotyDTO;
+﻿using CaptoneProject_IOTS_BOs;
+using CaptoneProject_IOTS_BOs.DTO.MaterialCategotyDTO;
+using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_Service.Services.Implement;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 using System.Runtime.InteropServices;
 
 namespace CaptoneProject_IOTS_API.Controllers.CategoryMaterialController
@@ -12,16 +15,46 @@ namespace CaptoneProject_IOTS_API.Controllers.CategoryMaterialController
     public class MaterialCategoryController : ControllerBase
     {
         private readonly IMaterialCategoryService _materialCategoryService;
-        public MaterialCategoryController()
+        public MaterialCategoryController(
+            IFileService fileService,
+            IMaterialCategoryService _materialCategoryService
+        )
         {
-            _materialCategoryService ??= new MatertialCategoryService();
+            //_materialCategoryService ??= new MaterialCategoryService(fileService);
+            this._materialCategoryService = _materialCategoryService;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAllCategoryMaterial()
+        private IActionResult GetActionResult(ResponseDTO response)
         {
-            var result = await _materialCategoryService.GetAllMaterialCategory();
-            return Ok(result);
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                return Unauthorized(response);
+            }
+            else if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return NotFound(response);
+            }
+            else if (response.StatusCode == HttpStatusCode.BadRequest)
+            {
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
+        [HttpGet("get-all-active-material-categories")]
+        public async  Task<IActionResult> GetAll([FromQuery] string? searchKeyword)
+        {
+            var result = await _materialCategoryService.GetAllMaterialCategory(searchKeyword == null ? "" : searchKeyword);
+
+            return GetActionResult(result);
+        }
+
+        [HttpPost("get-pagination")]
+        public async Task<IActionResult> GetPaginationCategoryMaterial([FromBody] PaginationRequest payload)
+        {
+            var result = await _materialCategoryService.GetPaginationMaterialCategories(payload);
+            return GetActionResult(result);
         }
 
         [HttpGet("{Id}")]
@@ -31,12 +64,42 @@ namespace CaptoneProject_IOTS_API.Controllers.CategoryMaterialController
             return Ok(result);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> AddCategoryMaterial ([FromBody] MatertialCategoryRequestDTO matertialCategoryRequest)
+        [HttpPost("create-material-category")]
+        public async Task<IActionResult> AddCategoryMaterial(
+            [FromForm] MatertialCategoryRequestDTO payload
+        )
         {
-            var result = await _materialCategoryService.CreateMaterialCategory(matertialCategoryRequest);
-            return Ok(result);
+            var response = await _materialCategoryService.CreateOrUpdateMaterialCategory(null, payload);
+
+            return GetActionResult(response);
         }
 
+        [HttpPut("update-material-category/{id}")]
+        public async Task<IActionResult> UpdateMaterialCategory(
+            int id,
+            [FromForm] MatertialCategoryRequestDTO payload
+        )
+        {
+            var response = await _materialCategoryService.CreateOrUpdateMaterialCategory(id, payload);
+
+            return GetActionResult(response);
+        }
+
+        [HttpPut("activate-material-category/{id}")]
+        public async Task<IActionResult> ActivateMaterialCategory(int id)
+        {
+            var response = await _materialCategoryService.UpdateMaterialCategoryStatus(id, 1);
+
+            return GetActionResult(response);
+        }
+
+        [HttpPut("deactive-material-category/{id}")]
+        public async Task<IActionResult> DeactiveMaterialCategory(int id)
+        {
+            var response = await _materialCategoryService.UpdateMaterialCategoryStatus(id, 0);
+
+            return GetActionResult(response);
+        }
+        
     }
 }

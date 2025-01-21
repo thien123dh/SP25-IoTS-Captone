@@ -1,5 +1,4 @@
-﻿using Azure.Storage.Blobs.Models;
-using CaptoneProject_IOTS_BOs;
+﻿using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -38,10 +37,10 @@ namespace CaptoneProject_IOTS_API.Controllers.FileController
         }
         [HttpPost("upload-files")]
         public async Task<IActionResult> UploadFile(
-            IFormFile payload
+            IFormFile file
         )
         {
-            return Ok(await fileService.UploadFile(payload));
+            return Ok(await fileService.UploadFile(file));
         }
     }
 }

@@ -9,12 +9,12 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
 {
     public class UserRepository : RepositoryBase<User>
     {
-        private readonly string _loginRepository;
+        //private readonly string _loginRepository;
         public UserRepository(
-            string loginRepository
+            //string loginRepository
         )
         {
-            _loginRepository = loginRepository;
+            //_loginRepository = loginRepository;
 
         }
 

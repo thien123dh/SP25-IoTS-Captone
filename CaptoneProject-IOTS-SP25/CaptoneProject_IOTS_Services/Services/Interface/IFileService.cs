@@ -1,5 +1,4 @@
-﻿using Azure.Storage.Blobs.Models;
-using CaptoneProject_IOTS_BOs;
+﻿using CaptoneProject_IOTS_BOs;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace CaptoneProject_IOTS_BOs.DTO.PaginationDTO
 {
-    public class PaginationResponse<T>
+    public class PaginationResponseDTO<T>
     {
         public int PageIndex { set; get; }
         public int PageSize { set; get; }
