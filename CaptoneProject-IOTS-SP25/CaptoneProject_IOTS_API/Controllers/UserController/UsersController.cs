@@ -129,7 +129,6 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
 
             );
         }
-
         //================ ADMIN ======================
         //================ STAFF/MANAGER ======================
         [HttpPost("verify-staff-manager-otp")]

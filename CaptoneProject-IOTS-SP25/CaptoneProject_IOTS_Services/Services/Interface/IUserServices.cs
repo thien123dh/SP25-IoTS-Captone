@@ -15,7 +15,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         Task<ResponseDTO> UpdateUserPassword(int userId, string password);
         Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserDetailsById(int id);
         Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserDetailsByEmail(string email);
-        Task<GenericResponseDTO<UserResponseDTO>> CreateUser(int id, CreateUserDTO payload, int isActive);
+        Task<GenericResponseDTO<UserResponseDTO>> CreateOrUpdateUser(int id, CreateUserDTO payload, int isActive);
         int? GetLoginUser();
         Task<GenericResponseDTO<UserResponseDTO>> GetUserLoginInfo();
         Task<ResponseDTO> UserChangePassword(ChangePasswordRequestDTO payload);

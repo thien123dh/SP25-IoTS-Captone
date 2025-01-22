@@ -73,6 +73,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             userRequest.Email = payload.Email;
 
+            userRequest.RoleId = payload.RoleId;
+
             if (payload.UserRequestStatus == (int) UserRequestConstant.UserRequestStatusEnum.PENDING_TO_VERIFY_OTP)
             {
                 string otp = GenerateOTP();
@@ -80,8 +82,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 userRequest.OtpCode = otp.Trim();
 
                 userRequest.ExpiredDate = DateTime.Now.AddMinutes(OTP_EXPIRED_MINUTES);
-
-                userRequest.RoleId = payload.RoleId;
             }
 
             if (userRequest.Id > 0)
@@ -136,6 +136,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         public async Task<ResponseDTO> VerifyOTP(string email, string otp)
         {
             UserRequest userRequest = await userRequestRepository.GetByEmail(email);
+
+            if (userRequest == null)
+                return new ResponseDTO
+                {
+                    IsSuccess = false,
+                    StatusCode = HttpStatusCode.NotFound,
+                    Message = "User Request Email cannot be found"
+                };
 
             if (userRequest.Status != (int)UserRequestConstant.UserRequestStatusEnum.PENDING_TO_VERIFY_OTP)
             {
