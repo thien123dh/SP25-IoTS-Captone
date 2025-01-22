@@ -64,7 +64,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (!verifyOtpResponse.IsSuccess)
                 return verifyOtpResponse;
 
-            GenericResponseDTO<UserResponseDTO> response = await _userServices.CreateUser(0, userInfo, isActive: 1);
+            GenericResponseDTO<UserResponseDTO> response = await _userServices.CreateOrUpdateUser(0, userInfo, isActive: 1);
 
             if (!response.IsSuccess)
                 return response;
@@ -77,7 +77,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     RoleId = payload.UserInfomation.RoleId
             });
 
-            return await _userServices.UpdateUserPassword(response.Data?.Id == null ? 0 : response.Data.Id, payload.Password);
+            await _userServices.UpdateUserPassword(response.Data?.Id == null ? 0 : response.Data.Id, payload.Password);
+
+            return response;
         }
     }
 }

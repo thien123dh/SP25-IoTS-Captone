@@ -58,7 +58,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 };
             }
 
-            GenericResponseDTO<UserResponseDTO> createUserResponse = await _userServices.CreateUser(0, payload, isActive: 0);
+            GenericResponseDTO<UserResponseDTO> createUserResponse = await _userServices.CreateOrUpdateUser(0, payload, isActive: 0);
 
             if (!createUserResponse.IsSuccess)
                 return createUserResponse;
@@ -68,7 +68,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 new UserRequestRequestDTO
                 {
                     Email = payload.Email,
-                    UserRequestStatus = (int)UserRequestStatusEnum.APPROVED,
+                    UserRequestStatus = (int)UserRequestStatusEnum.PENDING_TO_VERIFY_OTP,
                     RoleId = payload.RoleId
                 });
 

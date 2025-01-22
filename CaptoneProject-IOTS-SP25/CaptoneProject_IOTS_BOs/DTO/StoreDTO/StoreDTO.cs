@@ -23,15 +23,12 @@ namespace CaptoneProject_IOTS_BOs.DTO.StoreDTO
         {
             public int Id { get; set; }
             public string? ImageUrl { set; get; }
-            public BinaryData FileContent { set; get; }
         }
         public class StoreRequestDTO
         {
             public string Name { get; set; }
 
             public string Description { get; set; }
-
-            public int OwnerId { get; set; }
 
             public string? ImageUrl { set; get; }
 
