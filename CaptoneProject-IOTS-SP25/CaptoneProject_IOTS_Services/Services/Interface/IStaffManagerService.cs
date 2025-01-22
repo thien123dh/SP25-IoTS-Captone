@@ -18,6 +18,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
             string password
         );
 
+        //Task<ResponseDTO> CreateStaffManagerRequestVerifyOtp(string email);
 
     }
 }

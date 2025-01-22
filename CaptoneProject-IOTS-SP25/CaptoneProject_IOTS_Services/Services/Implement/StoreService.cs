@@ -79,7 +79,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var removeList = dbList?.Where(sa => (payload?.SingleOrDefault(item => sa.Id == item.Id) == null)).ToList();
 
-            var updateList = payload?.Select(item => new StoreAttachment
+            var newList = payload?.Where(item => dbList?.SingleOrDefault(s => s.Id == item.Id) == null).Select(item => new StoreAttachment
             {
                 ImageUrl = item.ImageUrl,
                 StoreId = storeId,
@@ -90,14 +90,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (removeList != null)
                 await _storeAttachmentRepository.RemoveAsync(removeList);
 
-            var response = _storeAttachmentRepository.CreateAsync(updateList);
-
             return new ResponseDTO
             {
                 IsSuccess = true,
                 Message = "Success",
                 StatusCode = HttpStatusCode.OK,
-                Data = response
+                Data = (newList == null) ? null : await _storeAttachmentRepository.CreateAsync(newList)
             };
         }
 
@@ -110,13 +108,18 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var user = _userRepository.GetById(userId);
 
-            return await _userRequestService.CreateOrUpdateUserRequest(
+            var userRequestResponse = await _userRequestService.CreateOrUpdateUserRequest(
                 new UserRequestRequestDTO
                 {
                     Email = user.Email,
                     UserRequestStatus = (int)UserRequestStatusEnum.PENDING_TO_APPROVE,
                     RoleId = (int)RoleEnum.STORE
                 });
+
+            if (!userRequestResponse.IsSuccess)
+                return userRequestResponse;
+
+            return await GetStoreDetailsByUserId(userId);
         }
 
         public async Task<GenericResponseDTO<StoreDetailsResponseDTO>> CreateOrUpdateStoreByUserId(int userId, StoreRequestDTO payload)
@@ -183,8 +186,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return await _userRequestService.CreateOrUpdateUserRequest(
                 new UserRequestRequestDTO
                 {
-                    Email = user.Email,
-                    UserRequestStatus = (int)UserRequestStatusEnum.VERIFIED_OTP,
+                    Email = email,
+                    UserRequestStatus = (int)UserRequestStatusEnum.PENDING_TO_VERIFY_OTP,
                     RoleId = (int)RoleEnum.STORE
                 });
         }
@@ -223,7 +226,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 };
 
             //User status change to 2 ==> PENDING
-            GenericResponseDTO<UserResponseDTO> response = await _userService.CreateUser(0, userInfo, isActive: 2);
+            GenericResponseDTO<UserResponseDTO> response = await _userService.CreateOrUpdateUser(0, userInfo, isActive: 2);
 
             if (!response.IsSuccess)
                 return response;

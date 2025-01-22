@@ -298,7 +298,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         }
         
         //set id = 0 to create new
-        public async Task<GenericResponseDTO<UserResponseDTO>> CreateUser(int id, CreateUserDTO payload, int isActive)
+        public async Task<GenericResponseDTO<UserResponseDTO>> CreateOrUpdateUser(int id, CreateUserDTO payload, int isActive)
         {
             User user = await _userRepository.GetUserByEmail(payload.Email);
 
@@ -357,7 +357,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 IsSuccess = true,
                 StatusCode = HttpStatusCode.OK,
-                Data = UserMapper.mapToUserResponse(newUser)
+                Data = UserMapper.mapToUserResponse(newUser),
+                Message = "Success"
             };
         }
 
