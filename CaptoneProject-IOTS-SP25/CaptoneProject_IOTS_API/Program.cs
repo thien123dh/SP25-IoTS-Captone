@@ -42,6 +42,7 @@ builder.Services.AddScoped<UserRoleRepository>();
 builder.Services.AddScoped<UserRequestRepository>();
 builder.Services.AddScoped<ActivityLogRepository>();
 builder.Services.AddScoped<MaterialCategoryRepository>();
+builder.Services.AddScoped<MaterialRepository>();
 builder.Services.AddScoped<StoreRepository>();
 builder.Services.AddScoped<StoreAttachmentRepository>();
 // Configure DbContext with SQL Server
@@ -61,6 +62,7 @@ builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
 builder.Services.AddScoped<IStoreService, StoreService>();
 builder.Services.AddScoped<IStaffManagerService, StaffManagerService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<IMaterialService, MaterialService>();
 builder.Services.AddScoped<IFileService>(provider =>
 {
     var bucket = configuration.GetConnectionString("Firebase-Storage-Bucket");
