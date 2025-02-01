@@ -29,6 +29,7 @@ namespace CaptoneProject_IOTS_BOs.Constant
         public static string LOGIN_INACTIVE_ACCOUNT = "Your account was inactive. Please contact with admin to activate";
 
         public static string MATERIAL_CATEGORY_NOTFOUND = "Cannot find material category";
+        public static string MATERIAL_NOTFOUND = "Cannot find material";
 
         public static string STORE_NOTFOUND = "Store cannot be found";
     }
