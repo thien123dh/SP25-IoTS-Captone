@@ -18,7 +18,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.ActivityLogDTO
 
     }
 
-    public class ActivityLogEntityTypeDTO
+    public class EntityTypeDTO
     {
         public int Id { set; get; }
         public string? label { set; get; }

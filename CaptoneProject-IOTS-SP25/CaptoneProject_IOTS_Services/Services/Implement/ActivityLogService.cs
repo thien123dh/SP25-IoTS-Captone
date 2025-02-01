@@ -61,7 +61,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 new CreateActivityLogDTO
                 {
                     EntityId = loginUser.Id,
-                    EntityType = (int)ActivityLogContanst.ActivityLogEntityTypeEnum.USER,
+                    EntityType = (int)EntityTypeConst.EntityTypeEnum.USER,
                     Title = message,
                     Contents = message,
                     MetaData = metaData
@@ -75,7 +75,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 IsSuccess = true,
                 StatusCode = System.Net.HttpStatusCode.OK,
-                Data = ActivityLogContanst.GetAllActivityLogEntityTypes().Where(type => type.IsActive > 0)
+                Data = EntityTypeConst.GetAllActivityLogEntityTypes().Where(type => type.IsActive > 0)
             };
         }
 

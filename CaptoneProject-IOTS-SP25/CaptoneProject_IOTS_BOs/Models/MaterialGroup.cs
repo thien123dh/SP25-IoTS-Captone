@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 
 namespace CaptoneProject_IOTS_BOs.Models;
 
@@ -23,11 +25,15 @@ public partial class MaterialGroup
 
     public int? UpdatedBy { get; set; }
 
+    [MaxLength(1000)]
+    [Column("image_url")]
+    public string? ImageUrl { set; get; }
     public virtual MaterialGroupCategory Category { get; set; }
 
     public virtual User CreatedByNavigation { get; set; }
 
     public virtual Lab Lab { get; set; }
+
 
     public virtual ICollection<MaterialGroupItem> MaterialGroupItems { get; set; } = new List<MaterialGroupItem>();
 

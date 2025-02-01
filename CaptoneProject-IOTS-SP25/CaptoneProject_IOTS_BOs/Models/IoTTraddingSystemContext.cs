@@ -74,6 +74,8 @@ public partial class IoTTraddingSystemContext : DbContext
         {
             entity.ToTable("ActivityLog");
 
+            modelBuilder.Entity<Attachment>();
+
             entity.Property(e => e.Id)
                 .ValueGeneratedNever()
                 .HasColumnName("id");

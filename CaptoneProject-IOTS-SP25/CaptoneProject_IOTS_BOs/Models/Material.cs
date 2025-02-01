@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CaptoneProject_IOTS_BOs.Models;
 
@@ -40,6 +42,10 @@ public partial class Material
     public decimal? Price { get; set; }
 
     public int? IsActive { get; set; }
+
+    [MaxLength(1000)]
+    [Column("image_url")]
+    public string? ImageUrl { set; get; }
 
     public virtual MaterialCategory Category { get; set; }
 

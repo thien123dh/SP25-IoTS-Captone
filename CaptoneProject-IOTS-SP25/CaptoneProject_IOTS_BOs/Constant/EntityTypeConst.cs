@@ -8,34 +8,34 @@ using System.Threading.Tasks;
 
 namespace CaptoneProject_IOTS_BOs.Constant
 {
-    public static class ActivityLogContanst
+    public static class EntityTypeConst
     {
-        private static ActivityLogEntityTypeDTO CreateEntityLogTypeDTO(int id, string label, int isActive)
+        private static EntityTypeDTO CreateEntityLogTypeDTO(int id, string label, int isActive)
         {
-            return new ActivityLogEntityTypeDTO
+            return new EntityTypeDTO
             {
                 Id = id,
                 label = label,
                 IsActive = isActive
             };
         }
-        public static IEnumerable<ActivityLogEntityTypeDTO> GetAllActivityLogEntityTypes()
+        public static IEnumerable<EntityTypeDTO> GetAllActivityLogEntityTypes()
         {
             return [
-                CreateEntityLogTypeDTO((int) ActivityLogEntityTypeEnum.USER_REQUEST, "User Request", 0),
-                CreateEntityLogTypeDTO((int) ActivityLogEntityTypeEnum.USER, "User", 1),
-                CreateEntityLogTypeDTO((int) ActivityLogEntityTypeEnum.MATERIAL, "Material", 1),
-                CreateEntityLogTypeDTO((int) ActivityLogEntityTypeEnum.MATERIAL_GROUP, "Material Group", 1)
+                CreateEntityLogTypeDTO((int) EntityTypeEnum.USER_REQUEST, "User Request", 0),
+                CreateEntityLogTypeDTO((int) EntityTypeEnum.USER, "User", 1),
+                CreateEntityLogTypeDTO((int) EntityTypeEnum.MATERIAL, "Material", 1),
+                CreateEntityLogTypeDTO((int) EntityTypeEnum.MATERIAL_GROUP, "Material Group", 1)
             ];
         }
-        public enum ActivityLogEntityTypeEnum
+        public enum EntityTypeEnum
         {
             USER_REQUEST = 1,
             USER = 2,
             MATERIAL = 3,
             MATERIAL_GROUP = 4,
+            BLOG = 5
         }
-
     }
 
     public static class ActivityLogMessageConstant
