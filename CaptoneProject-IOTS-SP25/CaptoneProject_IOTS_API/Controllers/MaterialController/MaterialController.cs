@@ -10,7 +10,7 @@ using System.Net;
 
 namespace CaptoneProject_IOTS_API.Controllers.MaterialController
 {
-    [Route("api/[controller]")]
+    [Route("api/material")]
     [ApiController]
     public class MaterialController : ControllerBase
     {

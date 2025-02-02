@@ -17,9 +17,14 @@ namespace CaptoneProject_IOTS_BOs.Constant
             VERIFIED_OTP = 5
             // STAFF/MANAGER ==> PENDING =(otp verify)=> APPROVED
             // CUSTOMER ===> PENDING =(otp verify)=> APPROVED
-
-            //TODO: TRAINER/STORE ==> PENDING =(otp verify)=> PENDING TO APPROVE =(Manager/Admin Approve)=> APPROVED
-            //                                                             =(Rejected)=> REJECTED
+            
+            //Store
+            //Create request to verify email ==> pending to approve otp
+            //Verified and registier user => VERIFIED_OTP
+            //Submit store information => Pending to approved
+            //Admin rejected => Rejected (the same with status 'verified otp')
+            //Admin Approved => Approved and user status = 1 (active)
+            
         }
 
     }

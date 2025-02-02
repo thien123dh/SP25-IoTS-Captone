@@ -45,7 +45,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             this._userRequestRepository = _userRequestRepository;
             this._userRepository = _userRepository;
             this._storeRepository = storeRepository;
-            _storeAttachmentRepository = storeAttachmentRepository;
+            this._storeAttachmentRepository = storeAttachmentRepository;
         }
 
         private async Task<GenericResponseDTO<StoreDetailsResponseDTO>> GetDetailsStoreById(int storeId)
@@ -154,6 +154,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             store.OwnerId = userId;
             store.UpdatedBy = loginUserId;
             store.UpdatedDate = DateTime.Now;
+            store.ImageUrl = payload.ImageUrl;
             //
 
             if (store.Id > 0) //Update

@@ -17,6 +17,7 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
 using static CaptoneProject_IOTS_BOs.Constant.UserRequestConstant;
 
 namespace CaptoneProject_IOTS_Service.Services.Implement
@@ -56,7 +57,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 otp += random.Next(0, 10);
             }
 
-            //return otp;
             //return otp.Trim();
             return "123456";
         }
@@ -98,7 +98,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             UserRequest response = await userRequestRepository.GetByEmail(payload.Email);
 
-            var emailTemplate = EmailTemplateConst.CreateStaffOrManagerEmailTemplate(userRequest.Email, userRequest.OtpCode);
+            //TODO - HARDCODE
+            var link = "https://www.facebook.com/thien.nguyen.1257604";
+
+            var emailTemplate = EmailTemplateConst.CreateStaffOrManagerEmailTemplate(userRequest.Email, userRequest.OtpCode, link);
 
             _emailService.SendEmailAsync(userRequest.Email, emailTemplate.Subject, emailTemplate.Body);
 
@@ -110,11 +113,24 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             };
         }
 
-        public async Task<ResponseDTO> GetUserRequestPagination(int? userRequestStatusFilter, PaginationRequest paginationRequest)
+        public async Task<ResponseDTO> GetUserRequestPagination(int? userRequestStatusFilter, 
+            PaginationRequest paginationRequest)
         {
             PaginationResponseDTO<UserRequest> paginationData = userRequestRepository.GetPaginate(
                 filter: ur => (
                     ur.Email.Contains(paginationRequest.SearchKeyword)
+                    &&
+                    ur.RoleId != (int)RoleEnum.CUSTOMER
+                    &&
+                    (
+                        (
+                            ur.RoleId == (int)RoleEnum.STAFF
+                        ) || (
+                            ur.Status != (int)UserRequestStatusEnum.PENDING_TO_VERIFY_OTP
+                            &&
+                            ur.Status != (int)UserRequestStatusEnum.VERIFIED_OTP
+                        )
+                    )
                     &&
                     (userRequestStatusFilter == null || userRequestStatusFilter == ur.Status)
                 ),
