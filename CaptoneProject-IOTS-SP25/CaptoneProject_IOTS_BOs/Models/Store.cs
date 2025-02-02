@@ -20,11 +20,10 @@ public partial class Store
 
     public int? CreatedBy { get; set; }
 
-    public DateTime? UpdatedDate { get; set; }
+    public DateTime? UpdatedDate { get; set; } = DateTime.Now;
 
     public int? UpdatedBy { get; set; }
     
-    [MaxLength(500)]
     [Column("image_url")]
     public string? ImageUrl { set; get; }
 

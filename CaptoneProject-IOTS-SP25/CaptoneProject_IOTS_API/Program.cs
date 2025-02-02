@@ -22,7 +22,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Cấu hình JWT
+// JWT Configuration
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var secretKey = jwtSettings["Key"];
 var issuer = jwtSettings["Issuer"];
@@ -49,8 +49,9 @@ builder.Services.AddScoped<MaterialCategoryRepository>();
 builder.Services.AddScoped<MaterialRepository>();
 builder.Services.AddScoped<StoreRepository>();
 builder.Services.AddScoped<StoreAttachmentRepository>();
+builder.Services.AddScoped<AttachmentRepository>();
 
-// Đăng ký dịch vụ
+// Register Services
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<MyHttpAccessor>();
 builder.Services.AddScoped<IUserServices, UserService>();
@@ -84,23 +85,23 @@ builder.Services.AddCors(options =>
 builder.Services.AddScoped<ITokenServices>(provider =>
     new TokenService(secretKey, issuer, audience, durationInMinutes));
 
-//Cấu hinh Json
+//Json Configuration
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     options.JsonSerializerOptions.WriteIndented = true;
 });
 
-//Cấu hình giữ mã Swagger
+
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Kit Stem Shop API", Version = "v1" });
 
-    // Cấu hình JWT Bearer Authentication cho Swagger
+    //Swagger configuration
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
-        Type = SecuritySchemeType.Http,  // Chọn "Http" để tương thích với Bearer Authentication
+        Type = SecuritySchemeType.Http,
         Scheme = "bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
@@ -123,7 +124,7 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Cấu hình JWT Authentication
+// JWT Configuration
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

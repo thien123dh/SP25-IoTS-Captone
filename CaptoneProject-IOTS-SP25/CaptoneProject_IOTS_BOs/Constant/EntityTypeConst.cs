@@ -34,7 +34,8 @@ namespace CaptoneProject_IOTS_BOs.Constant
             USER = 2,
             MATERIAL = 3,
             MATERIAL_GROUP = 4,
-            BLOG = 5
+            COURSE = 5,
+            BLOG = 6, 
         }
     }
 

@@ -282,7 +282,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                             user.Fullname.Contains(paginationRequest.SearchKeyword)
                         )
                     ),
-                    orderBy: null,
+                    orderBy: orderBy => orderBy.OrderByDescending(u => u.CreatedDate),
                     includeProperties: "UserRoles,UserRoles.Role",
                     pageIndex: paginationRequest.PageIndex,
                     pageSize: paginationRequest.PageSize

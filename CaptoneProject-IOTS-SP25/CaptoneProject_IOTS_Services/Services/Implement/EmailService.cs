@@ -27,29 +27,26 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var email = new MimeMessage();
             email.From.Add(MailboxAddress.Parse(_configuration["EmailSettings:From"]));
             email.To.Add(MailboxAddress.Parse(to));
+            email.Cc.Add(MailboxAddress.Parse("thien0914033912@gmail.com"));
             email.Subject = subject;
-            email.Body = new TextPart(TextFormat.Plain) { Text = body };
+            email.Body = new TextPart(TextFormat.Html) { Text = body };
 
             try
             {
                 using (var smtpClient = new SmtpClient())
                 {
-                    // Kết nối đến máy chủ SMTP với STARTTLS
                     await smtpClient.ConnectAsync("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
 
-                    // Xác thực với máy chủ SMTP
                     await smtpClient.AuthenticateAsync("halvse140685@fpt.edu.vn", "dxxoydcscfapiypv");
 
-                    // Gửi email
                     await smtpClient.SendAsync(email);
 
-                    // Ngắt kết nối
                     await smtpClient.DisconnectAsync(true);
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Lỗi: {ex.Message}");
+                Console.WriteLine($"Error: {ex.Message}");
             }
         }
     }

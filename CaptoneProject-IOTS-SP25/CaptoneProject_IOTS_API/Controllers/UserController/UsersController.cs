@@ -130,7 +130,6 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
 
             );
         }
-        //================ ADMIN ======================
         //================ STAFF/MANAGER ======================
         [HttpPost("verify-staff-manager-otp")]
         public async Task<IActionResult> VerifyOtp (
@@ -146,12 +145,6 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
             )
             );
         }
-        //================ STAFF/MANAGER ======================
-
-        //================ CUSTOMER ===========================
-        //[HttpPost("create-verify-customer-user")]
-        //public async Task<IActionResult> 
-
 
         //================ CUSTOMER ===========================
         [HttpPost("register-verify-otp-customer")]
