@@ -1,4 +1,5 @@
 ﻿using CaptoneProject_IOTS_BOs;
+using CaptoneProject_IOTS_BOs.DTO.ActivityLogDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Http;
@@ -50,6 +51,14 @@ namespace CaptoneProject_IOTS_API.Controllers.ActivityLogController
         )
         {
             return GetActionResult(await activityLogService.GetPaginationActivityLog(payload, null, null, userId));
+        }
+
+        [HttpPost("create-activity-log")]
+        public async Task<IActionResult> CreateActivityLog(
+            [FromBody] CreateActivityLogDTO payload
+        )
+        {
+            return GetActionResult(await activityLogService.CreateActivityLog(payload));
         }
     }
 }

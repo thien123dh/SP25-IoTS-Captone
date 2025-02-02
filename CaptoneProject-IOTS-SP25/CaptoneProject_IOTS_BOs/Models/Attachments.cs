@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace CaptoneProject_IOTS_BOs.Models
 {
     [Table("attachment")]
-    public class Attachment
+    public partial class Attachment
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]

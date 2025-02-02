@@ -29,7 +29,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             this.fileService = fileService;
             this.materialRepository = materialRepository;
         }
-        public async Task<ResponseDTO> CreateOrUpdateMaterial(int? id, MaterialRequestDTO material)
+        public async Task<ResponseDTO> CreateOrUpdateMaterial(int? id, CreateUpdateMaterialDTO material)
         {
             Material materials = (id == null) ? new Material() : materialRepository.GetById((int)id);
 

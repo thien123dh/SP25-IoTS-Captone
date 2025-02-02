@@ -14,7 +14,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.ActivityLogDTO
         public int EntityType { set; get; }
         public string Title { set; get; }
         public string Contents { set; get; }
-        public string MetaData { set; get; }
+        public string? MetaData { set; get; }
 
     }
 

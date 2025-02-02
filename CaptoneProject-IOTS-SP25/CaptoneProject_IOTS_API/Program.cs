@@ -34,6 +34,10 @@ var firebaseStorageBucket = builder.Configuration["FirebaseStorage:Bucket"];
 
 var configuration = builder.Configuration;
 
+// Configure DbContext with SQL Server
+builder.Services.AddDbContext<IoTTraddingSystemContext>(options =>
+    options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+
 // Register UserDAO with a factory method to inject the connection string
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<UserRepository>();
@@ -45,9 +49,6 @@ builder.Services.AddScoped<MaterialCategoryRepository>();
 builder.Services.AddScoped<MaterialRepository>();
 builder.Services.AddScoped<StoreRepository>();
 builder.Services.AddScoped<StoreAttachmentRepository>();
-// Configure DbContext with SQL Server
-builder.Services.AddDbContext<IoTTraddingSystemContext>(options =>
-    options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
 // Đăng ký dịch vụ
 builder.Services.AddHttpContextAccessor();

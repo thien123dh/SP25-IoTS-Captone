@@ -1,23 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace CaptoneProject_IOTS_BOs.Models;
-
-public partial class ActivityLog
+namespace CaptoneProject_IOTS_BOs.Models
 {
-    public int Id { get; set; }
-
-    public int? EntityId { get; set; }
-
-    public int? EntityType { get; set; }
-
-    public string Title { get; set; }
-
-    public string Contents { get; set; }
-
-    public int? CreatedBy { get; set; }
-
-    public DateTime? CreatedDate { get; set; }
-
-    public string Metadata { get; set; }
+    public class ActivityLog
+    {
+        public int EntityId { set; get; }
+        public int EntityType { set; get; }
+        public string Title { set; get; }
+        public string Contents { set; get; }
+        public string? MetaData { set; get; }
+        public int? CreatedBy { set; get; }
+        public DateTime? CreatedDate { set; get; }
+    }
 }

@@ -17,27 +17,38 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
     public class ActivityLogService : IActivityLogService
     {
         private readonly ActivityLogRepository activityLogRepository;
-        private readonly MyHttpAccessor httpAccessor;
+        private readonly IUserServices userServices;
         public ActivityLogService (
             ActivityLogRepository activityLogRepository,
-            MyHttpAccessor httpAccessor
+            IUserServices userServices
         )
         {
             this.activityLogRepository = activityLogRepository;
-            this.httpAccessor = httpAccessor;
+            this.userServices = userServices;
         }
 
         public async Task<ResponseDTO> CreateActivityLog(CreateActivityLogDTO source)
         {
+            User loginUser = userServices.GetLoginUser();
+
+            //if (loginUser == null)
+            //{
+            //    return new ResponseDTO
+            //    {
+            //        IsSuccess = false,
+            //        Message = "Cannot create activity log",
+            //        StatusCode = System.Net.HttpStatusCode.BadRequest
+            //    };
+            //}
+
             ActivityLog activityLog = new ActivityLog
             {
                 EntityId = source.EntityId,
                 EntityType = source.EntityType,
                 Title = source.Title,
                 Contents = source.Contents,
-                CreatedBy = httpAccessor.GetLoginUserId(),
-                CreatedDate = DateTime.Now,
-                Metadata = source.MetaData
+                CreatedBy = loginUser == null ? 0 : loginUser.Id
+                //CreatedDate = DateTime.Now
             };
 
             activityLogRepository.Create(activityLog);
@@ -50,23 +61,39 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             };
         }
 
-        public Task<ResponseDTO> CreateUserHistoryTrackingActivityLog(string action, string target, string? metaData)
+        public async Task<ResponseDTO> CreateUserHistoryTrackingActivityLog(string action, string target, string? metaData)
         {
-            User loginUser = httpAccessor.GetLoginUser();
+            try
+            {
+                User loginUser = userServices.GetLoginUser();
 
-            string message = ActivityLogMessageConstant.ACTIVITY_LOG_MESSAGE_TEMPLATE
-                    .Replace("{S}", loginUser?.Fullname).Replace("{Action}", action).Replace("{Target}", target);
+                if (loginUser == null)
+                    return new ResponseDTO();
 
-            return CreateActivityLog(
-                new CreateActivityLogDTO
+                string message = ActivityLogMessageConstant.ACTIVITY_LOG_MESSAGE_TEMPLATE
+                        .Replace("{S}", loginUser?.Fullname).Replace("{Action}", action).Replace("{Target}", target);
+
+                return await CreateActivityLog(
+                    new CreateActivityLogDTO
+                    {
+                        EntityId = loginUser.Id,
+                        EntityType = (int)EntityTypeConst.EntityTypeEnum.USER,
+                        Title = message,
+                        Contents = message,
+                        MetaData = ""
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                return new ResponseDTO
                 {
-                    EntityId = loginUser.Id,
-                    EntityType = (int)EntityTypeConst.EntityTypeEnum.USER,
-                    Title = message,
-                    Contents = message,
-                    MetaData = metaData
-                }
-            );
+                    IsSuccess = false,
+                    Message = ex.Message,
+                    StatusCode = System.Net.HttpStatusCode.BadRequest
+                };
+            }
+            
         }
 
         public ResponseDTO GetAllActivityLogTypes()
