@@ -18,7 +18,7 @@ public partial class IoTTraddingSystemContext : DbContext
     {
     }
 
-    //public virtual DbSet<ActivityLog> ActivityLogs { get; set; }
+    public virtual DbSet<ActivityLog> ActivityLogs { get; set; }
     public virtual DbSet<Attachment> Attachments { set; get; }
 
     public virtual DbSet<Blog> Blogs { get; set; }
@@ -71,29 +71,30 @@ public partial class IoTTraddingSystemContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        //modelBuilder.Entity<ActivityLog>(entity =>
-        //{
-        //    entity.ToTable("ActivityLog");
+        modelBuilder.Entity<ActivityLog>(entity =>
+        {
+            entity.ToTable("ActivityLog");
 
-        //    entity.Property(e => e.Id)
-        //        .ValueGeneratedNever()
-        //        .HasColumnName("id");
-        //    entity.Property(e => e.Contents)
-        //        .HasMaxLength(500)
-        //        .HasColumnName("contents");
-        //    entity.Property(e => e.CreatedBy).HasColumnName("created_by");
-        //    entity.Property(e => e.CreatedDate)
-        //        .HasColumnType("datetime")
-        //        .HasColumnName("created_date");
-        //    entity.Property(e => e.EntityId).HasColumnName("entity_id");
-        //    entity.Property(e => e.EntityType).HasColumnName("entity_type");
-        //    entity.Property(e => e.Metadata)
-        //        .HasMaxLength(500)
-        //        .HasColumnName("metadata");
-        //    entity.Property(e => e.Title)
-        //        .HasMaxLength(300)
-        //        .HasColumnName("title");
-        //});
+            entity.Property(e => e.Id)
+                //.ValueGeneratedNever()
+                .HasColumnName("id");
+            entity.Property(e => e.Contents)
+                .HasMaxLength(500)
+                .HasColumnName("contents");
+            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
+            entity.Property(e => e.CreatedDate)
+                .HasColumnType("datetime")
+                .HasColumnName("created_date");
+            entity.Property(e => e.EntityId).HasColumnName("entity_id");
+            entity.Property(e => e.EntityType).HasColumnName("entity_type");
+            entity.Property(e => e.Metadata)
+                .HasMaxLength(500)
+                .HasColumnName("metadata");
+            entity.Property(e => e.Title)
+                .HasMaxLength(300)
+                .HasColumnName("title");
+        });
+
         modelBuilder.Entity<Blog>(entity =>
         {
             entity.ToTable("Blog");
