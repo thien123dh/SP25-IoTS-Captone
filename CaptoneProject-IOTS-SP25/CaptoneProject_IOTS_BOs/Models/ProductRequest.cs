@@ -11,7 +11,7 @@ public partial class ProductRequest
 
     public int? ProductType { get; set; }
 
-    public string Remark { get; set; }
+    public string? Remark { get; set; }
 
     public int? ActionBy { get; set; }
 

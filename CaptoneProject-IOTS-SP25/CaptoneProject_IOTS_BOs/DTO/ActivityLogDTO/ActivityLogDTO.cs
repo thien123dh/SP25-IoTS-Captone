@@ -14,11 +14,11 @@ namespace CaptoneProject_IOTS_BOs.DTO.ActivityLogDTO
         public int EntityType { set; get; }
         public string Title { set; get; }
         public string Contents { set; get; }
-        public string MetaData { set; get; }
+        public string? MetaData { set; get; }
 
     }
 
-    public class ActivityLogEntityTypeDTO
+    public class EntityTypeDTO
     {
         public int Id { set; get; }
         public string? label { set; get; }

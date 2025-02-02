@@ -66,7 +66,7 @@ namespace CaptoneProject_IOTS_API.Controllers.MaterialController
 
         [HttpPost("create-material")]
         public async Task<IActionResult> AddMaterial(
-            [FromForm] MaterialRequestDTO payload
+            [FromBody] CreateUpdateMaterialDTO payload
         )
         {
             var response = await _materialService.CreateOrUpdateMaterial(null, payload);
@@ -77,7 +77,7 @@ namespace CaptoneProject_IOTS_API.Controllers.MaterialController
         [HttpPut("update-material-/{id}")]
         public async Task<IActionResult> UpdateMaterial(
             int id,
-            [FromForm] MaterialRequestDTO payload
+            [FromBody] CreateUpdateMaterialDTO payload
         )
         {
             var response = await _materialService.CreateOrUpdateMaterial(id, payload);

@@ -92,9 +92,10 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
             var response = await _userService.UpdateUserStatus(id, isActive: 1);
             ResponseDTO activityLogResponse;
 
+            //Create activity log
             if (response.IsSuccess)
             {
-                activityLogResponse = await activityLogService.CreateUserHistoryTrackingActivityLog(
+                activityLogService.CreateUserHistoryTrackingActivityLog(
                     "activate",
                     response.Data?.Fullname,
                     "activate"

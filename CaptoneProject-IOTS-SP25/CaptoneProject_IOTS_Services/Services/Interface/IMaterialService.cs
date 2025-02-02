@@ -14,7 +14,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
 {
     public interface IMaterialService
     {
-        Task<ResponseDTO> CreateOrUpdateMaterial(int? id, MaterialRequestDTO material);
+        Task<ResponseDTO> CreateOrUpdateMaterial(int? id, CreateUpdateMaterialDTO material);
         Task<ResponseDTO> UpdateMaterialStatus(int id, int IsActive);
         Task<ResponseDTO> GetAllMaterial(string searchKeyword);
         Task<GenericResponseDTO<PaginationResponseDTO<Material>>> GetPaginationMaterial(PaginationRequest paginate);

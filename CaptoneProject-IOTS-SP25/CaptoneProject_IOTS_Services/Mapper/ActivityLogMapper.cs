@@ -21,7 +21,7 @@ namespace CaptoneProject_IOTS_Service.Mapper
         {
             ActivityLogResponseDTO res = activityLogMapper.MappingTo(source);
 
-            res.EntityTypeLabel = ActivityLogContanst.GetAllActivityLogEntityTypes()?.SingleOrDefault(type => type.Id == res.EntityType)?.label;
+            res.EntityTypeLabel = EntityTypeConst.GetAllActivityLogEntityTypes()?.SingleOrDefault(type => type.Id == res.EntityType)?.label;
 
             return res;
         }

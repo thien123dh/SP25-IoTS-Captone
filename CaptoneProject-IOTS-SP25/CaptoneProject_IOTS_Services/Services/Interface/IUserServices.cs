@@ -1,6 +1,7 @@
 ﻿using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserDTO;
+using CaptoneProject_IOTS_BOs.Models;
 using System.Security.Claims;
 
 namespace CaptoneProject_IOTS_Service.Services.Interface
@@ -16,7 +17,8 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserDetailsById(int id);
         Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserDetailsByEmail(string email);
         Task<GenericResponseDTO<UserResponseDTO>> CreateOrUpdateUser(int id, CreateUserDTO payload, int isActive);
-        int? GetLoginUser();
+        int? GetLoginUserId();
+        User GetLoginUser(); 
         Task<GenericResponseDTO<UserResponseDTO>> GetUserLoginInfo();
         Task<ResponseDTO> UserChangePassword(ChangePasswordRequestDTO payload);
     }

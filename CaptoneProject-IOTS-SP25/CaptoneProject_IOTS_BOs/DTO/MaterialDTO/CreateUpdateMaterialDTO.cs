@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
 {
-    public class MaterialRequestDTO
+    public class CreateUpdateMaterialDTO
     {
         public string Name { get; set; }
 
@@ -28,18 +28,9 @@ namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
 
         public DateTime? LastWarrentyDate { get; set; }
 
-        public DateTime? CreatedDate { get; set; }
+        //public int? Quantity { get; set; }
 
-        public int? CreatedBy { get; set; }
-
-        public DateTime? UpdatedDate { get; set; }
-
-        public int? UpdatedBy { get; set; }
-
-        public int? Quantity { get; set; }
-
-        public decimal? Price { get; set; }
-
-        public int? IsActive { get; set; }
+        public decimal Price { get; set; }
+        public string? ImageUrl { set; get; }
     }
 }

@@ -12,7 +12,7 @@ public partial class MaterialCategory
 
     public string Label { get; set; }
 
-    [MaxLength(500)]
+    [MaxLength(1000)]
     [Column("image_url")]
     public string? ImageUrl { set; get; }
     public int? Orders { get; set; }
