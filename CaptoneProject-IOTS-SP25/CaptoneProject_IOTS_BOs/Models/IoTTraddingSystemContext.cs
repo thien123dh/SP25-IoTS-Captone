@@ -19,6 +19,7 @@ public partial class IoTTraddingSystemContext : DbContext
     }
 
     public virtual DbSet<ActivityLog> ActivityLogs { get; set; }
+    public virtual DbSet<Attachment> Attachments { set; get; }
 
     public virtual DbSet<Blog> Blogs { get; set; }
 
@@ -60,9 +61,9 @@ public partial class IoTTraddingSystemContext : DbContext
 
     public virtual DbSet<UserRole> UserRoles { get; set; }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-            => optionsBuilder.UseSqlServer("Server=iotsystem-db.c7yqwgmomb93.ap-southeast-2.rds.amazonaws.com;Uid=admin;Pwd=Iottradingsystem;Database=IoT_Tradding_System; TrustServerCertificate=True");
+        => optionsBuilder.UseSqlServer("Server=iotsystem-db.c7yqwgmomb93.ap-southeast-2.rds.amazonaws.com;Uid=admin;Pwd=Iottradingsystem;Database=IoT_Tradding_System; TrustServerCertificate=True");
 
 //    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 //#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
@@ -75,7 +76,7 @@ public partial class IoTTraddingSystemContext : DbContext
             entity.ToTable("ActivityLog");
 
             entity.Property(e => e.Id)
-                .ValueGeneratedNever()
+                //.ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.Contents)
                 .HasMaxLength(500)
@@ -93,6 +94,7 @@ public partial class IoTTraddingSystemContext : DbContext
                 .HasMaxLength(300)
                 .HasColumnName("title");
         });
+
         modelBuilder.Entity<Blog>(entity =>
         {
             entity.ToTable("Blog");

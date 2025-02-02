@@ -48,7 +48,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     Message = "User id is invalid"
                 };
             }
-            int? loginUserId = GetLoginUser();
+            int? loginUserId = GetLoginUserId();
 
             User user = _userRepository.GetById(userId);
             user.Password = _passwordHasher.HashPassword(null, password);
@@ -65,7 +65,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         }
         public async Task<GenericResponseDTO<UserResponseDTO>> GetUserLoginInfo()
         {
-            int? loginUserId = GetLoginUser();
+            int? loginUserId = GetLoginUserId();
 
             if (loginUserId == null)
                 return 
@@ -312,7 +312,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 };
             }
 
-            int? loginUserId = GetLoginUser();
+            int? loginUserId = GetLoginUserId();
 
             //UserDetailsResponseDTO? loginUser = (await GetUserLoginInfo())?.Data;
 
@@ -363,7 +363,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         }
 
         //TODO GET LOGIN USER
-        public int? GetLoginUser()
+        public int? GetLoginUserId()
         {
             int? loginUserId = httpAccessor.GetLoginUserId();
 
@@ -387,6 +387,18 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 };
 
             return await GetUserDetailsById(user.Id);
+        }
+
+        public User GetLoginUser()
+        {
+            int? loginUserId = GetLoginUserId();
+
+            if (loginUserId == null)
+                return null;
+
+            User user = _userRepository.GetById((int)loginUserId);
+
+            return user;
         }
     }
 }

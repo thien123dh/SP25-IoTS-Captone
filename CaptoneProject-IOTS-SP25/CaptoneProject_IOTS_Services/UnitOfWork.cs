@@ -10,6 +10,7 @@ namespace CaptoneProject_IOTS_Service
     public class UnitOfWork
     {
         private MaterialCategoryRepository _materialCategoryRepository;
+        private MaterialRepository _materialRepository;
         public UnitOfWork()
         {
         }
@@ -19,6 +20,14 @@ namespace CaptoneProject_IOTS_Service
             get
             {
                 return _materialCategoryRepository ??= new MaterialCategoryRepository();
+            }
+        }
+
+        public MaterialRepository MaterialRepository
+        {
+            get
+            {
+                return _materialRepository ??= new MaterialRepository();
             }
         }
 
