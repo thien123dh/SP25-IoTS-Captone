@@ -21,9 +21,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly string bucket;
         private readonly string authEmail = "iottradingsystem@gmail.com";
         private readonly string authPassword = "iottradingsystem";
-        public FileService(
-            string bucket
-        )
+        public FileService(string bucket)
         {
             this.bucket = bucket;
         }
@@ -49,7 +47,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     {
                         IsSuccess = true,
                         StatusCode = System.Net.HttpStatusCode.OK,
-                        Message = "Upload file successfully",
+                        Message = "Upload File Successfully",
                         Data = new FileResponseDTO
                         {
                             FileName = downloadUrl,
@@ -63,7 +61,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     {
                         IsSuccess = false,
                         StatusCode = System.Net.HttpStatusCode.BadRequest,
-                        Message = "Upload file error",
+                        Message = "Upload File Error",
                     };
                 }
             }
@@ -92,7 +90,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     {
                         IsSuccess = true,
                         StatusCode = System.Net.HttpStatusCode.OK,
-                        Message = "Upload file successfully",
+                        Message = "Upload File Successfully",
                         Data = new FileResponseDTO
                         {
                             FileName = file.FileName,
@@ -106,7 +104,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     {
                         IsSuccess = false,
                         StatusCode = System.Net.HttpStatusCode.BadRequest,
-                        Message = "Upload file error",
+                        Message = "Upload File Error",
                     };
                 }
             }
