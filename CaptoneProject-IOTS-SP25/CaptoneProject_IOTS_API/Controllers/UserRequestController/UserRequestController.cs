@@ -17,12 +17,14 @@ namespace CaptoneProject_IOTS_API.Controllers.UserRequestController
     public class UserRequestController : ControllerBase
     {
         IUserRequestService userRequestService;
-
+        IActivityLogService activityLogService;
         public UserRequestController (
-            IUserRequestService userRequestService
+            IUserRequestService userRequestService,
+            IActivityLogService activityLogService
         )
         {
             this.userRequestService = userRequestService;
+            this.activityLogService = activityLogService;
         }
         private IActionResult GetActionResult(ResponseDTO response)
         {
@@ -90,6 +92,12 @@ namespace CaptoneProject_IOTS_API.Controllers.UserRequestController
         )
         {
             var response = await userRequestService.ApproveOrRejectRequestStatus(id, "", isApprove: 1);
+
+            if (response.IsSuccess)
+            {
+                await activityLogService.CreateUserHistoryTrackingActivityLog("Approved User Request", response?.Data?.userRequestInfo.Email, "Approved");
+            }
+
             return GetActionResult(response);
         }
 
@@ -98,6 +106,20 @@ namespace CaptoneProject_IOTS_API.Controllers.UserRequestController
             [FromBody] RemarkDTO payload)
         {
             var response = await userRequestService.ApproveOrRejectRequestStatus(id, payload.Remark, isApprove: 0);
+
+            if (response.IsSuccess)
+            {
+                await activityLogService.CreateUserHistoryTrackingActivityLog("Rejected User Request", response?.Data?.userRequestInfo.Email, "Rejected");
+            }
+
+            return GetActionResult(response);
+        }
+
+        [HttpDelete("delete/{id}")]
+        public async Task<IActionResult> DeleteUserRequest(int id)
+        {
+            var response = await userRequestService.DeleteUserRequestById(id);
+
             return GetActionResult(response);
         }
     }

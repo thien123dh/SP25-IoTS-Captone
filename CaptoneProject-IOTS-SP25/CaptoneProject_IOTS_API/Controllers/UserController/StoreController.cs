@@ -19,6 +19,7 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
     {
         private readonly IStoreService _storeService;
         private readonly IUserRequestService _userRequestService;
+        private readonly IActivityLogService activityLogService;
         private IActionResult GetActionResult(ResponseDTO response)
         {
             if (response.StatusCode == HttpStatusCode.Unauthorized)
@@ -38,10 +39,12 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         }
 
         public StoreController(IStoreService _storeService,
-            IUserRequestService userRequestService)
+            IUserRequestService userRequestService,
+            IActivityLogService activityLogService)
         {
             this._storeService = _storeService;
             this._userRequestService = userRequestService;
+            this.activityLogService = activityLogService;
         }
 
         [HttpPost("register-store-user")]
@@ -63,10 +66,29 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         }
 
         [HttpPost("submit-store/{userId}")]
-        public async Task<IActionResult> CreateStoreByUserId(int userId,
+        public async Task<IActionResult> SubmitStoreByUserId(int userId,
             [FromBody] StoreRequestDTO payload)
         {
             var response = await _storeService.SubmitStoreInfomation(userId, payload);
+
+            if (response.IsSuccess)
+            {
+                activityLogService.CreateUserHistoryTrackingActivityLog("Submit Store", response.Data.Name, "Submit");
+            }
+
+            return GetActionResult(response);
+        }
+
+        [HttpPost("update-store/{userId}")]
+        public async Task<IActionResult> UpdateStoreByUserId(int userId,
+            [FromBody] StoreRequestDTO payload)
+        {
+            var response = await _storeService.CreateOrUpdateStoreByUserId(userId, payload);
+
+            if (response.IsSuccess)
+            {
+                activityLogService.CreateUserHistoryTrackingActivityLog("Updated Store Information", response.Data.Name, "Updated");
+            }
 
             return GetActionResult(response);
         }
@@ -78,6 +100,7 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
 
             return GetActionResult(response);
         }
+
         [HttpPost("get-pagination-stores")]
         public async Task<IActionResult> GetPaginationStores([FromBody] PaginationRequest paginationRequest)
         {

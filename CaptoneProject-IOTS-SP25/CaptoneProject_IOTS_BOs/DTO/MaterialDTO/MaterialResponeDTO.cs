@@ -43,5 +43,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
         public decimal? Price { get; set; }
 
         public int? IsActive { get; set; }
+
+
     }
 }

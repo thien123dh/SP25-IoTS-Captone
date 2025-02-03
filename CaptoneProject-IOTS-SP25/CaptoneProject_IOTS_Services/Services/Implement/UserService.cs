@@ -222,13 +222,13 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 };
         }
 
-        public async Task<ResponseDTO> UpdateUserRole(int userId, List<int>? roleList)
+        public async Task<GenericResponseDTO<UserDetailsResponseDTO>> UpdateUserRole(int userId, List<int>? roleList)
         {
             roleList = (roleList == null) ? new List<int>() : roleList;
             User user = await _userRepository.GetUserById(userId);
 
             if (user == null)
-                return new ResponseDTO
+                return new GenericResponseDTO<UserDetailsResponseDTO>
                 {
                     IsSuccess = false,
                     Message = ExceptionMessage.USER_DOESNT_EXIST,
@@ -243,6 +243,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (deleteUserRoleList != null)
                 await _userRoleRepository.RemoveAsync(deleteUserRoleList);
 
+            int? loginUserId = GetLoginUserId();
+
             var insertUserRoleList = roleList
             .Where(
                 r => (userRoleList?.FirstOrDefault(ur => ur.RoleId == r) == null)
@@ -253,13 +255,13 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 RoleId = r,
                 CreatedDate = DateTime.Now,
                 //HARDCODE ==> TODO
-                CreatedBy = 1
+                CreatedBy = loginUserId == null ? 0 : (int)loginUserId
             });
 
             //Create user role list
             await _userRoleRepository.CreateAsync(insertUserRoleList);
 
-            return new ResponseDTO
+            return new GenericResponseDTO<UserDetailsResponseDTO>
             {
                 IsSuccess = true,
                 Message = "Ok",

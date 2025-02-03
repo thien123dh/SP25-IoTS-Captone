@@ -5,7 +5,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
 namespace CaptoneProject_IOTS_BOs.Models
 {
     [Table("attachment")]
@@ -26,8 +25,8 @@ namespace CaptoneProject_IOTS_BOs.Models
         [MaxLength(500)]
         public string? MetaData { set; get; }
         [Column("created_date")]
-        public DateTime? CreatedDate { set; get; }
+        public DateTime? CreatedDate { set; get; } = DateTime.Now;
         [Column("created_by")]
-        public int? createdBy { set; get; }
+        public int? CreatedBy { set; get; }
     }
 }

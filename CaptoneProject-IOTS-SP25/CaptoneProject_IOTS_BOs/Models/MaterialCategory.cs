@@ -15,7 +15,9 @@ public partial class MaterialCategory
     [MaxLength(1000)]
     [Column("image_url")]
     public string? ImageUrl { set; get; }
+    [JsonIgnore]
     public int? Orders { get; set; }
+    [JsonIgnore]
     public int? IsActive { get; set; } = 1;
 
     [JsonIgnore]

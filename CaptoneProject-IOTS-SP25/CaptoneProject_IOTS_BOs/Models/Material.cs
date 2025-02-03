@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -11,6 +12,9 @@ public partial class Material
 
     public string Name { get; set; }
 
+    [MaxLength(500)]
+    [Column("summary")]
+    public string Summary { set; get; }
     public string Description { get; set; }
 
     public int? CategoryId { get; set; }
@@ -27,27 +31,31 @@ public partial class Material
 
     public string PowerSource { get; set; }
 
-    public DateTime? LastWarrentyDate { get; set; }
+    public DateTime? LastWarrentyDate { get; set; } = DateTime.Now.AddDays(30);
 
-    public DateTime? CreatedDate { get; set; }
+    [Column("store_id")]
+    [ForeignKey(nameof(Store))]
+    public int StoreId { get; set; }
+    public DateTime? CreatedDate { get; set; } = DateTime.Now;
 
     public int? CreatedBy { get; set; }
 
-    public DateTime? UpdatedDate { get; set; }
+    public DateTime? UpdatedDate { get; set; } = DateTime.Now;
 
     public int? UpdatedBy { get; set; }
 
     public int? Quantity { get; set; } = 0;
 
-    public decimal? Price { get; set; }
+    public decimal? Price { get; set; } = 0;
 
-    public int? IsActive { get; set; }
+    public int? IsActive { get; set; } = 1;
 
     [MaxLength(1000)]
     [Column("image_url")]
     public string? ImageUrl { set; get; }
 
-    public virtual MaterialCategory Category { get; set; }
+    public virtual Store StoreNavigation { get; set; }
+    public MaterialCategory Category { get; set; }
 
     public virtual User CreatedByNavigation { get; set; }
 
