@@ -99,7 +99,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             };
         }
 
-        public async Task<ResponseDTO> SubmitStoreInfomation(int userId, StoreRequestDTO payload)
+        public async Task<GenericResponseDTO<StoreDetailsResponseDTO>> SubmitStoreInfomation(int userId, StoreRequestDTO payload)
         {
             var response = await CreateOrUpdateStoreByUserId(userId, payload);
 
@@ -117,7 +117,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 });
 
             if (!userRequestResponse.IsSuccess)
-                return userRequestResponse;
+                return new GenericResponseDTO<StoreDetailsResponseDTO>
+                {
+                    IsSuccess = false,
+                    Message = userRequestResponse.Message,
+                    StatusCode = userRequestResponse.StatusCode
+                };
 
             return await GetStoreDetailsByUserId(userId);
         }

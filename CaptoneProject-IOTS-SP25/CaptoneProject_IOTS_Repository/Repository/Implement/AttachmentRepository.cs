@@ -10,6 +10,12 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
 {
     public class AttachmentRepository : RepositoryBase<Attachment>
     {
+        public List<Attachment>? GetAttachmentsByEntityId(int entityId, int entityType)
+        {
+            List<Attachment>? res = _dbSet.Where(att => att.EntityId == entityId && att.EntityType == entityType)
+                                            .ToList();
 
+            return res;
+        }
     }
 }

@@ -16,11 +16,9 @@ namespace CaptoneProject_IOTS_API.Controllers.MaterialController
     {
         private readonly IMaterialService _materialService;
         public MaterialController(
-            IFileService fileService,
             IMaterialService _materialService
         )
         {
-            //_materialCategoryService ??= new MaterialCategoryService(fileService);
             this._materialService = _materialService;
         }
 
@@ -61,7 +59,8 @@ namespace CaptoneProject_IOTS_API.Controllers.MaterialController
         public async Task<IActionResult> GetMaterialById(int Id)
         {
             var result = await _materialService.GetByMaterialId(Id);
-            return Ok(result);
+
+            return GetActionResult(result);
         }
 
         [HttpPost("create-material")]

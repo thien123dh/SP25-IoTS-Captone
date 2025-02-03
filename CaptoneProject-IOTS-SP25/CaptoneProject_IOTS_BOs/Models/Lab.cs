@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 
 namespace CaptoneProject_IOTS_BOs.Models;
 
@@ -7,6 +9,9 @@ public partial class Lab
 {
     public int Id { get; set; }
 
+    [MaxLength(500)]
+    [Column("summary")]
+    public string Summary { set; get; }
     public string Title { get; set; }
 
     public string Description { get; set; }

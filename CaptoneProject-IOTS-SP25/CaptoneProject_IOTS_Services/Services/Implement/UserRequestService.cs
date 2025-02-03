@@ -8,6 +8,7 @@ using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
 using CaptoneProject_IOTS_Service.Mapper;
 using CaptoneProject_IOTS_Service.Services.Interface;
+using MailKit.Net.Imap;
 using Microsoft.AspNetCore.Http;
 using OtpNet;
 using System;
@@ -252,12 +253,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return await GetUserRequestDetailsById(userRequest.Id);
         }
 
-        public async Task<ResponseDTO> ApproveOrRejectRequestStatus(int requestId, string? remark, int isApprove)
+        public async Task<GenericResponseDTO<UserRequestDetailsResponseDTO>> ApproveOrRejectRequestStatus(int requestId, string? remark, int isApprove)
         {
             var userRequest = await userRequestRepository.GetById(requestId);
 
             if (userRequest == null)
-                return new ResponseDTO
+                return new GenericResponseDTO<UserRequestDetailsResponseDTO>
                 {
                     IsSuccess = false,
                     Message = ExceptionMessage.USER_REQUEST_NOT_FOUND,
@@ -265,7 +266,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 };
 
             if (userRequest.Status != (int)UserRequestStatusEnum.PENDING_TO_APPROVE)
-                return new ResponseDTO
+                return new GenericResponseDTO<UserRequestDetailsResponseDTO>
                 {
                     IsSuccess = false,
                     Message = "User Request Status must be Pending to Approve",
@@ -274,7 +275,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             if (isApprove <= 0 && (remark == null || remark.Trim() == ""))
             {
-                return new ResponseDTO
+                return new GenericResponseDTO<UserRequestDetailsResponseDTO>
                 {
                     IsSuccess = false,
                     Message = "Please enter the reason why you rejected",
@@ -290,7 +291,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
             catch (Exception ex)
             {
-                return new ResponseDTO
+                return new GenericResponseDTO<UserRequestDetailsResponseDTO>
                 {
                     IsSuccess = false,
                     Message = ex.Message,
@@ -306,6 +307,29 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
 
             return await GetUserRequestDetailsById(userRequest.Id);
+        }
+
+        public async Task<GenericResponseDTO<UserRequest>> DeleteUserRequestById(int id)
+        {
+            var userRequest = await userRequestRepository.GetById(id);
+
+            if (userRequest == null)
+                return new GenericResponseDTO<UserRequest>
+                {
+                    IsSuccess = false,
+                    Message = ExceptionMessage.USER_REQUEST_NOT_FOUND,
+                    StatusCode = HttpStatusCode.NotFound
+                };
+
+            userRequestRepository.Remove(userRequest);
+
+            return new GenericResponseDTO<UserRequest>
+            {
+                IsSuccess = true,
+                Message = "Success",
+                StatusCode = HttpStatusCode.OK,
+                Data = userRequest
+            };
         }
     }
 }

@@ -12,14 +12,17 @@ public partial class Store
 
     public string Name { get; set; }
 
+    [JsonIgnore]
     public string Description { get; set; }
 
     public int OwnerId { get; set; }
 
+    [JsonIgnore]
     public DateTime? CreatedDate { get; set; } = DateTime.Now;
 
     public int? CreatedBy { get; set; }
 
+    [JsonIgnore]
     public DateTime? UpdatedDate { get; set; } = DateTime.Now;
 
     public int? UpdatedBy { get; set; }
@@ -27,10 +30,12 @@ public partial class Store
     [Column("image_url")]
     public string? ImageUrl { set; get; }
 
+    [JsonIgnore]
     public int? IsActive { get; set; }
 
     [JsonIgnore]
     public virtual User Owner { get; set; }
 
+    [JsonIgnore]
     public virtual IEnumerable<StoreAttachment>? StoreAttachmentsNavigation { set; get; }
 }
