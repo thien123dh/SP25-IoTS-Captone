@@ -9,12 +9,17 @@ public partial class MaterialGroup
 {
     public int Id { get; set; }
 
+    [MaxLength(500)]
+    [Column("summary")]
+    public string Summary { set; get; }
     public string Name { get; set; }
 
     public string Description { get; set; }
 
     public int? CategoryId { get; set; }
-
+    [Column("store_id")]
+    [ForeignKey(nameof(Store))]
+    public int StoreId { set; get; }
     public int? LabId { get; set; }
 
     public DateTime? CreatedDate { get; set; }
@@ -28,6 +33,7 @@ public partial class MaterialGroup
     [MaxLength(1000)]
     [Column("image_url")]
     public string? ImageUrl { set; get; }
+    public virtual Store StoreNavigation { set; get; }
     public virtual MaterialGroupCategory Category { get; set; }
 
     public virtual User CreatedByNavigation { get; set; }

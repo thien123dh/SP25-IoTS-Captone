@@ -84,6 +84,11 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         {
             var response = await _userService.UpdateUserRole(id, payload.RoleIdList);
 
+            if (response.IsSuccess)
+            {
+                activityLogService.CreateUserHistoryTrackingActivityLog("Update Role User ", response.Data.Email, "Updated");
+            }
+
             return GetActionResult(response);
         }
         [HttpPut("activate-user/{id}")]
@@ -96,9 +101,9 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
             if (response.IsSuccess)
             {
                 activityLogService.CreateUserHistoryTrackingActivityLog(
-                    "activate",
+                    "Activate",
                     response.Data?.Fullname,
-                    "activate"
+                    "Activate"
                 );
             }
 
@@ -109,6 +114,15 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         {
             var response = await _userService.UpdateUserStatus(id, isActive: 0);
 
+            if (response.IsSuccess)
+            {
+                activityLogService.CreateUserHistoryTrackingActivityLog(
+                    "Deactivate",
+                    response.Data?.Fullname,
+                    "Deactivate"
+                );
+            }
+
             return GetActionResult(response);
         }
         [HttpGet("get-user-by-email/{email}")]
@@ -118,57 +132,7 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
 
             return GetActionResult(response);
         }
-        //================ COMMON =====================
 
-        //================ ADMIN ======================
-        [HttpPost("create-staff-manager-request")]
-        public async Task<IActionResult> CreateStaffRequest([FromBody] CreateUserDTO payload)
-        {
-            return GetActionResult(
-
-                await staffManagerService.CreateStaffOrManager(payload)
-
-            );
-        }
-        //================ STAFF/MANAGER ======================
-        [HttpPost("verify-staff-manager-otp")]
-        public async Task<IActionResult> VerifyOtp (
-            [FromBody] StaffManagerVerifyOtpRequest payload
-        )
-        {
-            return GetActionResult(
-                await staffManagerService.StaffManagerVerifyOTP (
-                    payload.OTP, 
-                    payload.RequestId, 
-                    (int)UserRequestStatusEnum.APPROVED, 
-                    payload.password
-            )
-            );
-        }
-
-        //================ CUSTOMER ===========================
-        [HttpPost("register-verify-otp-customer")]
-        public async Task<IActionResult> RegisterCustomerAccount([FromBody] UserRegisterDTO payload)
-        {
-            if (payload.UserInfomation.RoleId != (int)RoleEnum.CUSTOMER)
-            {
-                return GetActionResult(
-                    new ResponseDTO
-                    {
-                        IsSuccess = false,
-                        StatusCode = HttpStatusCode.BadRequest,
-                        Message = "User role is not customer"
-                    }
-                );
-            }
-                
-            return GetActionResult(
-                await customerService.RegisterCustomerUser(payload)
-            );
-        }
-        
-        //
-        //================ Decode lay role =================/
         [Authorize]
         [HttpGet("get-user-login-info")]
         public async Task<IActionResult> GetUserLoginInfo()
@@ -176,7 +140,5 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
             var response = await _userService.GetUserLoginInfo();
             return Ok(response);
         }
-
-
     }
 }

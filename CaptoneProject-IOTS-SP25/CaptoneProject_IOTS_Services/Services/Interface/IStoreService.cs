@@ -16,7 +16,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
     {
         Task<GenericResponseDTO<UserRequestResponseDTO>> CreateStoreUserRequestVerifyOtp(string email);
         Task<GenericResponseDTO<UserResponseDTO>> RegisterStoreUser(UserRegisterDTO payload);
-        Task<ResponseDTO> SubmitStoreInfomation(int userId, StoreRequestDTO payload);
+        Task<GenericResponseDTO<StoreDetailsResponseDTO>> SubmitStoreInfomation(int userId, StoreRequestDTO payload);
         Task<GenericResponseDTO<StoreDetailsResponseDTO>> CreateOrUpdateStoreByUserId(int userId, StoreRequestDTO payload);
         Task<GenericResponseDTO<StoreDetailsResponseDTO>> GetStoreDetailsByUserId(int userId);
         Task<ResponseDTO> GetPaginationStores(PaginationRequest paginationRequest);

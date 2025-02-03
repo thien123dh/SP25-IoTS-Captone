@@ -11,7 +11,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         Task<ResponseDTO> LoginUserAsync(string email, string password);
         Task<ResponseDTO> GetUsersPagination(PaginationRequest paginationRequest, int? roleId);
         Task<ResponseDTO> GetAllUsers();
-        Task<ResponseDTO> UpdateUserRole(int userId, List<int>? roleList);
+        Task<GenericResponseDTO<UserDetailsResponseDTO>> UpdateUserRole(int userId, List<int>? roleList);
         Task<GenericResponseDTO<UserResponseDTO>> UpdateUserStatus(int userId, int isActive);
         Task<ResponseDTO> UpdateUserPassword(int userId, string password);
         Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserDetailsById(int id);
