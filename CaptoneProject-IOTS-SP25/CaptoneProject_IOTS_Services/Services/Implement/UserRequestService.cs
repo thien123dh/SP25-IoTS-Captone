@@ -146,7 +146,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 IsSuccess = true,
                 StatusCode = HttpStatusCode.OK,
                 Data = PaginationMapper<UserRequest, UserRequestResponseDTO>
-                    .mappingTo(UserRequestMapper.MappingToUserRequestResponseDTO, paginationData)
+                    .MappingTo(UserRequestMapper.MappingToUserRequestResponseDTO, paginationData)
             };
         }
 
