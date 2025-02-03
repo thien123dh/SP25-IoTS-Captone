@@ -170,7 +170,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 IsSuccess = true,
                 Message = "Success",
                 StatusCode = System.Net.HttpStatusCode.OK,
-                Data = PaginationMapper<Material, MaterialItemDTO>.mappingTo(MaterialMapper.MapToMaterialItemDTO, res)
+                Data = PaginationMapper<Material, MaterialItemDTO>.MappingTo(MaterialMapper.MapToMaterialItemDTO, res)
             };
         }
 
