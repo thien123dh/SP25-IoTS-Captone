@@ -2,6 +2,7 @@
 using CaptoneProject_IOTS_BOs.DTO.MaterialDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.ProductRequestDTO;
+using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
 using CaptoneProject_IOTS_Service.Mapper;
@@ -32,9 +33,38 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             this.materialService = materialService;
         }
 
-        public Task<GenericResponseDTO<ProductRequestDTO>> ApproveOrRejectProductRequest(int productRequestId, int isApprove)
+        public async Task<GenericResponseDTO<ProductRequestDTO>> ApproveOrRejectProductRequest(int productRequestId, RemarkDTO payload, int isApprove)
         {
-            throw new NotImplementedException();
+            var pR = await productRequestRepository.GetProductRequestById(productRequestId);
+
+            if (pR == null)
+                return new GenericResponseDTO<ProductRequestDTO>
+                {
+                    IsSuccess = false,
+                    Message = "Not Found",
+                    StatusCode = System.Net.HttpStatusCode.NotFound
+                };
+
+            try
+            {
+                pR.Status = (isApprove > 1) ? (int)ProductRequestStatusEnum.APPROVED : (int)ProductRequestStatusEnum.REJECTED;
+                pR.Remark = payload.Remark;
+
+                productRequestRepository.Update(pR);
+
+                if (pR.ProductType == (int)ProductTypeEnum.MATERIAL)
+                    await materialService.UpdateMaterialStatus((int)pR.MaterialId, (isApprove > 0) ? ProductStatusEnum.ACTIVE : ProductStatusEnum.PENDING);
+
+                return await GetProductRequestById(pR.Id);
+            } catch (Exception ex)
+            {
+                return new GenericResponseDTO<ProductRequestDTO>
+                {
+                    IsSuccess = false,
+                    StatusCode = System.Net.HttpStatusCode.BadRequest,
+                    Message = ex.Message
+                };
+            }
         }
 
         public async Task<GenericResponseDTO<PaginationResponseDTO<ProductRequestDTO>>> GetPaginationProductRequest(PaginationRequest payload)

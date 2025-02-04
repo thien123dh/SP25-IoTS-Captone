@@ -13,6 +13,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using static CaptoneProject_IOTS_BOs.Constant.EntityTypeConst;
+using static CaptoneProject_IOTS_BOs.Constant.ProductConst;
 
 namespace CaptoneProject_IOTS_Service.Services.Implement
 {
@@ -191,6 +192,38 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var response = materialRepository.Update(res);
 
             return await GetByMaterialId(response.Id);
+        }
+
+        public async Task<GenericResponseDTO<MaterialDetailsResponseDTO>> UpdateMaterialStatus(int id, ProductStatusEnum status)
+        {
+            var material = materialRepository.GetById(id);
+
+            if (material == null)
+                return new GenericResponseDTO<MaterialDetailsResponseDTO>
+                {
+                    IsSuccess = false,
+                    Message = "Not Found",
+                    StatusCode = System.Net.HttpStatusCode.NotFound
+                };
+
+            material.IsActive = (int)status;
+
+            try
+            {
+                material = materialRepository.Update(material);
+
+                return await GetByMaterialId(material.Id);
+
+            } catch (Exception ex)
+            {
+                return new GenericResponseDTO<MaterialDetailsResponseDTO>
+                {
+                    IsSuccess = false,
+                    Message = ex.Message,
+                    StatusCode = System.Net.HttpStatusCode.BadRequest
+                };
+            }
+
         }
     }
 }

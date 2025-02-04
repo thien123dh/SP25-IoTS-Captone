@@ -38,7 +38,7 @@ namespace CaptoneProject_IOTS_API.Controllers.FileController
 
         [HttpPost("upload-files")]
         public async Task<IActionResult> UploadFile(
-            [FromForm] IFormFile file
+            IFormFile file
         )
         {
             return Ok(await fileService.UploadFile(file));
