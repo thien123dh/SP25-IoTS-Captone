@@ -23,11 +23,13 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly ITokenServices _tokenGenerator;
         private readonly PasswordHasher<string> _passwordHasher;
         private readonly MyHttpAccessor httpAccessor;
+        private readonly IRoleService roleService;
         public UserService (
             UserRepository userService, 
             ITokenServices tokenGenerator,
             UserRoleRepository userRoleRepository,
-            MyHttpAccessor httpAccessor
+            MyHttpAccessor httpAccessor,
+            IRoleService roleService
         )
         {
             _userRepository = userService;
@@ -35,6 +37,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             _tokenGenerator = tokenGenerator;
             _passwordHasher = new PasswordHasher<string>();
             this.httpAccessor = httpAccessor;
+            this.roleService = roleService;
         }
 
         public async Task<ResponseDTO> UpdateUserPassword(int userId, string password)
@@ -295,7 +298,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 IsSuccess = true,
                 Message = "Ok",
                 StatusCode = HttpStatusCode.OK,
-                Data = PaginationMapper<User, UserResponseDTO>.mappingTo(UserMapper.mapToUserResponse, source: response)
+                Data = PaginationMapper<User, UserResponseDTO>.MappingTo(UserMapper.mapToUserResponse, source: response)
             };
         }
         
@@ -401,6 +404,18 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             User user = _userRepository.GetById((int)loginUserId);
 
             return user;
+        }
+
+        public async Task<List<Role>?> GetLoginUserRoles()
+        {
+            int? loginUserId = GetLoginUserId();
+
+            if (loginUserId == null)
+                return null;
+
+            var user = await _userRepository.GetUserById((int)loginUserId);
+
+            return user?.UserRoles?.Select(u => u.Role)?.ToList();
         }
     }
 }

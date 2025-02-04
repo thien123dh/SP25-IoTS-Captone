@@ -18,7 +18,8 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserDetailsByEmail(string email);
         Task<GenericResponseDTO<UserResponseDTO>> CreateOrUpdateUser(int id, CreateUserDTO payload, int isActive);
         int? GetLoginUserId();
-        User GetLoginUser(); 
+        User GetLoginUser();
+        Task<List<Role>?> GetLoginUserRoles();
         Task<GenericResponseDTO<UserResponseDTO>> GetUserLoginInfo();
         Task<ResponseDTO> UserChangePassword(ChangePasswordRequestDTO payload);
     }

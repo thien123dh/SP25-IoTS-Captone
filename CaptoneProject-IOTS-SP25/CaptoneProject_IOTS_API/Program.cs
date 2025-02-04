@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using System.Text.Json.Serialization;
+using static Org.BouncyCastle.Math.EC.ECCurve;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+
 // JWT Configuration
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var secretKey = jwtSettings["Key"];
@@ -31,6 +33,9 @@ var durationInMinutes = int.Parse(jwtSettings["DurationInMinutes"]);
 
 //Configuration firebase storage
 var firebaseStorageBucket = builder.Configuration["FirebaseStorage:Bucket"];
+
+//Frontend Domain
+var frontendDomain = builder.Configuration["FrontendDomain:Domain"];
 
 var configuration = builder.Configuration;
 
@@ -50,6 +55,7 @@ builder.Services.AddScoped<MaterialRepository>();
 builder.Services.AddScoped<StoreRepository>();
 builder.Services.AddScoped<StoreAttachmentRepository>();
 builder.Services.AddScoped<AttachmentRepository>();
+builder.Services.AddScoped<ProductRequestRepository>();
 
 // Register Services
 builder.Services.AddHttpContextAccessor();
@@ -66,10 +72,15 @@ builder.Services.AddScoped<IStaffManagerService, StaffManagerService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IMaterialService, MaterialService>();
 builder.Services.AddScoped<IAttachmentsService, AttachmentsService>();
+builder.Services.AddScoped<IProductRequestService, ProductRequestService>();
 builder.Services.AddScoped<IFileService>(provider =>
 {
     var bucket = configuration.GetConnectionString("Firebase-Storage-Bucket");
     return new FileService(bucket);
+});
+builder.Services.AddScoped<IEnvironmentService>(provider =>
+{
+    return new EnvironmentService(frontendDomain);
 });
 
 builder.Services.AddCors(options =>
