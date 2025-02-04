@@ -107,7 +107,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 string url = environmentService.GetFrontendDomain();
 
                 var link = url + "/" + response.Id;
-
                 
                 try
                 {

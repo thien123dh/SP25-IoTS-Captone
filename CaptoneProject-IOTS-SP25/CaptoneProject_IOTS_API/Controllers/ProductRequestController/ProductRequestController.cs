@@ -1,6 +1,7 @@
 ﻿using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.DTO.MaterialDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
+using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Http;
@@ -65,5 +66,22 @@ namespace CaptoneProject_IOTS_API.Controllers.ProductRequestController
             return GetActionResult(response);
         }
 
+        [HttpPost("approve/{id}")]
+        public async Task<IActionResult> ApproveProductRequestById(int id,
+            [FromBody] RemarkDTO payload)
+        {
+            var res = await productRequestService.ApproveOrRejectProductRequest(id, payload, isApprove: 1);
+
+            return GetActionResult(res);
+        }
+
+        [HttpPost("reject/{id}")]
+        public async Task<IActionResult> RejectProductRequestById(int id,
+            [FromBody] RemarkDTO payload)
+        {
+            var res = await productRequestService.ApproveOrRejectProductRequest(id, payload, isApprove: 0);
+
+            return GetActionResult(res);
+        }
     }
 }

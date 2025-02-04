@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
 using CaptoneProject_IOTS_BOs.DTO.MaterialDTO;
+using static CaptoneProject_IOTS_BOs.Constant.ProductConst;
 
 namespace CaptoneProject_IOTS_Service.Services.Interface
 {
@@ -19,5 +20,6 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         Task<ResponseDTO> GetAllMaterial(string searchKeyword);
         Task<GenericResponseDTO<PaginationResponseDTO<MaterialItemDTO>>> GetPaginationMaterial(PaginationRequest paginate);
         Task<GenericResponseDTO<MaterialDetailsResponseDTO>> GetByMaterialId(int id);
+        Task<GenericResponseDTO<MaterialDetailsResponseDTO>> UpdateMaterialStatus(int id, ProductStatusEnum status);
     }
 }

@@ -2,6 +2,7 @@
 using CaptoneProject_IOTS_BOs.DTO.MaterialDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.ProductRequestDTO;
+using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +16,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         public Task<GenericResponseDTO<PaginationResponseDTO<ProductRequestDTO>>> GetPaginationProductRequest(PaginationRequest payload);
         public Task<GenericResponseDTO<ProductRequestDTO>> GetProductRequestById(int id);
         public Task<GenericResponseDTO<ProductRequestDTO>> SubmitMaterialRequest(int? productRequestId, CreateUpdateMaterialDTO payload);
-        public Task<GenericResponseDTO<ProductRequestDTO>> ApproveOrRejectProductRequest(int productRequestId, int isApprove);
+        public Task<GenericResponseDTO<ProductRequestDTO>> ApproveOrRejectProductRequest(int productRequestId, RemarkDTO payload, int isApprove);
 
     }
 }
