@@ -31,13 +31,15 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly IEmailService _emailService;
         private readonly MyHttpAccessor myHttpAccessor;
         private readonly IUserServices _userServices;
+        private readonly IEnvironmentService environmentService;
         public UserRequestService
         (
             UserRequestRepository userRequestRepository,
             IEmailService emailService,
             UserRepository userRepository,
             MyHttpAccessor myHttpAccessor,
-            IUserServices _userServices
+            IUserServices _userServices,
+            IEnvironmentService environmentService
         )
         {
             this.userRequestRepository = userRequestRepository;
@@ -45,6 +47,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             this.userRepository = userRepository;
             this.myHttpAccessor = myHttpAccessor;
             this._userServices = _userServices;
+            this.environmentService = environmentService;
         }
 
         private string GenerateOTP()
@@ -97,21 +100,41 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 userRequestRepository.Create(userRequest);
             }
 
-            UserRequest response = await userRequestRepository.GetByEmail(payload.Email);
-
-            //TODO - HARDCODE
-            var link = "https://www.facebook.com/thien.nguyen.1257604";
-
-            var emailTemplate = EmailTemplateConst.CreateStaffOrManagerEmailTemplate(userRequest.Email, userRequest.OtpCode, link);
-
-            _emailService.SendEmailAsync(userRequest.Email, emailTemplate.Subject, emailTemplate.Body);
-
-            return new GenericResponseDTO<UserRequestResponseDTO>
+            try
             {
-                IsSuccess = true,
-                StatusCode = HttpStatusCode.OK,
-                Data = UserRequestMapper.MappingToUserRequestResponseDTO(response)
-            };
+                UserRequest response = await userRequestRepository.GetByEmail(payload.Email);
+
+                string url = environmentService.GetFrontendDomain();
+
+                var link = url + "/" + response.Id;
+
+                
+                try
+                {
+                    var emailTemplate = EmailTemplateConst.CreateStaffOrManagerEmailTemplate(userRequest.OtpCode, link, userRequest.Email);
+
+                    _emailService.SendEmailAsync(userRequest.Email, emailTemplate.Subject, emailTemplate.Body);
+                } catch (Exception ex)
+                {
+
+                }
+                
+                return new GenericResponseDTO<UserRequestResponseDTO>
+                {
+                    IsSuccess = true,
+                    StatusCode = HttpStatusCode.OK,
+                    Data = UserRequestMapper.MappingToUserRequestResponseDTO(response)
+                };
+            } catch (Exception ex)
+            {
+                return new GenericResponseDTO<UserRequestResponseDTO>
+                {
+                    IsSuccess = false,
+                    Message = ex.Message,
+                    StatusCode = HttpStatusCode.BadRequest
+                };
+            }
+            
         }
 
         public async Task<ResponseDTO> GetUserRequestPagination(int? userRequestStatusFilter, 

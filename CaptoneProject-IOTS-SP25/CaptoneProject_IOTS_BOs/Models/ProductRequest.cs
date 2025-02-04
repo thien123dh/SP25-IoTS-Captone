@@ -25,6 +25,7 @@ public partial class ProductRequest
 
     public string? Remark { get; set; }
 
+    //[ForeignKey(nameof(User))]
     public int? ActionBy { get; set; }
 
     public DateTime? CreatedDate { get; set; } = DateTime.Now;
@@ -38,6 +39,7 @@ public partial class ProductRequest
     public int? Status { get; set; }
 
     public virtual User CreatedByNavigation { get; set; }
+    //public virtual User ActionByNavigation { set; get; }
 
     public virtual ProductRequestStatus StatusNavigation { get; set; }
 

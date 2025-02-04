@@ -20,7 +20,7 @@ namespace CaptoneProject_IOTS_Service.Mapper
                 UserRequestStatus = new UserRequestStatusDTO
                 {
                     Id = userRequest.Status,
-                    Label = userRequest.StatusNavigation.Label
+                    Label = userRequest?.StatusNavigation?.Label
                 },
                 CreatedDate = userRequest.CreatedDate,
                 ActionDate = userRequest.ActionDate,
