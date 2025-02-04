@@ -56,6 +56,7 @@ builder.Services.AddScoped<StoreRepository>();
 builder.Services.AddScoped<StoreAttachmentRepository>();
 builder.Services.AddScoped<AttachmentRepository>();
 builder.Services.AddScoped<ProductRequestRepository>();
+builder.Services.AddScoped<BusinessLicenseRepository>();
 
 // Register Services
 builder.Services.AddHttpContextAccessor();

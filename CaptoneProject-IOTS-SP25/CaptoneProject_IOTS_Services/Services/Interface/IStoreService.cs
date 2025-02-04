@@ -1,7 +1,9 @@
 ﻿using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
+using CaptoneProject_IOTS_BOs.DTO.StoreDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
+using CaptoneProject_IOTS_BOs.Models;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
@@ -16,7 +18,8 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
     {
         Task<GenericResponseDTO<UserRequestResponseDTO>> CreateStoreUserRequestVerifyOtp(string email);
         Task<GenericResponseDTO<UserResponseDTO>> RegisterStoreUser(UserRegisterDTO payload);
-        Task<GenericResponseDTO<StoreDetailsResponseDTO>> SubmitStoreInfomation(int userId, StoreRequestDTO payload);
+        Task<GenericResponseDTO<BusinessLicenses>> CreateOrUpdateBusinessLicences(BusinessLicensesDTO payload);
+        Task<GenericResponseDTO<BusinessLicenses>> GetBusinessLicencesByStoreId(int storeId);
         Task<GenericResponseDTO<StoreDetailsResponseDTO>> CreateOrUpdateStoreByUserId(int userId, StoreRequestDTO payload);
         Task<GenericResponseDTO<StoreDetailsResponseDTO>> GetStoreDetailsByUserId(int userId);
         Task<ResponseDTO> GetPaginationStores(PaginationRequest paginationRequest);

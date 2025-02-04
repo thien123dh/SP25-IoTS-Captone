@@ -1,7 +1,9 @@
 ﻿using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
+using CaptoneProject_IOTS_BOs.DTO.StoreDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
+using CaptoneProject_IOTS_Service.Business;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -65,32 +67,43 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
             return GetActionResult(response);
         }
 
-        [HttpPost("submit-store/{userId}")]
-        public async Task<IActionResult> SubmitStoreByUserId(int userId,
-            [FromBody] StoreRequestDTO payload)
+        [HttpPost("submit-pending-to-approve-store-request/{requestId}")]
+        public async Task<IActionResult> SubmitPendingToApproveUserRequest(int requestId)
         {
-            var response = await _storeService.SubmitStoreInfomation(userId, payload);
+            var res = await _userRequestService.UpdateUserRequestStatus(requestId, UserRequestStatusEnum.PENDING_TO_APPROVE);
 
-            if (response.IsSuccess)
-            {
-                activityLogService.CreateUserHistoryTrackingActivityLog("Submit Store", response.Data.Name, "Submit");
-            }
-
-            return GetActionResult(response);
+            return GetActionResult(res);
         }
 
-        [HttpPost("update-store/{userId}")]
-        public async Task<IActionResult> UpdateStoreByUserId(int userId,
+        [HttpPost("create-or-update-store/{userId}")]
+        public async Task<IActionResult> CreateOrUpdateStoreByUserId(int userId,
             [FromBody] StoreRequestDTO payload)
         {
             var response = await _storeService.CreateOrUpdateStoreByUserId(userId, payload);
 
             if (response.IsSuccess)
             {
-                activityLogService.CreateUserHistoryTrackingActivityLog("Updated Store Information", response.Data.Name, "Updated");
+                activityLogService.CreateUserHistoryTrackingActivityLog("Update Store", response.Data.Name, "Update");
             }
 
             return GetActionResult(response);
+        }
+
+        [HttpPost("create-or-update-business-license")]
+        public async Task<IActionResult> CreateOrUpdateBusinessLicenses(
+            [FromBody] BusinessLicensesDTO payload)
+        {
+            var res = await _storeService.CreateOrUpdateBusinessLicences(payload);
+
+            return GetActionResult(res);
+        }
+
+        [HttpGet("get-business-license/{storeId}")]
+        public async Task<IActionResult> GetBusinessLicenseByStoreId(int storeId)
+        {
+            var res = await _storeService.GetBusinessLicencesByStoreId(storeId);
+
+            return GetActionResult(res);
         }
 
         [HttpGet("get-store-details-by-user-id/{userId}")]
