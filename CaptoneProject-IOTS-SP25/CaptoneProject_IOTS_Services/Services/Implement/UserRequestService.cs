@@ -111,7 +111,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 
                 try
                 {
-                    var emailTemplate = EmailTemplateConst.CreateStaffOrManagerEmailTemplate(userRequest.OtpCode, link, userRequest.Email);
+                    var emailTemplate = _emailService.GetStaffManagerOtpEmailTemplate(userRequest.OtpCode, link, userRequest.Email);
 
                     _emailService.SendEmailAsync(userRequest.Email, emailTemplate.Subject, emailTemplate.Body);
                 } catch (Exception ex)
