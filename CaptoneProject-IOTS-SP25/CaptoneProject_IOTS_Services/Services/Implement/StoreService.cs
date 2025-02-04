@@ -30,14 +30,15 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly UserRepository _userRepository;
         private readonly StoreRepository _storeRepository;
         private readonly StoreAttachmentRepository _storeAttachmentRepository;
-
+        private readonly BusinessLicenseRepository businessLicenseRepository;
         public StoreService (MyHttpAccessor _myHttpAccessor,
             IUserRequestService _userRequestService,
             UserRequestRepository _userRequestRepository,
             IUserServices _userService,
             UserRepository _userRepository,
             StoreRepository storeRepository,
-            StoreAttachmentRepository storeAttachmentRepository)
+            StoreAttachmentRepository storeAttachmentRepository,
+            BusinessLicenseRepository businessLicenseRepository)
         {
             this._myHttpAccessor = _myHttpAccessor;
             this._userRequestService = _userRequestService;
@@ -46,6 +47,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             this._userRepository = _userRepository;
             this._storeRepository = storeRepository;
             this._storeAttachmentRepository = storeAttachmentRepository;
+            this.businessLicenseRepository = businessLicenseRepository;
         }
 
         private async Task<GenericResponseDTO<StoreDetailsResponseDTO>> GetDetailsStoreById(int storeId)
@@ -149,7 +151,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             Store store = _storeRepository.GetByUserId(userId);
 
-            store = store == null ? new Store() : store;
+            store = store == null ? new Store
+            {
+                IsActive = 2 //Default is pending
+            } : store;
 
             int? loginUserId = _myHttpAccessor.GetLoginUserId();
 
@@ -160,6 +165,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             store.UpdatedBy = loginUserId;
             store.UpdatedDate = DateTime.Now;
             store.ImageUrl = payload.ImageUrl;
+            store.ContactNumber = payload.ContactNumber;
+            store.Summary = payload.Summary;
+            store.Address = payload.Address;
             //
 
             if (store.Id > 0) //Update
@@ -285,6 +293,73 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 Message = "Success",
                 StatusCode = HttpStatusCode.OK,
                 Data = PaginationMapper<Store, StoreResponseDTO>.MappingTo(StoreMapper.MapToStoreResponse, res)
+            };
+        }
+
+        public async Task<GenericResponseDTO<BusinessLicenses>> CreateOrUpdateBusinessLicences(BusinessLicensesDTO payload)
+        {
+            int storeId = payload.StoreId;
+
+            var store = _storeRepository.GetById(storeId);
+
+            if (store == null)
+                return new GenericResponseDTO<BusinessLicenses>
+                {
+                    IsSuccess = false,
+                    Message = "Not Found",
+                    StatusCode = HttpStatusCode.NotFound
+                };
+
+            var businessLicense = businessLicenseRepository.GetByStoreId(storeId);
+
+            var saveItem = BusinessLicensesMapper.MapToBusinessLicenses(payload);
+            saveItem.Id = businessLicense == null ? saveItem.Id : businessLicense.Id;
+
+            try
+            {
+                if (saveItem.Id > 0) //Update
+                    saveItem = businessLicenseRepository.Update(saveItem);
+                else //Create
+                    saveItem = businessLicenseRepository.Create(saveItem);
+
+                return new GenericResponseDTO<BusinessLicenses>
+                {
+                    IsSuccess = true,
+                    Message = "Success",
+                    StatusCode = HttpStatusCode.OK,
+                    Data = saveItem
+                };
+            } catch (Exception ex)
+            {
+                return new GenericResponseDTO<BusinessLicenses>
+                {
+                    IsSuccess = false,
+                    Message = ex.Message,
+                    StatusCode = HttpStatusCode.BadRequest
+                };
+            }
+        }
+
+        public async Task<GenericResponseDTO<BusinessLicenses>> GetBusinessLicencesByStoreId(int storeId)
+        {
+            var store = _storeRepository.GetById(storeId);
+
+            if (store == null)
+                return new GenericResponseDTO<BusinessLicenses>
+                {
+                    IsSuccess = false,
+                    Message = "Not Found Store",
+                    StatusCode = HttpStatusCode.NotFound
+                };
+
+            var res = businessLicenseRepository.GetByStoreId(storeId);
+
+            return new GenericResponseDTO<BusinessLicenses>
+            {
+                IsSuccess = false,
+                Message = "Success",
+                StatusCode = HttpStatusCode.OK,
+                Data = res
             };
         }
     }

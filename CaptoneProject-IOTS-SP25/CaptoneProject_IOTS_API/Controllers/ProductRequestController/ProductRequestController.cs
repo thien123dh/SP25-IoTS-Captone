@@ -15,73 +15,73 @@ namespace CaptoneProject_IOTS_API.Controllers.ProductRequestController
     public class ProductRequestController : ControllerBase
     {
 
-        private readonly IProductRequestService productRequestService;
+        //    private readonly IProductRequestService productRequestService;
 
-        public ProductRequestController(IProductRequestService productRequestService)
-        {
-            this.productRequestService = productRequestService;
-        }
+        //    public ProductRequestController(IProductRequestService productRequestService)
+        //    {
+        //        this.productRequestService = productRequestService;
+        //    }
 
-        private IActionResult GetActionResult(ResponseDTO response)
-        {
-            if (response.StatusCode == HttpStatusCode.Unauthorized)
-            {
-                return Unauthorized(response);
-            }
-            else if (response.StatusCode == HttpStatusCode.NotFound)
-            {
-                return NotFound(response);
-            }
-            else if (response.StatusCode == HttpStatusCode.BadRequest)
-            {
-                return BadRequest(response);
-            }
+        //    private IActionResult GetActionResult(ResponseDTO response)
+        //    {
+        //        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        //        {
+        //            return Unauthorized(response);
+        //        }
+        //        else if (response.StatusCode == HttpStatusCode.NotFound)
+        //        {
+        //            return NotFound(response);
+        //        }
+        //        else if (response.StatusCode == HttpStatusCode.BadRequest)
+        //        {
+        //            return BadRequest(response);
+        //        }
 
-            return Ok(response);
-        }
+        //        return Ok(response);
+        //    }
 
-        [HttpPost("get-paginate")]
-        public async Task<IActionResult> GetPagination([FromBody] PaginationRequest payload)
-        {
-            var response = await productRequestService.GetPaginationProductRequest(payload);
+        //    [HttpPost("get-paginate")]
+        //    public async Task<IActionResult> GetPagination([FromBody] PaginationRequest payload)
+        //    {
+        //        var response = await productRequestService.GetPaginationProductRequest(payload);
 
-            return GetActionResult(response);
-        }
+        //        return GetActionResult(response);
+        //    }
 
-        [HttpPost("submit-material-request")]
+        //    [HttpPost("submit-material-request")]
 
-        public async Task<IActionResult> SubmitMaterialRequest([FromQuery] int? productRequestId,
-            [FromBody] CreateUpdateMaterialDTO payload)
-        {
-            var response = await productRequestService.SubmitMaterialRequest(productRequestId, payload);
+        //    public async Task<IActionResult> SubmitMaterialRequest([FromQuery] int? productRequestId,
+        //        [FromBody] CreateUpdateMaterialDTO payload)
+        //    {
+        //        var response = await productRequestService.SubmitMaterialRequest(productRequestId, payload);
 
-            return GetActionResult(response);
-        }
+        //        return GetActionResult(response);
+        //    }
 
-        [HttpGet("get-product-request-by-id/{id}")]
-        public async Task<IActionResult> GetByProductRequestById(int id)
-        {
-            var response = await productRequestService.GetProductRequestById(id);
+        //    [HttpGet("get-product-request-by-id/{id}")]
+        //    public async Task<IActionResult> GetByProductRequestById(int id)
+        //    {
+        //        var response = await productRequestService.GetProductRequestById(id);
 
-            return GetActionResult(response);
-        }
+        //        return GetActionResult(response);
+        //    }
 
-        [HttpPost("approve/{id}")]
-        public async Task<IActionResult> ApproveProductRequestById(int id,
-            [FromBody] RemarkDTO payload)
-        {
-            var res = await productRequestService.ApproveOrRejectProductRequest(id, payload, isApprove: 1);
+        //    [HttpPost("approve/{id}")]
+        //    public async Task<IActionResult> ApproveProductRequestById(int id,
+        //        [FromBody] RemarkDTO payload)
+        //    {
+        //        var res = await productRequestService.ApproveOrRejectProductRequest(id, payload, isApprove: 1);
 
-            return GetActionResult(res);
-        }
+        //        return GetActionResult(res);
+        //    }
 
-        [HttpPost("reject/{id}")]
-        public async Task<IActionResult> RejectProductRequestById(int id,
-            [FromBody] RemarkDTO payload)
-        {
-            var res = await productRequestService.ApproveOrRejectProductRequest(id, payload, isApprove: 0);
+        //    [HttpPost("reject/{id}")]
+        //    public async Task<IActionResult> RejectProductRequestById(int id,
+        //        [FromBody] RemarkDTO payload)
+        //    {
+        //        var res = await productRequestService.ApproveOrRejectProductRequest(id, payload, isApprove: 0);
 
-            return GetActionResult(res);
-        }
+        //        return GetActionResult(res);
+        //    }
     }
 }

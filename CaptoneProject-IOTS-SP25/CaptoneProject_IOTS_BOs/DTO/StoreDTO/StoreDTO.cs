@@ -27,7 +27,9 @@ namespace CaptoneProject_IOTS_BOs.DTO.StoreDTO
         public class StoreRequestDTO
         {
             public string Name { get; set; }
-
+            public string? ContactNumber { set; get; }
+            public string? Address { set; get; }
+            public string? Summary { set; get; }
             public string Description { get; set; }
 
             public string? ImageUrl { set; get; }
@@ -38,18 +40,20 @@ namespace CaptoneProject_IOTS_BOs.DTO.StoreDTO
         {
             public int Id { set; get; }
             public string Name { get; set; }
+            public string? Summary { set; get; }
             public int OwnerId { get; set; }
             public string OwnerName { set; get; }
             public DateTime? CreatedDate { set; get; }
             public int? CreatedBy { set; get; }
-            public DateTime? UpdatedDate { set; get; }
-            public int? UpdatedBy { set; get; }
         }
         public class StoreDetailsResponseDTO
         {
             public int Id { set; get; }
             public string Name { get; set; }
             public string Description { get; set; }
+            public string? ContactNumber { set; get; }
+            public string? Address { set; get; }
+            public string? Summary { set; get; }
             public int OwnerId { get; set; }
             public string? ImageUrl { set; get; }
             public DateTime? CreatedDate { set; get; }

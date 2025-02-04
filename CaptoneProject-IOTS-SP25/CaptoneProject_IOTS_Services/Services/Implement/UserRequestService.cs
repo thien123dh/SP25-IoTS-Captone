@@ -353,5 +353,35 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 Data = userRequest
             };
         }
+
+        public async Task<GenericResponseDTO<UserRequestDetailsResponseDTO>> UpdateUserRequestStatus(int requestId, UserRequestStatusEnum status)
+        {
+            var updateItem = await userRequestRepository.GetById(requestId);
+
+            if (updateItem == null)
+                return new GenericResponseDTO<UserRequestDetailsResponseDTO>
+                {
+                    IsSuccess = false,
+                    Message = "Not Found",
+                    StatusCode = HttpStatusCode.NotFound
+                };
+
+            updateItem.Status = (int)status;
+
+            try
+            {
+                updateItem = userRequestRepository.Update(updateItem);
+
+                return await GetUserRequestDetailsById(updateItem.Id);
+            } catch (Exception ex)
+            {
+                return new GenericResponseDTO<UserRequestDetailsResponseDTO>
+                {
+                    IsSuccess = false,
+                    StatusCode = HttpStatusCode.BadRequest,
+                    Message = ex.Message
+                };
+            }
+        }
     }
 }

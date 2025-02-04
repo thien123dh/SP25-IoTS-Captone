@@ -24,6 +24,9 @@ namespace CaptoneProject_IOTS_Service.Mapper
                 ImageUrl = store.ImageUrl,
                 CreatedBy = store.CreatedBy,
                 CreatedDate = store.CreatedDate,
+                Summary = store.Summary,
+                ContactNumber = store.ContactNumber,
+                Address = store.Address,
                 StoreAttachments = store.StoreAttachmentsNavigation?.Select(sa => new StoreAttachmentResponseDTO
                 {
                     Id = sa.Id,
