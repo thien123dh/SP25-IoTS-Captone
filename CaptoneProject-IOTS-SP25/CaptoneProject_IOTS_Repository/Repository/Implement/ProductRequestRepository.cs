@@ -14,7 +14,7 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
         public async Task<ProductRequest> GetProductRequestById(int id)
         {
             var res = await _dbSet
-                .Include(item => item.MaterialGroupNavigation)
+                .Include(item => item.MaterialNavigation)
                 .Include(item => item.LabNavigation)
                 .Include(item => item.MaterialGroupNavigation)
                 .Include(item => item.CreatedByNavigation)

@@ -24,18 +24,18 @@ namespace CaptoneProject_IOTS_Service.Mapper
 
             if (source.ProductType == (int)ProductTypeEnum.MATERIAL)
             {
-                res.ProductName = source.MaterialNavigation.Name;
-                res.Summary = source.MaterialNavigation.Summary;
+                res.ProductName = source?.MaterialNavigation?.Name;
+                res.Summary = source?.MaterialNavigation?.Summary;
             }
             else if (source.ProductType == (int)ProductTypeEnum.MATERIAL_GROUP)
             {
-                res.ProductName = source.MaterialGroupNavigation.Name;
-                res.Summary = source.MaterialGroupNavigation.Summary;
+                res.ProductName = source?.MaterialGroupNavigation?.Name;
+                res.Summary = source?.MaterialGroupNavigation?.Summary;
             }
             else if (source.ProductType == (int)ProductTypeEnum.LAB)
             {
-                res.ProductName = source.LabNavigation.Title;
-                res.Summary = source.LabNavigation.Summary;
+                res.ProductName = source?.LabNavigation?.Title;
+                res.Summary = source?.LabNavigation?.Summary;
             }
 
             return res;
