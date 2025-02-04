@@ -27,7 +27,6 @@ namespace CaptoneProject_IOTS_BOs.DTO.UserRequestDTO
 
     public class RemarkDTO
     {
-        [Required]
         public string Remark { set; get; }
     }
 }

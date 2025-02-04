@@ -14,5 +14,12 @@ namespace CaptoneProject_IOTS_BOs.Constant
             MATERIAL_GROUP = 2,
             LAB = 3
         }
+
+        public enum ProductStatusEnum
+        {
+            INACTIVE = 0,
+            ACTIVE = 1,
+            PENDING = 2
+        }
    }
 }
