@@ -73,7 +73,7 @@ namespace CaptoneProject_IOTS_API.Controllers.MaterialController
             return GetActionResult(response);
         }
 
-        [HttpPut("update-material-/{id}")]
+        [HttpPut("update-material/{id}")]
         public async Task<IActionResult> UpdateMaterial(
             int id,
             [FromBody] CreateUpdateMaterialDTO payload

@@ -22,6 +22,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         Task<GenericResponseDTO<BusinessLicenses>> GetBusinessLicencesByStoreId(int storeId);
         Task<GenericResponseDTO<StoreDetailsResponseDTO>> CreateOrUpdateStoreByUserId(int userId, StoreRequestDTO payload);
         Task<GenericResponseDTO<StoreDetailsResponseDTO>> GetStoreDetailsByUserId(int userId);
+        Task<GenericResponseDTO<StoreDetailsResponseDTO>> GetStoreDetailsByStoreId(int storeId);
         Task<ResponseDTO> GetPaginationStores(PaginationRequest paginationRequest);
     }
 }

@@ -20,7 +20,6 @@ namespace CaptoneProject_IOTS_API.Controllers.CategoryMaterialController
             IMaterialCategoryService _materialCategoryService
         )
         {
-            //_materialCategoryService ??= new MaterialCategoryService(fileService);
             this._materialCategoryService = _materialCategoryService;
         }
 
@@ -51,9 +50,10 @@ namespace CaptoneProject_IOTS_API.Controllers.CategoryMaterialController
         }
 
         [HttpPost("get-pagination")]
-        public async Task<IActionResult> GetPaginationCategoryMaterial([FromBody] PaginationRequest payload)
+        public async Task<IActionResult> GetPaginationCategoryMaterial([FromBody] PaginationRequest payload, 
+            [FromQuery] int? statusFilter)
         {
-            var result = await _materialCategoryService.GetPaginationMaterialCategories(payload);
+            var result = await _materialCategoryService.GetPaginationMaterialCategories(payload, statusFilter);
             return GetActionResult(result);
         }
 
@@ -66,7 +66,7 @@ namespace CaptoneProject_IOTS_API.Controllers.CategoryMaterialController
 
         [HttpPost("create-material-category")]
         public async Task<IActionResult> AddCategoryMaterial(
-            [FromForm] MatertialCategoryRequestDTO payload
+            [FromBody] CreateUpdateMaterialCategoryDTO payload
         )
         {
             var response = await _materialCategoryService.CreateOrUpdateMaterialCategory(null, payload);
@@ -77,7 +77,7 @@ namespace CaptoneProject_IOTS_API.Controllers.CategoryMaterialController
         [HttpPut("update-material-category/{id}")]
         public async Task<IActionResult> UpdateMaterialCategory(
             int id,
-            [FromForm] MatertialCategoryRequestDTO payload
+            [FromBody] CreateUpdateMaterialCategoryDTO payload
         )
         {
             var response = await _materialCategoryService.CreateOrUpdateMaterialCategory(id, payload);

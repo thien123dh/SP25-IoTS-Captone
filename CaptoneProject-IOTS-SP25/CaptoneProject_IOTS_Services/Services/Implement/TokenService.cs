@@ -28,10 +28,15 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         public string GenerateToken(User user)
         {
+            int? role = user.UserRoles?.FirstOrDefault()?.Role?.Id;
+
+            if (role == null)
+                throw new Exception("User don't have role to access page");
+
             var claims = new[]
             {
                 new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Role, user.UserRoles?.FirstOrDefault()?.Role?.Label ?? "User"), // Lấy tên vai trò từ Userrole
+                new Claim(ClaimTypes.Role, user.UserRoles?.FirstOrDefault()?.Role?.Id.ToString()),
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
             };
 

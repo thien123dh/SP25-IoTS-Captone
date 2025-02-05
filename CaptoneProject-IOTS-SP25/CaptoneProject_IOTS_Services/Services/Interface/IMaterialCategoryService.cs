@@ -15,10 +15,10 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
 {
     public interface IMaterialCategoryService
     {
-        Task<ResponseDTO> CreateOrUpdateMaterialCategory(int? id, MatertialCategoryRequestDTO categoryMaterial);
+        Task<ResponseDTO> CreateOrUpdateMaterialCategory(int? id, CreateUpdateMaterialCategoryDTO categoryMaterial);
         Task<ResponseDTO> UpdateMaterialCategoryStatus(int id, int IsActive);
         Task<ResponseDTO> GetAllMaterialCategory(string searchKeyword);
-        Task<GenericResponseDTO<PaginationResponseDTO<MaterialCategory>>> GetPaginationMaterialCategories(PaginationRequest paginate);
+        Task<GenericResponseDTO<PaginationResponseDTO<MaterialCategory>>> GetPaginationMaterialCategories(PaginationRequest paginate, int? statusFilter);
         Task<GenericResponseDTO<MaterialCategory>> GetByMaterialCategoryId(int id);
     }
 }

@@ -7,6 +7,7 @@ using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
 using CaptoneProject_IOTS_Service.Mapper;
+using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using MailKit.Net.Imap;
 using Microsoft.AspNetCore.Http;
@@ -20,6 +21,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
 using static CaptoneProject_IOTS_BOs.Constant.UserRequestConstant;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace CaptoneProject_IOTS_Service.Services.Implement
 {
@@ -177,60 +179,31 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             UserRequest userRequest = await userRequestRepository.GetByEmail(email);
 
             if (userRequest == null)
-                return new ResponseDTO
-                {
-                    IsSuccess = false,
-                    StatusCode = HttpStatusCode.NotFound,
-                    Message = "User Request Email cannot be found"
-                };
+                return ResponseService<Object>.NotFound("User Request Email cannot be found");
 
             if (userRequest.Status != (int)UserRequestConstant.UserRequestStatusEnum.PENDING_TO_VERIFY_OTP)
             {
-                return new ResponseDTO
-                {
-                    IsSuccess = false,
-                    StatusCode = HttpStatusCode.BadRequest,
-                    Message = ExceptionMessage.EMAIL_ALREADY_VERIFIED
-                };
+                return ResponseService<Object>.BadRequest(ExceptionMessage.EMAIL_ALREADY_VERIFIED);
             }
 
             if (userRequest == null)
             {
-                return new ResponseDTO
-                {
-                    IsSuccess = false,
-                    StatusCode = HttpStatusCode.BadRequest,
-                    Message = "The verified email request cannot be found"
-                };
+                return ResponseService<Object>.BadRequest("The verified email request cannot be found");
             }
 
             if (otp.Trim().CompareTo(userRequest.OtpCode.Trim()) == 0)
             {
-                if (DateTime.Now > userRequest.ExpiredDate)
-                {
-                    return new ResponseDTO
-                    {
-                        IsSuccess = false,
-                        StatusCode = HttpStatusCode.BadRequest,
-                        Message = ExceptionMessage.EXPIRED_OTP
-                    };
-                } else
-                {
-                    return new ResponseDTO
-                    {
-                        IsSuccess = true,
-                        StatusCode = HttpStatusCode.OK,
-                        Message = "Ok"
-                    };
-                }
+                //if (DateTime.Now > userRequest.ExpiredDate)
+                //{
+                //    return ResponseService<Object>.BadRequest(ExceptionMessage.EXPIRED_OTP);
+                //} else
+                //{
+                //    return ResponseService<Object>.OK(null);
+                //}
+                return ResponseService<Object>.OK(null);
             }
 
-            return new ResponseDTO
-            {
-                IsSuccess = false,
-                StatusCode = HttpStatusCode.BadRequest,
-                Message = ExceptionMessage.INCORRECT_OTP
-            };
+            return ResponseService<Object>.BadRequest(ExceptionMessage.INCORRECT_OTP);
         }
 
         public async Task<GenericResponseDTO<UserRequestDetailsResponseDTO>> GetUserRequestDetailsById(int requestId)
@@ -238,32 +211,17 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             UserRequest userRequest = await userRequestRepository.GetById(requestId);
 
             if (userRequest == null)
-                return new GenericResponseDTO<UserRequestDetailsResponseDTO>
-                {
-                    IsSuccess = false,
-                    Message = ExceptionMessage.USER_REQUEST_NOT_FOUND,
-                    StatusCode = HttpStatusCode.NotFound
-                };
-
+                return ResponseService<UserRequestDetailsResponseDTO>.NotFound(ExceptionMessage.USER_REQUEST_NOT_FOUND);
+                
             var userResponse = (await _userServices.GetUserDetailsByEmail(userRequest.Email));
 
             if (!userResponse.IsSuccess)
-                return new GenericResponseDTO<UserRequestDetailsResponseDTO>
-                {
-                    IsSuccess = false,
-                    StatusCode = userResponse.StatusCode,
-                    Message = userResponse.Message
-                };
+                return ResponseService<UserRequestDetailsResponseDTO>.CastTypeErrorResponse(userResponse);
 
             UserDetailsResponseDTO? userInfo = userResponse.Data;
 
-            return new GenericResponseDTO<UserRequestDetailsResponseDTO>
-            {
-                IsSuccess = true,
-                Message = "Success",
-                StatusCode = HttpStatusCode.OK,
-                Data = UserRequestMapper.MappingToUserRequestDetailsResponseDTO(userRequest, userInfo)
-            };  
+            return ResponseService<UserRequestDetailsResponseDTO>
+                .OK(UserRequestMapper.MappingToUserRequestDetailsResponseDTO(userRequest, userInfo));
         }
 
         public async Task<GenericResponseDTO<UserRequestDetailsResponseDTO>> GetUserRequestDetailsByUserId(int userId)
@@ -336,22 +294,18 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var userRequest = await userRequestRepository.GetById(id);
 
             if (userRequest == null)
-                return new GenericResponseDTO<UserRequest>
-                {
-                    IsSuccess = false,
-                    Message = ExceptionMessage.USER_REQUEST_NOT_FOUND,
-                    StatusCode = HttpStatusCode.NotFound
-                };
+                return ResponseService<UserRequest>.NotFound(ExceptionMessage.USER_REQUEST_NOT_FOUND);           
 
-            userRequestRepository.Remove(userRequest);
-
-            return new GenericResponseDTO<UserRequest>
+            try
             {
-                IsSuccess = true,
-                Message = "Success",
-                StatusCode = HttpStatusCode.OK,
-                Data = userRequest
-            };
+                userRequestRepository.Remove(userRequest);
+
+                return ResponseService<UserRequest>.OK(userRequest);
+
+            } catch (Exception ex)
+            {
+                return ResponseService<UserRequest>.BadRequest(ex.Message);
+            }
         }
 
         public async Task<GenericResponseDTO<UserRequestDetailsResponseDTO>> UpdateUserRequestStatus(int requestId, UserRequestStatusEnum status)

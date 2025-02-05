@@ -6,6 +6,7 @@ using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
 using CaptoneProject_IOTS_Service.Mapper;
+using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -146,56 +147,45 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         }
         public async Task<ResponseDTO> LoginUserAsync(string email, string password)
         {
-            var user = await _userRepository.CheckLoginAsync(email, password); //Pass default: 123
+            var user = await _userRepository.CheckLoginAsync(email, password);
+
             if (user != null)
             {
                 var verifyPassword = _passwordHasher.VerifyHashedPassword(null, user.Password, password);
                 if (verifyPassword == PasswordVerificationResult.Failed)
                 {
-                    return new ResponseDTO
-                    {
-                        IsSuccess = false,
-                        Message = "Invalid credentials",
-                        StatusCode = HttpStatusCode.Unauthorized,
-                    }; // Invalid credentials
+                    return ResponseService<Object>.BadRequest(ExceptionMessage.INCORRECT_PASSWORD);
                 }
                 else if (user.IsActive < 1)
                 {
-                    return new ResponseDTO
-                    {
-                        IsSuccess = false,
-                        Message = ExceptionMessage.LOGIN_INACTIVE_ACCOUNT,
-                        StatusCode = HttpStatusCode.Unauthorized,
-                    };
+                    return ResponseService<Object>.UnAuthorize(ExceptionMessage.LOGIN_INACTIVE_ACCOUNT);
                 }
             }
             else
             {
-                return new ResponseDTO
-                {
-                    IsSuccess = false,
-                    Message = "User not found",
-                    StatusCode = HttpStatusCode.NotFound,
-                }; // Invalid credentials
+                return ResponseService<Object>.NotFound(ExceptionMessage.EMAIL_DOESNT_EXIST);
             }
-            var token = _tokenGenerator.GenerateToken(user);
-            return new ResponseDTO
+            try
             {
-                IsSuccess = true,
-                Message = "Login success",
-                StatusCode = HttpStatusCode.OK,
-                Data = new
+                var token = _tokenGenerator.GenerateToken(user);
+
+                return ResponseService<Object>.OK(new
                 {
                     Token = token,
                     user.Id,
                     user.Username,
                     Role = user.UserRoles?.FirstOrDefault()?.Role.Label,
+                    RoleId = user.UserRoles?.FirstOrDefault()?.Role.Id,
                     user.Email,
                     user.Address,
                     user.Phone,
                     user.IsActive,
-                }
-            };
+                });
+            } catch (Exception ex)
+            {
+                return ResponseService<Object>.UnAuthorize(ex.Message);
+            }
+            
         }
 
         public async Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserDetailsById(int id)
@@ -204,25 +194,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             if (user == null)
             {
-                return new GenericResponseDTO<UserDetailsResponseDTO>
-                {
-                    IsSuccess = false,
-                    Message = ExceptionMessage.USER_DOESNT_EXIST,
-                    StatusCode = HttpStatusCode.BadRequest
-                };
+                return ResponseService<UserDetailsResponseDTO>.BadRequest(ExceptionMessage.USER_DOESNT_EXIST);
             }
 
             var data = UserMapper.mapToUserDetailsResponse(user);
 
-            return
-                new GenericResponseDTO<UserDetailsResponseDTO>
-                {
-                    IsSuccess = true,
-                    Message = "OK",
-                    StatusCode = HttpStatusCode.OK,
-                    //Data = _map.MappingTo(user)
-                    Data = data
-                };
+            return ResponseService<UserDetailsResponseDTO>.OK(data);
         }
 
         public async Task<GenericResponseDTO<UserDetailsResponseDTO>> UpdateUserRole(int userId, List<int>? roleList)
@@ -231,12 +208,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             User user = await _userRepository.GetUserById(userId);
 
             if (user == null)
-                return new GenericResponseDTO<UserDetailsResponseDTO>
-                {
-                    IsSuccess = false,
-                    Message = ExceptionMessage.USER_DOESNT_EXIST,
-                    StatusCode = HttpStatusCode.NotFound
-                };
+                return ResponseService<UserDetailsResponseDTO>.NotFound(ExceptionMessage.USER_DOESNT_EXIST);
 
             List<UserRole>? userRoleList = user.UserRoles?.ToList();
 
@@ -264,13 +236,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             //Create user role list
             await _userRoleRepository.CreateAsync(insertUserRoleList);
 
-            return new GenericResponseDTO<UserDetailsResponseDTO>
-            {
-                IsSuccess = true,
-                Message = "Ok",
-                StatusCode = HttpStatusCode.OK,
-                Data = (await GetUserDetailsById(userId)).Data
-            };
+            return ResponseService<UserDetailsResponseDTO>.OK((await GetUserDetailsById(userId)).Data);
         }
 
         public async Task<ResponseDTO> GetUsersPagination(PaginationRequest paginationRequest, int? roleId)
@@ -293,13 +259,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     pageSize: paginationRequest.PageSize
             );
 
-            return new ResponseDTO
-            {
-                IsSuccess = true,
-                Message = "Ok",
-                StatusCode = HttpStatusCode.OK,
-                Data = PaginationMapper<User, UserResponseDTO>.MappingTo(UserMapper.mapToUserResponse, source: response)
-            };
+            return ResponseService<Object>
+                .OK(PaginationMapper<User, UserResponseDTO>.MappingTo(UserMapper.mapToUserResponse, source: response));
         }
         
         //set id = 0 to create new
@@ -309,62 +270,42 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             if (user != null)
             {
-                return new GenericResponseDTO<UserResponseDTO>
-                {
-                    IsSuccess = false,
-                    StatusCode = HttpStatusCode.BadRequest,
-                    Message = ExceptionMessage.USER_EXIST_EXCEPTION
-                };
+                return ResponseService<UserResponseDTO>.BadRequest(ExceptionMessage.USER_EXIST_EXCEPTION);
             }
 
             int? loginUserId = GetLoginUserId();
 
-            //UserDetailsResponseDTO? loginUser = (await GetUserLoginInfo())?.Data;
+            user = user == null ? new User() : user;
 
-            user = new User
-            {
-                Email = payload.Email,
-                Fullname = payload.Fullname,
-                Username = payload.Email,
-                Password = (user == null) ? "" : user.Password,
-                Phone = payload.Phone,
-                Address = payload.Address,
-                CreatedBy = loginUserId,
-                CreatedDate = DateTime.Now,
-                UpdatedBy = loginUserId,
-                UpdatedDate = DateTime.Now,
-                IsActive = isActive
-            };
+            //Set Data
+            user.Email = payload.Email;
+            user.Fullname = payload.Fullname;
+            user.Username = payload.Email;
+            user.Phone = payload.Phone;
+            user.Address = payload.Address;
+            user.UpdatedDate = DateTime.Now;
+            user.IsActive = isActive;
+            user.UpdatedBy = loginUserId;
+            //Set Data
 
-            user.Id = (id > 0) ? id : user.Id;
-
-            User newUser;
             try
             {
-                newUser = _userRepository.Create(user);
+                if (user.Id > 0) //Update
+                    user = _userRepository.Update(user);
+                else //Create
+                    user = _userRepository.Create(user);
 
-                ResponseDTO response = await UpdateUserRole(newUser.Id, [payload.RoleId]);
+                ResponseDTO response = await UpdateUserRole(user.Id, [payload.RoleId]);
 
                 if (!response.IsSuccess)
                     throw new Exception(response.Message);
             }
             catch (Exception ex)
             {
-                return new GenericResponseDTO<UserResponseDTO>
-                {
-                    IsSuccess = false,
-                    StatusCode = HttpStatusCode.BadRequest,
-                    Message = ex.Message
-                };
+                return ResponseService<UserResponseDTO>.BadRequest(ex.Message);
             }
 
-            return new GenericResponseDTO<UserResponseDTO>
-            {
-                IsSuccess = true,
-                StatusCode = HttpStatusCode.OK,
-                Data = UserMapper.mapToUserResponse(newUser),
-                Message = "Success"
-            };
+            return ResponseService<UserResponseDTO>.OK(UserMapper.mapToUserResponse(user));
         }
 
         //TODO GET LOGIN USER
@@ -374,9 +315,29 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             return loginUserId;
         }
-        public Task<ResponseDTO> UserChangePassword(ChangePasswordRequestDTO payload)
+        public async Task<ResponseDTO> UserChangePassword(ChangePasswordRequestDTO payload)
         {
-            throw new NotImplementedException();
+            User? loginUser = GetLoginUser();
+
+            if (loginUser == null)
+                return ResponseService<Object>.UnAuthorize(ExceptionMessage.SESSION_EXPIRED);
+
+            try
+            {
+                var verifyPassword = _passwordHasher.VerifyHashedPassword(null, loginUser.Password, payload.OldPassword);
+
+                if (verifyPassword == PasswordVerificationResult.Failed)
+                    return ResponseService<Object>.BadRequest("Incorrect current password. Please try again");
+                else
+                {
+                    return await UpdateUserPassword(loginUser.Id, payload.NewPassword);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return ResponseService<Object>.BadRequest(ex.Message);
+            }
         }
 
         public async Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserDetailsByEmail(string email)
@@ -384,12 +345,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             User user = await _userRepository.GetUserByEmail(email);
 
             if (user == null)
-                return new GenericResponseDTO<UserDetailsResponseDTO>
-                {
-                    IsSuccess = false,
-                    Message = ExceptionMessage.USER_DOESNT_EXIST,
-                    StatusCode = HttpStatusCode.NotFound
-                };
+                return ResponseService<UserDetailsResponseDTO>.NotFound(ExceptionMessage.USER_DOESNT_EXIST);
 
             return await GetUserDetailsById(user.Id);
         }

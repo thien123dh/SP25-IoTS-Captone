@@ -27,6 +27,6 @@ namespace CaptoneProject_IOTS_BOs.DTO.UserRequestDTO
     public class UserRequestDetailsResponseDTO
     {
         public UserRequestResponseDTO userRequestInfo { set; get; }
-        public UserDetailsResponseDTO userDetails {set; get;}
+        public UserDetailsResponseDTO? userDetails {set; get;}
     }
 }

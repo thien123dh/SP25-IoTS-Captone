@@ -47,9 +47,10 @@ namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
 
     public class MaterialItemDTO
     {
+        public string Id { set; get; }
         public string Name { get; set; }
         public string Summary { get; set; }
-        public MaterialCategory Category { get; set; }
+        public MaterialCategory? Category { set; get; }
         public Store? StoreNavigation { set; get; }
         public int? Quantity { get; set; }
         public decimal Price { get; set; }
@@ -64,10 +65,8 @@ namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
         public string Summary { set; get; }
 
         public string Description { get; set; }
-
-        public Store StoreNavigation { set; get; }
-
-        public MaterialCategory Category { get; set; }
+        public Store? StoreNavigation { set; get; }
+        public MaterialCategory? Category { get; set; }
 
         public string Manufacturer { get; set; }
 
@@ -90,6 +89,6 @@ namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
         public DateTime CreatedDate { set; get; }
         public DateTime UpdatedDate { set; get; }
         public int? ProductStatus { set; get; }
-        public List<AttachmentsDTO> MaterialAttachments { set; get; }
+        public List<AttachmentsDTO>? MaterialAttachments { set; get; }
     }
 }

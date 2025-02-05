@@ -8,8 +8,9 @@ namespace CaptoneProject_IOTS_BOs.Constant
 {
     public static class ExceptionMessage
     {
+        public static string SESSION_EXPIRED = "Your session is expired. Please login";
         public static string USER_EXIST_EXCEPTION = "User is existing";
-
+        public static string EMAIL_DOESNT_EXIST = "Email doesn't exist";
         public static string USER_DOESNT_EXIST = "User does not exist";
 
         public static string INVALID_STORE_ROLE = "The role must be store";
@@ -27,7 +28,7 @@ namespace CaptoneProject_IOTS_BOs.Constant
         public static string INCORRECT_OTP = "The entered otp was incorrect. Please try again";
 
         public static string LOGIN_INACTIVE_ACCOUNT = "Your account was inactive. Please contact with admin to activate";
-
+        public static string INCORRECT_PASSWORD = "Your password is incorrect";
         public static string MATERIAL_CATEGORY_NOTFOUND = "Cannot find material category";
         public static string MATERIAL_NOTFOUND = "Cannot find material";
 

@@ -39,7 +39,6 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
 
             return Ok(response);
         }
-
         public StoreController(IStoreService _storeService,
             IUserRequestService userRequestService,
             IActivityLogService activityLogService)
@@ -110,6 +109,14 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         public async Task<IActionResult> GetStoreDetailsByUserId(int userId)
         {
             var response = await _storeService.GetStoreDetailsByUserId(userId);
+
+            return GetActionResult(response);
+        }
+
+        [HttpGet("get-store-details-by-store-id/{storeId}")]
+        public async Task<IActionResult> GetStoreDetailsByStoreId(int storeId)
+        {
+            var response = await _storeService.GetStoreDetailsByStoreId(storeId);
 
             return GetActionResult(response);
         }

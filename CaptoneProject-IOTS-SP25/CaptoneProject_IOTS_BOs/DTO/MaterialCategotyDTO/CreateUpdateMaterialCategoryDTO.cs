@@ -8,12 +8,11 @@ using System.Threading.Tasks;
 
 namespace CaptoneProject_IOTS_BOs.DTO.MaterialCategotyDTO
 {
-    public class MatertialCategoryRequestDTO
+    public class CreateUpdateMaterialCategoryDTO
     {
         [JsonRequired]
         public string Label { get; set; }
         public string Description { set; get; }
         public string? ImageUrl { set; get; }
-        public IFormFile? Image { get; set; }
     }
 }

@@ -77,8 +77,9 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
 
             return GetActionResult(response);
         }
+
         [HttpPut("update-user-role/{id}")]
-        public async Task<IActionResult> UpdateUserRole (
+        public async Task<IActionResult> UpdateUserRole(
             int id,
             [FromBody] UpdateUserRoleRequestDTO payload)
         {
@@ -91,6 +92,7 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
 
             return GetActionResult(response);
         }
+
         [HttpPut("activate-user/{id}")]
         public async Task<IActionResult> ActivateUser(int id)
         {
@@ -109,6 +111,16 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
 
             return GetActionResult(response);
         }
+
+        [HttpPut("update-password")]
+        [Authorize]
+        public async Task<IActionResult> UpdateLoginUserPassword([FromBody] ChangePasswordRequestDTO payload)
+        {
+            var res = await _userService.UserChangePassword(payload);
+
+            return GetActionResult(res);
+        }
+
         [HttpPut("deactive-user/{id}")]
         public async Task<IActionResult> DeactiveUser(int id)
         {
