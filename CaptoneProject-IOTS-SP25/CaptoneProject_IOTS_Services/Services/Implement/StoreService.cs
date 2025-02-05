@@ -7,6 +7,7 @@ using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
 using CaptoneProject_IOTS_Service.Mapper;
+using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Http;
 using System;
@@ -361,6 +362,16 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 StatusCode = HttpStatusCode.OK,
                 Data = res
             };
+        }
+
+        public async Task<GenericResponseDTO<StoreDetailsResponseDTO>> GetStoreDetailsByStoreId(int storeId)
+        {
+            var store = _storeRepository.GetById(storeId);
+
+            if (store == null)
+                return ResponseService<StoreDetailsResponseDTO>.NotFound("Store doesn't exist");
+
+            return await  GetStoreDetailsByUserId(store.OwnerId);
         }
     }
 }
