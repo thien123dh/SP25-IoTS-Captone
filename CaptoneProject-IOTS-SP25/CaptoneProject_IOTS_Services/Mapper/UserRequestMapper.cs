@@ -30,13 +30,12 @@ namespace CaptoneProject_IOTS_Service.Mapper
             };
         }
 
-        public static UserRequestDetailsResponseDTO MappingToUserRequestDetailsResponseDTO(UserRequest userRequest, UserDetailsResponseDTO userDetails)
+        public static UserRequestDetailsResponseDTO MappingToUserRequestDetailsResponseDTO(UserRequest userRequest, UserDetailsResponseDTO? userDetails)
         {
             return new UserRequestDetailsResponseDTO
             {
                 userRequestInfo = MappingToUserRequestResponseDTO(userRequest),
                 userDetails = userDetails
-
             };
         }
     }

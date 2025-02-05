@@ -1,4 +1,5 @@
-﻿using CaptoneProject_IOTS_BOs.DTO.UserDTO;
+﻿using CaptoneProject_IOTS_BOs;
+using CaptoneProject_IOTS_BOs.DTO.UserDTO;
 using CaptoneProject_IOTS_Service.Services.Implement;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Mvc;
@@ -17,15 +18,8 @@ namespace CaptoneProject_IOTS_API.Controllers.LoginController
             _userService = userService;
         }
 
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDTO request)
+        private IActionResult GetActionResult(ResponseDTO response)
         {
-            if (request == null)
-            {
-                return BadRequest("Invalid request");
-            }
-
-            var response = await _userService.LoginUserAsync(request.Email, request.Password);
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
                 return Unauthorized(response);
@@ -34,8 +28,20 @@ namespace CaptoneProject_IOTS_API.Controllers.LoginController
             {
                 return NotFound(response);
             }
+            else if (response.StatusCode == HttpStatusCode.BadRequest)
+            {
+                return BadRequest(response);
+            }
 
             return Ok(response);
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDTO request)
+        {
+            var response = await _userService.LoginUserAsync(request.Email, request.Password);
+
+            return GetActionResult(response);
         }
     }
 }

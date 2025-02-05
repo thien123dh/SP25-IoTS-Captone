@@ -6,6 +6,7 @@ using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
 using CaptoneProject_IOTS_Service.Business;
 using CaptoneProject_IOTS_Service.Mapper;
+using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using System;
 using System.Collections.Generic;
@@ -136,29 +137,18 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var res = materialRepository.GetById(id);
 
             if (res == null)
-                return new GenericResponseDTO<MaterialDetailsResponseDTO>
-                {
-                    IsSuccess = false,
-                    Message = "Not Found",
-                    StatusCode = System.Net.HttpStatusCode.NotFound
-                };
+                return ResponseService<MaterialDetailsResponseDTO>.NotFound("Not Found");
 
             List<Attachment>? attachments = attachmentRepository.GetAttachmentsByEntityId(id, (int)EntityTypeEnum.MATERIAL);
 
             MaterialDetailsResponseDTO result = MaterialMapper.MapToMaterialDetailsResponseDTO(res, attachments);
 
-            return new GenericResponseDTO<MaterialDetailsResponseDTO>
-            {
-                IsSuccess = true,
-                Message = "Success",
-                StatusCode = System.Net.HttpStatusCode.OK,
-                Data = result
-            };
+            return ResponseService<MaterialDetailsResponseDTO>.OK(result);
         }
 
         public async Task<GenericResponseDTO<PaginationResponseDTO<MaterialItemDTO>>> GetPaginationMaterial(PaginationRequest paginate)
         {
-            PaginationResponseDTO<Material> res = materialRepository.GetPaginate(
+            var res = materialRepository.GetPaginate(
                 filter: m => m.Name.Contains(paginate.SearchKeyword),
                 orderBy: orderBy => orderBy.OrderByDescending(item => item.CreatedDate),
                 includeProperties: "StoreNavigation,Category",
@@ -166,13 +156,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 pageSize: paginate.PageSize
             );
 
-            return new GenericResponseDTO<PaginationResponseDTO<MaterialItemDTO>>
-            {
-                IsSuccess = true,
-                Message = "Success",
-                StatusCode = System.Net.HttpStatusCode.OK,
-                Data = PaginationMapper<Material, MaterialItemDTO>.MappingTo(MaterialMapper.MapToMaterialItemDTO, res)
-            };
+            return ResponseService<PaginationResponseDTO<MaterialItemDTO>>
+                .OK(PaginationMapper<Material, MaterialItemDTO>.MappingTo(MaterialMapper.MapToMaterialItemDTO, res));
         }
 
         public async Task<ResponseDTO> UpdateMaterialStatus(int id, int IsActive)
@@ -180,6 +165,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             Material res = materialRepository.GetById(id);
 
             if (res == null)
+
                 return new ResponseDTO
                 {
                     IsSuccess = false,
@@ -199,12 +185,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var material = materialRepository.GetById(id);
 
             if (material == null)
-                return new GenericResponseDTO<MaterialDetailsResponseDTO>
-                {
-                    IsSuccess = false,
-                    Message = "Not Found",
-                    StatusCode = System.Net.HttpStatusCode.NotFound
-                };
+                ResponseService<MaterialDetailsResponseDTO>.NotFound("Not Found");
 
             material.IsActive = (int)status;
 

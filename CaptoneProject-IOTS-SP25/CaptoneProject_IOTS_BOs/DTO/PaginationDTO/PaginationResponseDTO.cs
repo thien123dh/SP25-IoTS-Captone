@@ -18,9 +18,9 @@ namespace CaptoneProject_IOTS_BOs.DTO.PaginationDTO
     public class PaginationRequest
     {
         [Required]
-        public int PageIndex { set; get; }
+        public int PageIndex { set; get; } = 1;
         [Required]
-        public int PageSize { set; get; }
+        public int PageSize { set; get; } = 50;
         public string SearchKeyword { set; get; } = "";
         public DateTime? StartFilterDate { set; get; }
         public DateTime? EndFilterDate { set; get; }

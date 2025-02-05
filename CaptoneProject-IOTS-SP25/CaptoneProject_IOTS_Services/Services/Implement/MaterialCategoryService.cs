@@ -5,6 +5,7 @@ using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
 using CaptoneProject_IOTS_Service.Business;
+using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Http;
 using System;
@@ -31,28 +32,17 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             this.materialCategoryRepository = materialCategoryRepository;
         }
 
-        public async Task<ResponseDTO> CreateOrUpdateMaterialCategory(int? id, MatertialCategoryRequestDTO payload)
+        public async Task<ResponseDTO> CreateOrUpdateMaterialCategory(int? id, CreateUpdateMaterialCategoryDTO payload)
         {
-            var image = payload.Image;
-            var imageResponse = (image == null) ? null : await fileService.UploadFile(image);
-
-            if (imageResponse != null && !imageResponse.IsSuccess)
-                return imageResponse;
-
             MaterialCategory materialCategory = (id == null) ? new MaterialCategory() : materialCategoryRepository.GetById((int)id);
 
-            if (materialCategory == null && id != null)
-                return new ResponseDTO
-                {
-                    IsSuccess = false,
-                    StatusCode = System.Net.HttpStatusCode.NotFound,
-                    Message = ExceptionMessage.MATERIAL_CATEGORY_NOTFOUND
-                };
+            if (materialCategory == null)
+                return ResponseService<Object>.NotFound(ExceptionMessage.MATERIAL_CATEGORY_NOTFOUND);
 
             try
             {
                 materialCategory.Label = payload.Label;
-                materialCategory.ImageUrl = (imageResponse != null) ? imageResponse?.Data?.Id : payload.ImageUrl;
+                materialCategory.ImageUrl = payload.ImageUrl;
 
                 MaterialCategory? response;
 
@@ -61,21 +51,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 else //Create
                     response = materialCategoryRepository.Create(materialCategory);
 
-                return new ResponseDTO
-                {
-                    IsSuccess = true,
-                    StatusCode = System.Net.HttpStatusCode.OK,
-                    Data = await GetByMaterialCategoryId(response.Id)
-                };
+                return await GetByMaterialCategoryId(response.Id);
             }
             catch (Exception ex)
             {
-                return new ResponseDTO
-                {
-                    IsSuccess = false,
-                    StatusCode = System.Net.HttpStatusCode.BadRequest,
-                    Message = ex.Message
-                };
+                return ResponseService<Object>.BadRequest(ex.Message);
             }
         }
 
@@ -113,39 +93,23 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var res = materialCategoryRepository.GetById(id);
 
             if (res == null)
-                return new GenericResponseDTO<MaterialCategory>
-                {
-                    IsSuccess = false,
-                    Message = "Not Found",
-                    StatusCode = System.Net.HttpStatusCode.NotFound
-                };
+                return ResponseService<MaterialCategory>.NotFound("Not Found");
 
-            return new GenericResponseDTO<MaterialCategory>
-            {
-                IsSuccess = true,
-                Message = "Success",
-                StatusCode = System.Net.HttpStatusCode.OK,
-                Data = res
-            };
+            return ResponseService<MaterialCategory>.OK(res);
         }
 
-        public async Task<GenericResponseDTO<PaginationResponseDTO<MaterialCategory>>> GetPaginationMaterialCategories(PaginationRequest paginate)
+        public async Task<GenericResponseDTO<PaginationResponseDTO<MaterialCategory>>> GetPaginationMaterialCategories(PaginationRequest paginate, int? statusFilter)
         {
             PaginationResponseDTO<MaterialCategory> res = materialCategoryRepository.GetPaginate(
-                filter: m => m.Label.Contains(paginate.SearchKeyword),
-                orderBy: null,
+                filter: m => m.Label.Contains(paginate.SearchKeyword)
+                    && (statusFilter == null || m.IsActive == statusFilter),
+                orderBy: orderBy => orderBy.OrderByDescending(item => item.Id),
                 includeProperties: "",
                 pageIndex: paginate.PageIndex,
                 pageSize: paginate.PageSize
             );
 
-            return new GenericResponseDTO<PaginationResponseDTO<MaterialCategory>>
-            {
-                IsSuccess = true,
-                Message = "Success",
-                StatusCode = System.Net.HttpStatusCode.OK,
-                Data = res
-            };
+            return ResponseService<PaginationResponseDTO<MaterialCategory>>.OK(res);
         }
 
         public async Task<ResponseDTO> UpdateMaterialCategoryStatus(int id, int isActive)

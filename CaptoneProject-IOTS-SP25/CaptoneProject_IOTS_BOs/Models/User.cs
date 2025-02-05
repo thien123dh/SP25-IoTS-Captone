@@ -24,11 +24,11 @@ public partial class User
 
     public int? CreatedBy { get; set; }
 
-    public DateTime? CreatedDate { get; set; }
+    public DateTime? CreatedDate { get; set; } = DateTime.Now;
 
     public int? UpdatedBy { get; set; }
 
-    public DateTime? UpdatedDate { get; set; }
+    public DateTime? UpdatedDate { get; set; } = DateTime.Now;
 
     public int IsActive { get; set; }
 
