@@ -31,7 +31,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         UserRepository userRepository;
         const int OTP_EXPIRED_MINUTES = 60;
         private readonly IEmailService _emailService;
-        private readonly MyHttpAccessor myHttpAccessor;
         private readonly IUserServices _userServices;
         private readonly IEnvironmentService environmentService;
         public UserRequestService
@@ -39,15 +38,13 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             UserRequestRepository userRequestRepository,
             IEmailService emailService,
             UserRepository userRepository,
-            MyHttpAccessor myHttpAccessor,
             IUserServices _userServices,
             IEnvironmentService environmentService
         )
         {
             this.userRequestRepository = userRequestRepository;
-            _emailService = emailService;
+            this._emailService = emailService;
             this.userRepository = userRepository;
-            this.myHttpAccessor = myHttpAccessor;
             this._userServices = _userServices;
             this.environmentService = environmentService;
         }
@@ -69,16 +66,15 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         public async Task<GenericResponseDTO<UserRequestResponseDTO>> CreateOrUpdateUserRequest(UserRequestRequestDTO payload)
         {
+            int? loginUserId = _userServices.GetLoginUserId();
+            
             UserRequest? userRequest = await userRequestRepository.GetByEmail(payload.Email);
 
             userRequest = (userRequest == null) ? new UserRequest() : userRequest;
-
-            userRequest.ActionBy = myHttpAccessor.GetLoginUserId();
-
+            
+            userRequest.ActionBy = loginUserId;
             userRequest.Status = payload.UserRequestStatus;
-
             userRequest.Email = payload.Email;
-
             userRequest.RoleId = payload.RoleId;
 
             if (payload.UserRequestStatus == (int) UserRequestConstant.UserRequestStatusEnum.PENDING_TO_VERIFY_OTP)
@@ -90,15 +86,17 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 userRequest.ExpiredDate = DateTime.Now.AddMinutes(OTP_EXPIRED_MINUTES);
             }
 
-            if (userRequest.Id > 0)
+            if (userRequest.Id > 0) //Update
             {
                 userRequest.ActionDate = DateTime.Now;
-                
+
                 userRequestRepository.Update(userRequest);
             }
             else
             {
                 userRequest.CreatedDate = DateTime.Now;
+                userRequest.CreatedBy = loginUserId;
+
                 userRequestRepository.Create(userRequest);
             }
 
@@ -119,25 +117,16 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 {
 
                 }
-                
-                return new GenericResponseDTO<UserRequestResponseDTO>
-                {
-                    IsSuccess = true,
-                    StatusCode = HttpStatusCode.OK,
-                    Data = UserRequestMapper.MappingToUserRequestResponseDTO(response)
-                };
+
+                return ResponseService<UserRequestResponseDTO>.OK(UserRequestMapper.MappingToUserRequestResponseDTO(response));
+            
             } catch (Exception ex)
             {
-                return new GenericResponseDTO<UserRequestResponseDTO>
-                {
-                    IsSuccess = false,
-                    Message = ex.Message,
-                    StatusCode = HttpStatusCode.BadRequest
-                };
+                return ResponseService<UserRequestResponseDTO>.BadRequest(ex.Message);
             }
             
         }
-
+        
         public async Task<ResponseDTO> GetUserRequestPagination(int? userRequestStatusFilter, 
             PaginationRequest paginationRequest)
         {
@@ -149,7 +138,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     &&
                     (
                         (
-                            ur.RoleId == (int)RoleEnum.STAFF
+                            ur.RoleId == (int)RoleEnum.STAFF || ur.RoleId == (int)RoleEnum.MANAGER
                         ) || (
                             ur.Status != (int)UserRequestStatusEnum.PENDING_TO_VERIFY_OTP
                             &&
@@ -165,13 +154,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 pageSize: paginationRequest.PageSize
             );
 
-            return new ResponseDTO
-            {
-                IsSuccess = true,
-                StatusCode = HttpStatusCode.OK,
-                Data = PaginationMapper<UserRequest, UserRequestResponseDTO>
-                    .MappingTo(UserRequestMapper.MappingToUserRequestResponseDTO, paginationData)
-            };
+            return ResponseService<Object>
+                .OK(PaginationMapper<UserRequest, UserRequestResponseDTO>
+                    .MappingTo(UserRequestMapper.MappingToUserRequestResponseDTO, paginationData));
+            
         }
 
         public async Task<ResponseDTO> VerifyOTP(string email, string otp)
@@ -238,29 +224,18 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var userRequest = await userRequestRepository.GetById(requestId);
 
             if (userRequest == null)
-                return new GenericResponseDTO<UserRequestDetailsResponseDTO>
-                {
-                    IsSuccess = false,
-                    Message = ExceptionMessage.USER_REQUEST_NOT_FOUND,
-                    StatusCode = HttpStatusCode.NotFound
-                };
+                return ResponseService<UserRequestDetailsResponseDTO>
+                    .NotFound(ExceptionMessage.USER_REQUEST_NOT_FOUND);
+                
 
             if (userRequest.Status != (int)UserRequestStatusEnum.PENDING_TO_APPROVE)
-                return new GenericResponseDTO<UserRequestDetailsResponseDTO>
-                {
-                    IsSuccess = false,
-                    Message = "User Request Status must be Pending to Approve",
-                    StatusCode = HttpStatusCode.BadRequest
-                };
+                return ResponseService<UserRequestDetailsResponseDTO>
+                    .BadRequest("User Request Status must be Pending to Approve");
 
             if (isApprove <= 0 && (remark == null || remark.Trim() == ""))
             {
-                return new GenericResponseDTO<UserRequestDetailsResponseDTO>
-                {
-                    IsSuccess = false,
-                    Message = "Please enter the reason why you rejected",
-                    StatusCode = HttpStatusCode.BadRequest
-                };
+                return ResponseService<UserRequestDetailsResponseDTO>
+                    .BadRequest("Please enter the reason why you rejected");
             }
 
             try
@@ -271,12 +246,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
             catch (Exception ex)
             {
-                return new GenericResponseDTO<UserRequestDetailsResponseDTO>
-                {
-                    IsSuccess = false,
-                    Message = ex.Message,
-                    StatusCode = HttpStatusCode.BadRequest
-                };
+                return ResponseService<UserRequestDetailsResponseDTO>
+                    .BadRequest(ex.Message);
             }
 
             if (isApprove > 0)
@@ -313,12 +284,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var updateItem = await userRequestRepository.GetById(requestId);
 
             if (updateItem == null)
-                return new GenericResponseDTO<UserRequestDetailsResponseDTO>
-                {
-                    IsSuccess = false,
-                    Message = "Not Found",
-                    StatusCode = HttpStatusCode.NotFound
-                };
+                return ResponseService<UserRequestDetailsResponseDTO>
+                    .NotFound(ExceptionMessage.USER_REQUEST_NOT_FOUND);
 
             updateItem.Status = (int)status;
 
@@ -327,14 +294,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 updateItem = userRequestRepository.Update(updateItem);
 
                 return await GetUserRequestDetailsById(updateItem.Id);
+
             } catch (Exception ex)
             {
-                return new GenericResponseDTO<UserRequestDetailsResponseDTO>
-                {
-                    IsSuccess = false,
-                    StatusCode = HttpStatusCode.BadRequest,
-                    Message = ex.Message
-                };
+                return ResponseService<UserRequestDetailsResponseDTO>
+                    .NotFound(ex.Message);
             }
         }
     }
