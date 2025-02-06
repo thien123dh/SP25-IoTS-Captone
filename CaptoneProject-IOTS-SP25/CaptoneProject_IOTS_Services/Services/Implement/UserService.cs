@@ -286,6 +286,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             user.UpdatedDate = DateTime.Now;
             user.IsActive = isActive;
             user.UpdatedBy = loginUserId;
+            user.UpdatedDate = DateTime.Now;
             //Set Data
 
             try
