@@ -252,7 +252,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 {
                     Email = userInfo.Email,
                     UserRequestStatus = (int)UserRequestStatusEnum.VERIFIED_OTP,
-                    RoleId = (int)RoleEnum.CUSTOMER
+                    RoleId = (int)RoleEnum.STORE
                 });
 
             await _userService.UpdateUserPassword(response.Data?.Id == null ? 0 : response.Data.Id, payload.Password);
