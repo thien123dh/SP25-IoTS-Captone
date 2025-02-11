@@ -313,22 +313,33 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var businessLicense = businessLicenseRepository.GetByStoreId(storeId);
 
-            var saveItem = BusinessLicensesMapper.MapToBusinessLicenses(payload);
-            saveItem.Id = businessLicense == null ? saveItem.Id : businessLicense.Id;
+            businessLicense = businessLicense == null ? new BusinessLicenses() : businessLicense;
+
+            //var saveItem = BusinessLicensesMapper.MapToBusinessLicenses(payload);
+            //saveItem.Id = businessLicense == null ? saveItem.Id : businessLicense.Id;
+
+            businessLicense.BackIdentification = payload.BackIdentification;
+            businessLicense.FrontIdentification = payload.FrontIdentification;
+            businessLicense.BusinessLicences = payload.BusinessLicences;
+            businessLicense.LiscenseNumber = payload.LiscenseNumber;
+            businessLicense.storeId = payload.StoreId;
+            businessLicense.IssueDate = payload.IssueDate;
+            businessLicense.ExpiredDate = payload.ExpiredDate;
+            businessLicense.IssueBy = payload.IssueBy;
 
             try
             {
-                if (saveItem.Id > 0) //Update
-                    saveItem = businessLicenseRepository.Update(saveItem);
+                if (businessLicense.Id > 0) //Update
+                    businessLicense = businessLicenseRepository.Update(businessLicense);
                 else //Create
-                    saveItem = businessLicenseRepository.Create(saveItem);
+                    businessLicense = businessLicenseRepository.Create(businessLicense);
 
                 return new GenericResponseDTO<BusinessLicenses>
                 {
                     IsSuccess = true,
                     Message = "Success",
                     StatusCode = HttpStatusCode.OK,
-                    Data = saveItem
+                    Data = businessLicense
                 };
             } catch (Exception ex)
             {
@@ -346,22 +357,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var store = _storeRepository.GetById(storeId);
 
             if (store == null)
-                return new GenericResponseDTO<BusinessLicenses>
-                {
-                    IsSuccess = false,
-                    Message = "Not Found Store",
-                    StatusCode = HttpStatusCode.NotFound
-                };
+                return ResponseService<BusinessLicenses>.NotFound("Store cannot be found");
 
             var res = businessLicenseRepository.GetByStoreId(storeId);
 
-            return new GenericResponseDTO<BusinessLicenses>
-            {
-                IsSuccess = false,
-                Message = "Success",
-                StatusCode = HttpStatusCode.OK,
-                Data = res
-            };
+            if (res == null)
+                return ResponseService<BusinessLicenses>.NotFound("License cannot be found");
+
+            return ResponseService<BusinessLicenses>.OK(res);
         }
 
         public async Task<GenericResponseDTO<StoreDetailsResponseDTO>> GetStoreDetailsByStoreId(int storeId)
