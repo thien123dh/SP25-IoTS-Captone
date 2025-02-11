@@ -243,7 +243,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         {
             PaginationResponseDTO<User> response = _userRepository.GetPaginate(
                     filter: user => (
-                        ((roleId == null) || user.UserRoles.SingleOrDefault(userRole => userRole.RoleId == roleId) != null)
+                    !user.UserRoles.Any(userRole => userRole.RoleId == 1) &&
+                    ((roleId == null) || user.UserRoles.SingleOrDefault(userRole => userRole.RoleId == roleId) != null)
                         &&
                         (
                             user.Email.Contains(paginationRequest.SearchKeyword)
