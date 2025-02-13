@@ -12,6 +12,7 @@ using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -211,6 +212,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         {
             string otp = payload.Otp;
             CreateUserDTO userInfo = payload.UserInfomation;
+            int? loginUserId = _userService.GetLoginUserId();
 
             if (payload.UserInfomation.RoleId != (int)RoleEnum.STORE)
                 return new GenericResponseDTO<UserResponseDTO>
@@ -256,6 +258,32 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 });
 
             await _userService.UpdateUserPassword(response.Data?.Id == null ? 0 : response.Data.Id, payload.Password);
+            
+            try
+            {
+                //Auto create store information
+                var store = new Store
+                {
+                    OwnerId = response.Data.Id,
+                    CreatedBy = loginUserId,
+                    UpdatedBy = loginUserId,
+                    IsActive = 0
+                };
+
+                store = _storeRepository.Create(store);
+
+                var license = new BusinessLicenses
+                {
+                    storeId = store.Id
+                };
+
+                //Auto create default lisences
+                businessLicenseRepository.Create(license);
+
+            } catch (Exception e)
+            {
+                return ResponseService<UserResponseDTO>.BadRequest(e.Message);
+            }
 
             return response;
         }
