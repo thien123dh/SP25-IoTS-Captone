@@ -41,6 +41,6 @@ namespace CaptoneProject_IOTS_BOs.Constant
 
     public static class ActivityLogMessageConstant
     {
-        public static string ACTIVITY_LOG_MESSAGE_TEMPLATE = "{S} {Action} {Target}";
+        public static string ACTIVITY_LOG_MESSAGE_TEMPLATE = "{S} {Action} '{Target}'";
     }
 }
