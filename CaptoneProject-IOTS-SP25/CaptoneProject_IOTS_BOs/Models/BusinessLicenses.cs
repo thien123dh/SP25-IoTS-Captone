@@ -22,19 +22,19 @@ namespace CaptoneProject_IOTS_BOs.Models
 
         [Column("front_identification")]
         [MaxLength(1000)]
-        public string FrontIdentification { set; get; }
+        public string FrontIdentification { set; get; } = "";
 
         [Column("back_identification")]
         [MaxLength(1000)]
-        public string BackIdentification { set; get; }
+        public string BackIdentification { set; get; } = "";
 
         [Column("business_listenses")]
         [MaxLength(1000)]
-        public string BusinessLicences { set; get; }
+        public string BusinessLicences { set; get; } = "";
 
         [Column("license_number")]
         [MaxLength(100)]
-        public string LiscenseNumber { set; get; }
+        public string LiscenseNumber { set; get; } = "";
 
         [Column("issue_date")]
         public DateTime IssueDate { set; get; }
@@ -44,7 +44,7 @@ namespace CaptoneProject_IOTS_BOs.Models
 
         [Column("issue_by")]
         [MaxLength(255)]
-        public string IssueBy { set; get; }
+        public string IssueBy { set; get; } = "";
 
         [JsonIgnore]
         public virtual Store StoreNavigation { set; get; }

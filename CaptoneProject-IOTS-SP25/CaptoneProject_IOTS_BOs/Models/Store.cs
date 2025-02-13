@@ -10,7 +10,7 @@ public partial class Store
 {
     public int Id { get; set; }
 
-    public string Name { get; set; }
+    public string Name { get; set; } = "";
     [Column("contact_number")]
     [MaxLength(50)]
     public string? ContactNumber { set; get; }
@@ -19,7 +19,7 @@ public partial class Store
     [MaxLength(500)]
     public string? Summary { set; get; }
     [JsonIgnore]
-    public string Description { get; set; }
+    public string Description { get; set; } = "";
 
     public int OwnerId { get; set; }
 
@@ -37,7 +37,7 @@ public partial class Store
     public string? ImageUrl { set; get; }
 
     [JsonIgnore]
-    public int? IsActive { get; set; } = 2; //PENDING
+    public int? IsActive { get; set; } = 1;
 
     [JsonIgnore]
     public virtual User Owner { get; set; }
