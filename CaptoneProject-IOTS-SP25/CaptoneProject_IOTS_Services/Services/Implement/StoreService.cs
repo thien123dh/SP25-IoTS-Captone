@@ -105,7 +105,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         public async Task<GenericResponseDTO<StoreDetailsResponseDTO>> SubmitStoreInfomation(int userId, StoreRequestDTO payload)
         {
-            var response = await CreateOrUpdateStoreByUserId(userId, payload);
+            var response = await CreateOrUpdateStoreByLoginUser(userId, payload);
 
             if (!response.IsSuccess)
                 return response;
@@ -131,34 +131,27 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return await GetStoreDetailsByUserId(userId);
         }
 
-        public async Task<GenericResponseDTO<StoreDetailsResponseDTO>> CreateOrUpdateStoreByUserId(int userId, StoreRequestDTO payload)
+        public async Task<GenericResponseDTO<StoreDetailsResponseDTO>> CreateOrUpdateStoreByLoginUser(int userId, StoreRequestDTO payload)
         {
-            User user = await _userRepository.GetUserById(userId);
+            int? loginUserId = _userService.GetLoginUserId();
+
+            if (loginUserId == null)
+                return ResponseService<StoreDetailsResponseDTO>.Unauthorize("Please login to update Store");
+
+            User user = await _userRepository.GetUserById((int)loginUserId);
 
             if (!(user?.UserRoles?.Count(ur => ur.RoleId == (int)RoleEnum.STORE) > 0))
-                return new GenericResponseDTO<StoreDetailsResponseDTO>
-                {
-                    IsSuccess = false,
-                    Message = ExceptionMessage.INVALID_STORE_ROLE,
-                    StatusCode = HttpStatusCode.BadRequest
-                };
+                return ResponseService<StoreDetailsResponseDTO>.BadRequest(ExceptionMessage.INVALID_STORE_ROLE);
 
             if (user == null)
-                return new GenericResponseDTO<StoreDetailsResponseDTO>
-                {
-                    IsSuccess = false,
-                    Message = ExceptionMessage.USER_DOESNT_EXIST,
-                    StatusCode = HttpStatusCode.NotFound
-                };
+                return ResponseService<StoreDetailsResponseDTO>.NotFound(ExceptionMessage.USER_DOESNT_EXIST);
 
-            Store store = _storeRepository.GetByUserId(userId);
+            Store store = _storeRepository.GetByUserId(user.Id);
 
             store = store == null ? new Store
             {
                 IsActive = 2 //Default is pending
             } : store;
-
-            int? loginUserId = _myHttpAccessor.GetLoginUserId();
 
             //Set data 
             store.Name = payload.Name;
@@ -325,26 +318,23 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             };
         }
 
-        public async Task<GenericResponseDTO<BusinessLicenses>> CreateOrUpdateBusinessLicences(BusinessLicensesDTO payload)
+        public async Task<GenericResponseDTO<BusinessLicenses>> CreateOrUpdateBusinessLicences(StoreBusinessLicensesDTO payload)
         {
-            int storeId = payload.StoreId;
+            var loginUserId = _userService.GetLoginUserId();
 
-            var store = _storeRepository.GetById(storeId);
+            if (loginUserId == null)
+                return ResponseService<BusinessLicenses>.Unauthorize("Please login to update license");
+
+            var store = _storeRepository.GetByUserId((int)loginUserId);
 
             if (store == null)
-                return new GenericResponseDTO<BusinessLicenses>
-                {
-                    IsSuccess = false,
-                    Message = "Not Found",
-                    StatusCode = HttpStatusCode.NotFound
-                };
+                return ResponseService<BusinessLicenses>.NotFound("Store cannot be found");
+
+            int storeId = store.Id;
 
             var businessLicense = businessLicenseRepository.GetByStoreId(storeId);
 
             businessLicense = businessLicense == null ? new BusinessLicenses() : businessLicense;
-
-            //var saveItem = BusinessLicensesMapper.MapToBusinessLicenses(payload);
-            //saveItem.Id = businessLicense == null ? saveItem.Id : businessLicense.Id;
 
             businessLicense.BackIdentification = payload.BackIdentification;
             businessLicense.FrontIdentification = payload.FrontIdentification;
@@ -362,21 +352,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 else //Create
                     businessLicense = businessLicenseRepository.Create(businessLicense);
 
-                return new GenericResponseDTO<BusinessLicenses>
-                {
-                    IsSuccess = true,
-                    Message = "Success",
-                    StatusCode = HttpStatusCode.OK,
-                    Data = businessLicense
-                };
+                return ResponseService<BusinessLicenses>.OK(businessLicense);
+
             } catch (Exception ex)
             {
-                return new GenericResponseDTO<BusinessLicenses>
-                {
-                    IsSuccess = false,
-                    Message = ex.Message,
-                    StatusCode = HttpStatusCode.BadRequest
-                };
+                return ResponseService<BusinessLicenses>.BadRequest(ex.Message);
             }
         }
 

@@ -13,8 +13,8 @@ namespace CaptoneProject_IOTS_Service.Mapper
 {
     public static class BusinessLicensesMapper
     {
-        private static IMapService<BusinessLicensesDTO, BusinessLicenses> businessLicensesMapper = new MapService<BusinessLicensesDTO, BusinessLicenses>();
-        public static BusinessLicenses MapToBusinessLicenses(BusinessLicensesDTO source)
+        private static IMapService<StoreBusinessLicensesDTO, BusinessLicenses> businessLicensesMapper = new MapService<StoreBusinessLicensesDTO, BusinessLicenses>();
+        public static BusinessLicenses MapToBusinessLicenses(StoreBusinessLicensesDTO source)
         {
             return businessLicensesMapper.MappingTo(source);
         }

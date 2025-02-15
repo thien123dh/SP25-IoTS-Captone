@@ -22,6 +22,9 @@ public partial class User
 
     public string? Address { get; set; }
 
+    [Column("gender")]
+    public int? Gender { set; get; } = 1;
+
     public int? CreatedBy { get; set; }
 
     public DateTime? CreatedDate { get; set; } = DateTime.Now;
@@ -32,7 +35,7 @@ public partial class User
 
     public int IsActive { get; set; }
 
-    [MaxLength(500)]
+    [MaxLength(1000)]
     [Column("image_url")]
     public string? ImageURL { set; get; }
 

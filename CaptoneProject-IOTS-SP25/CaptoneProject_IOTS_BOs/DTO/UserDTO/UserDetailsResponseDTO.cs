@@ -26,11 +26,13 @@ namespace CaptoneProject_IOTS_BOs.DTO.UserDTO
         public string Phone { get; set; }
 
         public string Address { get; set; }
+        public int? Gender { set; get; }
 
         public int? CreatedBy { get; set; }
 
         public DateTime? CreatedDate { get; set; }
 
+        
         public int? UpdatedBy { get; set; }
 
         public DateTime? UpdatedDate { get; set; }
@@ -54,6 +56,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.UserDTO
         public string Phone { get; set; }
 
         public string Address { get; set; }
+        public int? Gender { set; get; }
 
         public int? CreatedBy { get; set; }
 
