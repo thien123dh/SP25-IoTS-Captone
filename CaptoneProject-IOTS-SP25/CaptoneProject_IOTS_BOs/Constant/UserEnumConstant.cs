@@ -46,6 +46,5 @@ namespace CaptoneProject_IOTS_BOs.Constant
                    Label = "Pending"
                }
             };
-
     }
 }

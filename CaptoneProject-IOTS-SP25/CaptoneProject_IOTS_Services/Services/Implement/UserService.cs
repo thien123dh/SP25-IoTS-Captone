@@ -158,7 +158,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 }
                 else if (user.IsActive < 1)
                 {
-                    return ResponseService<Object>.UnAuthorize(ExceptionMessage.LOGIN_INACTIVE_ACCOUNT);
+                    return ResponseService<Object>.Unauthorize(ExceptionMessage.LOGIN_INACTIVE_ACCOUNT);
                 }
             }
             else
@@ -183,7 +183,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 });
             } catch (Exception ex)
             {
-                return ResponseService<Object>.UnAuthorize(ex.Message);
+                return ResponseService<Object>.Unauthorize(ex.Message);
             }
             
         }
@@ -288,6 +288,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             user.IsActive = isActive;
             user.UpdatedBy = loginUserId;
             user.UpdatedDate = DateTime.Now;
+            user.Gender = (int)payload.Gender;
             //Set Data
 
             try
@@ -322,14 +323,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             User? loginUser = GetLoginUser();
 
             if (loginUser == null)
-                return ResponseService<Object>.UnAuthorize(ExceptionMessage.SESSION_EXPIRED);
+                return ResponseService<Object>.Unauthorize(ExceptionMessage.SESSION_EXPIRED);
 
             try
             {
                 var verifyPassword = _passwordHasher.VerifyHashedPassword(null, loginUser.Password, payload.OldPassword);
 
                 if (verifyPassword == PasswordVerificationResult.Failed)
-                    return ResponseService<Object>.BadRequest("Incorrect current password. Please try again");
+                    return ResponseService<Object>.BadRequest("Incorrect currently password. Please try again");
                 else
                 {
                     return await UpdateUserPassword(loginUser.Id, payload.NewPassword);
@@ -374,6 +375,13 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var user = await _userRepository.GetUserById((int)loginUserId);
 
             return user?.UserRoles?.Select(u => u.Role)?.ToList();
+        }
+
+        public async Task<Boolean> CheckLoginUserRole(RoleEnum role)
+        {
+            var roles = await GetLoginUserRoles();
+
+            return roles?.Count(item => item.Id == (int)role) > 0;
         }
     }
 }

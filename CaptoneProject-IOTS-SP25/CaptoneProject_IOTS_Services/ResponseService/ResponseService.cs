@@ -41,7 +41,7 @@ namespace CaptoneProject_IOTS_Service.ResponseService
             StatusCode = System.Net.HttpStatusCode.BadRequest,
         };
 
-        public static GenericResponseDTO<T> UnAuthorize(string message) => new GenericResponseDTO<T>
+        public static GenericResponseDTO<T> Unauthorize(string message) => new GenericResponseDTO<T>
         {
             IsSuccess = false,
             Message = message,

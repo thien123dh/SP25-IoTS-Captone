@@ -10,13 +10,24 @@ using System.Threading.Tasks;
 
 namespace CaptoneProject_IOTS_BOs.DTO.StoreDTO
 {
-    public class BusinessLicensesDTO
+    public class StoreBusinessLicensesDTO
     {
         public int StoreId { set; get; }
         public string FrontIdentification { set; get; }
         public string BackIdentification { set; get; }
         public string BusinessLicences { set; get; }
         public string LiscenseNumber { set; get; }
+        public DateTime IssueDate { set; get; }
+        public DateTime ExpiredDate { set; get; }
+        public string IssueBy { set; get; }
+    }
+
+    public class TrainerBusinessLicensesDTO
+    {
+        public int TrainerId { set; get; }
+        public string FrontIdentification { set; get; }
+        public string BackIdentification { set; get; }
+        public string BusinessLicences { set; get; }
         public DateTime IssueDate { set; get; }
         public DateTime ExpiredDate { set; get; }
         public string IssueBy { set; get; }

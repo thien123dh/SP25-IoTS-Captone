@@ -58,6 +58,7 @@ builder.Services.AddScoped<StoreAttachmentRepository>();
 builder.Services.AddScoped<AttachmentRepository>();
 builder.Services.AddScoped<ProductRequestRepository>();
 builder.Services.AddScoped<BusinessLicenseRepository>();
+builder.Services.AddScoped<TrainerBusinessLicensesRepository>();
 
 // Register Services
 builder.Services.AddHttpContextAccessor();
@@ -76,6 +77,8 @@ builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IMaterialService, MaterialService>();
 builder.Services.AddScoped<IAttachmentsService, AttachmentsService>();
 builder.Services.AddScoped<IProductRequestService, ProductRequestService>();
+builder.Services.AddScoped<ITrainerService, TrainerService>();
+builder.Services.AddScoped<IVNPayService, VNPayService>();
 builder.Services.AddScoped<IFileService>(provider =>
 {
     var bucket = configuration.GetConnectionString("Firebase-Storage-Bucket");

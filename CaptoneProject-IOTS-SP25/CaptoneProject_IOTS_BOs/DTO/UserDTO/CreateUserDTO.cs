@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static CaptoneProject_IOTS_BOs.Constant.GenderConst;
 
 namespace CaptoneProject_IOTS_BOs.DTO.UserDTO
 {
@@ -16,6 +17,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.UserDTO
         public string Fullname { set; get; }
         public string? Phone { get; set; }
         public string? Address { get; set; }
+        public GenderEnum Gender { set; get; } = GenderEnum.Male;
         [Required]
         public int RoleId {get; set;}
     }
