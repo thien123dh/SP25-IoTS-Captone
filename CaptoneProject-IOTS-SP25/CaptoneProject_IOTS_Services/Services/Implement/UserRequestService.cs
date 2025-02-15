@@ -254,7 +254,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 User user = await userRepository.GetUserByEmail(userRequest.Email);
 
-                await _userServices.UpdateUserStatus(user.Id, 1);
+                await _userServices.UpdateUserStatus(user.Id, (int)UserStatusEnum.ACTIVE);
             }
 
             return await GetUserRequestDetailsById(userRequest.Id);

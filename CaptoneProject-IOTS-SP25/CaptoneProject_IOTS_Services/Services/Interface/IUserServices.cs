@@ -3,6 +3,7 @@ using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserDTO;
 using CaptoneProject_IOTS_BOs.Models;
 using System.Security.Claims;
+using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
 
 namespace CaptoneProject_IOTS_Service.Services.Interface
 {
@@ -22,5 +23,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         Task<List<Role>?> GetLoginUserRoles();
         Task<GenericResponseDTO<UserResponseDTO>> GetUserLoginInfo();
         Task<ResponseDTO> UserChangePassword(ChangePasswordRequestDTO payload);
+
+        Task<Boolean> CheckLoginUserRole(RoleEnum role);
     }
 }

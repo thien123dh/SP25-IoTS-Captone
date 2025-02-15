@@ -78,7 +78,7 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         public async Task<IActionResult> CreateOrUpdateStoreByUserId(int userId,
             [FromBody] StoreRequestDTO payload)
         {
-            var response = await _storeService.CreateOrUpdateStoreByUserId(userId, payload);
+            var response = await _storeService.CreateOrUpdateStoreByLoginUser(userId, payload);
 
             if (response.IsSuccess)
             {
@@ -90,7 +90,7 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
 
         [HttpPost("create-or-update-business-license")]
         public async Task<IActionResult> CreateOrUpdateBusinessLicenses(
-            [FromBody] BusinessLicensesDTO payload)
+            [FromBody] StoreBusinessLicensesDTO payload)
         {
             var res = await _storeService.CreateOrUpdateBusinessLicences(payload);
 

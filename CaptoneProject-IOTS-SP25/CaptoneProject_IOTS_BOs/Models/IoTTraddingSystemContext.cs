@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using CaptoneProject_IOTS_BOs.DTO;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -42,6 +43,7 @@ public partial class IoTTraddingSystemContext : DbContext
     public virtual DbSet<MaterialGroupCategory> MaterialGroupCategories { get; set; }
 
     public virtual DbSet<MaterialGroupItem> MaterialGroupItems { get; set; }
+    public virtual DbSet<Notifications> Notifications { set; get; }
 
     public virtual DbSet<ProductRequest> ProductRequests { get; set; }
 
@@ -51,6 +53,7 @@ public partial class IoTTraddingSystemContext : DbContext
     public virtual DbSet<Role> Roles { get; set; }
 
     public virtual DbSet<Store> Stores { get; set; }
+    public virtual DbSet<TrainerBusinessLicense> TrainerBusinessLicenses { set; get; }
 
     public virtual DbSet<User> Users { get; set; }
 
