@@ -9,7 +9,7 @@ using CaptoneProject_IOTS_BOs.DTO.MaterialGroupCategoryDTO;
 
 namespace CaptoneProject_IOTS_API.Controllers.MaterialGroupCategoryController
 {
-    [Route("api/[controller]")]
+    [Route("api/material-group-category")]
     [ApiController]
     public class MaterialGroupCategoryController : ControllerBase
     {
