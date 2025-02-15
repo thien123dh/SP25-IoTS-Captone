@@ -10,7 +10,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
 {
     public interface IVNPayService
     {
-        public Task<IBusinessResult> CallAPIPayByUserId(int userId, string returnUrl, string paymentType);
-        public Task<IBusinessResult> GetInformationPayment(int userId, VNPayRequestDTO dto);
+        public Task<string> CallAPIPayByUserId(int userId, string returnUrl, string paymentType);
+        public Task<ResponsePayment> GetInformationPayment(int userId, VNPayRequestDTO dto);
     }
 }
