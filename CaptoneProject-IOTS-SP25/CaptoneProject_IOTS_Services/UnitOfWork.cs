@@ -12,6 +12,7 @@ namespace CaptoneProject_IOTS_Service
         private MaterialCategoryRepository _materialCategoryRepository;
         private MaterialGroupCategoryRepository _materialGroupCategoryRepository;
         private MaterialRepository _materialRepository;
+        private VNPayRepository _vNPayRepository;
         public UnitOfWork()
         {
         }
@@ -37,6 +38,14 @@ namespace CaptoneProject_IOTS_Service
             get
             {
                 return _materialGroupCategoryRepository ??= new MaterialGroupCategoryRepository();
+            }
+        }
+
+        public VNPayRepository payRepository
+        {
+            get
+            {
+                return _vNPayRepository ??= new VNPayRepository();
             }
         }
     }
