@@ -10,23 +10,14 @@ using System.Threading.Tasks;
 
 namespace CaptoneProject_IOTS_Repository.Repository.Implement
 {
-    public class MaterialRepository : RepositoryBase<Material>
+    public class IotsDeviceRepository : RepositoryBase<IotsDevice>
     {
-        public Material GetById(int id)
+        public IotsDevice GetById(int id)
         {
             return _dbSet
                 .Include(item => item.Category)
                 .Include(item => item.StoreNavigation)
                 .SingleOrDefault(item => item.Id == id);
-        }
-        public async Task<Material> GetCategoryMaterialById(int id)
-        {
-            return await _dbSet.FindAsync(id);
-        }
-
-        public async Task<List<Material>> GetAllMaterialCaterial()
-        {
-            return await _dbSet.ToListAsync();
         }
     }
 }

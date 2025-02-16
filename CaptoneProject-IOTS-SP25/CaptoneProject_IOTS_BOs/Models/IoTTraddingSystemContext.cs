@@ -30,29 +30,18 @@ public partial class IoTTraddingSystemContext : DbContext
 
     public virtual DbSet<BlogsCategory> BlogsCategories { get; set; }
 
-    public virtual DbSet<Lab> Labs { get; set; }
-
-    public virtual DbSet<LabDetail> LabDetails { get; set; }
-
-    public virtual DbSet<Material> Materials { get; set; }
+    public virtual DbSet<IotsDevice> Materials { get; set; }
 
     public virtual DbSet<MaterialCategory> MaterialCategories { get; set; }
 
-    public virtual DbSet<MaterialGroup> MaterialGroups { get; set; }
-
-    public virtual DbSet<MaterialGroupCategory> MaterialGroupCategories { get; set; }
-
-    public virtual DbSet<MaterialGroupItem> MaterialGroupItems { get; set; }
     public virtual DbSet<Notifications> Notifications { set; get; }
-
-    public virtual DbSet<ProductRequest> ProductRequests { get; set; }
-
-    public virtual DbSet<ProductRequestStatus> ProductRequestStatuses { get; set; }
 
     public virtual DbSet<BusinessLicenses> BusinessLicenses { set; get; }
     public virtual DbSet<Role> Roles { get; set; }
 
     public virtual DbSet<Store> Stores { get; set; }
+
+    public virtual DbSet<SecondhandInformation> SecondhandInformation { set; get; }
     public virtual DbSet<TrainerBusinessLicense> TrainerBusinessLicenses { set; get; }
 
     public virtual DbSet<User> Users { get; set; }
@@ -204,65 +193,9 @@ public partial class IoTTraddingSystemContext : DbContext
             entity.Property(e => e.Orders).HasColumnName("orders");
         });
 
-        modelBuilder.Entity<Lab>(entity =>
+        modelBuilder.Entity<IotsDevice>(entity =>
         {
-            entity.ToTable("Lab");
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
-            entity.Property(e => e.CreatedDate)
-                .HasColumnType("datetime")
-                .HasColumnName("created_date");
-            entity.Property(e => e.Description)
-                .HasMaxLength(1000)
-                .HasColumnName("description");
-            entity.Property(e => e.IsActive).HasColumnName("is_active");
-            entity.Property(e => e.Title)
-                .HasMaxLength(200)
-                .HasColumnName("title");
-            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
-            entity.Property(e => e.UpdatedDate)
-                .HasColumnType("datetime")
-                .HasColumnName("updated_date");
-        });
-
-        modelBuilder.Entity<LabDetail>(entity =>
-        {
-            entity.ToTable("LabDetail");
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.CreatedDate)
-                .HasColumnType("datetime")
-                .HasColumnName("created_date");
-            entity.Property(e => e.ImageUrl)
-                .HasMaxLength(500)
-                .HasColumnName("image_url");
-            entity.Property(e => e.LabContent)
-                .HasMaxLength(1000)
-                .HasColumnName("lab_content");
-            entity.Property(e => e.LabId).HasColumnName("lab_id");
-            entity.Property(e => e.MetaData)
-                .HasMaxLength(500)
-                .IsFixedLength()
-                .HasColumnName("meta_data");
-            entity.Property(e => e.Title)
-                .HasMaxLength(200)
-                .HasColumnName("title");
-            entity.Property(e => e.UpdatedDate)
-                .HasColumnType("datetime")
-                .HasColumnName("updated_date");
-            entity.Property(e => e.VideoUrl)
-                .HasMaxLength(500)
-                .HasColumnName("video_url");
-
-            entity.HasOne(d => d.Lab).WithMany(p => p.LabDetails)
-                .HasForeignKey(d => d.LabId)
-                .HasConstraintName("FK_LabDetail_Lab");
-        });
-
-        modelBuilder.Entity<Material>(entity =>
-        {
-            entity.ToTable("Material");
+            entity.ToTable("IotsDevices");
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.CategoryId).HasColumnName("category_id");
@@ -278,9 +211,6 @@ public partial class IoTTraddingSystemContext : DbContext
                 .HasColumnName("description");
             entity.Property(e => e.FirmwareVersion).HasColumnName("firmware_version");
             entity.Property(e => e.IsActive).HasColumnName("is_active");
-            entity.Property(e => e.LastWarrentyDate)
-                .HasColumnType("datetime")
-                .HasColumnName("last_warrenty_date");
             entity.Property(e => e.Manufacturer)
                 .HasMaxLength(500)
                 .HasColumnName("manufacturer");
@@ -293,10 +223,6 @@ public partial class IoTTraddingSystemContext : DbContext
             entity.Property(e => e.PowerSource)
                 .HasMaxLength(200)
                 .HasColumnName("power_source");
-            entity.Property(e => e.Price)
-                .HasColumnType("decimal(18, 0)")
-                .HasColumnName("price");
-            entity.Property(e => e.Quantity).HasColumnName("quantity");
             entity.Property(e => e.SerialNumber)
                 .HasMaxLength(200)
                 .HasColumnName("serial_number");
@@ -305,7 +231,7 @@ public partial class IoTTraddingSystemContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("updated_date");
 
-            entity.HasOne(d => d.Category).WithMany(p => p.Materials)
+            entity.HasOne(d => d.Category).WithMany(p => p.IotDevices)
                 .HasForeignKey(d => d.CategoryId)
                 .HasConstraintName("FK_Material_MaterialCategory");
 
@@ -331,124 +257,6 @@ public partial class IoTTraddingSystemContext : DbContext
             entity.Property(e => e.Orders).HasColumnName("orders");
             entity.Property(e => e.ImageUrl).HasColumnName("image_url")
                 .HasMaxLength(500);
-        });
-
-        modelBuilder.Entity<MaterialGroup>(entity =>
-        {
-            entity.ToTable("MaterialGroup");
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.CategoryId).HasColumnName("category_id");
-            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
-            entity.Property(e => e.CreatedDate)
-                .HasColumnType("datetime")
-                .HasColumnName("created_date");
-            entity.Property(e => e.Description)
-                .HasMaxLength(1000)
-                .HasColumnName("description");
-            entity.Property(e => e.LabId).HasColumnName("lab_id");
-            entity.Property(e => e.Name)
-                .HasMaxLength(500)
-                .HasColumnName("name");
-            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
-            entity.Property(e => e.UpdatedDate)
-                .HasColumnType("datetime")
-                .HasColumnName("updated_date");
-
-            entity.HasOne(d => d.Category).WithMany(p => p.MaterialGroups)
-                .HasForeignKey(d => d.CategoryId)
-                .HasConstraintName("FK_MaterialGroup_MaterialGroupCategory");
-
-            entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.MaterialGroupCreatedByNavigations)
-                .HasForeignKey(d => d.CreatedBy)
-                .HasConstraintName("FK_MaterialGroup_Users");
-
-            entity.HasOne(d => d.Lab).WithMany(p => p.MaterialGroups)
-                .HasForeignKey(d => d.LabId)
-                .HasConstraintName("FK_MaterialGroup_Lab");
-
-            entity.HasOne(d => d.UpdatedByNavigation).WithMany(p => p.MaterialGroupUpdatedByNavigations)
-                .HasForeignKey(d => d.UpdatedBy)
-                .HasConstraintName("FK_MaterialGroup_Users1");
-        });
-
-        modelBuilder.Entity<MaterialGroupCategory>(entity =>
-        {
-            entity.ToTable("MaterialGroupCategory");
-
-            entity.Property(e => e.Id)
-                .ValueGeneratedNever()
-                .HasColumnName("id");
-            entity.Property(e => e.IsActive).HasColumnName("is_active");
-            entity.Property(e => e.Label)
-                .HasMaxLength(200)
-                .HasColumnName("label");
-            entity.Property(e => e.Orders).HasColumnName("orders");
-        });
-
-        modelBuilder.Entity<MaterialGroupItem>(entity =>
-        {
-            entity.ToTable("MaterialGroupItem");
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.GroupId).HasColumnName("group_id");
-            entity.Property(e => e.MaterialId).HasColumnName("material_id");
-
-            entity.HasOne(d => d.Group).WithMany(p => p.MaterialGroupItems)
-                .HasForeignKey(d => d.GroupId)
-                .HasConstraintName("FK_MaterialGroupItem_MaterialGroup");
-
-            entity.HasOne(d => d.Material).WithMany(p => p.MaterialGroupItems)
-                .HasForeignKey(d => d.MaterialId)
-                .HasConstraintName("FK_MaterialGroupItem_Material");
-        });
-
-        modelBuilder.Entity<ProductRequest>(entity =>
-        {
-            entity.ToTable("ProductRequest");
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.ActionBy).HasColumnName("action_by");
-            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
-            entity.Property(e => e.CreatedDate)
-                .HasColumnType("datetime")
-                .HasColumnName("created_date");
-            entity.Property(e => e.ProductId).HasColumnName("product_id");
-            entity.Property(e => e.ProductType).HasColumnName("product_type");
-            entity.Property(e => e.Remark)
-                .HasMaxLength(500)
-                .HasColumnName("remark");
-            entity.Property(e => e.Status).HasColumnName("status");
-            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
-            entity.Property(e => e.UpdatedDate)
-                .HasColumnType("datetime")
-                .HasColumnName("updated_date");
-
-            entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.ProductRequestCreatedByNavigations)
-                .HasForeignKey(d => d.CreatedBy)
-                .HasConstraintName("FK_ProductRequest_Users");
-
-            entity.HasOne(d => d.StatusNavigation).WithMany(p => p.ProductRequests)
-                .HasForeignKey(d => d.Status)
-                .HasConstraintName("FK_ProductRequest_ProductRequestStatus");
-
-            entity.HasOne(d => d.UpdatedByNavigation).WithMany(p => p.ProductRequestUpdatedByNavigations)
-                .HasForeignKey(d => d.UpdatedBy)
-                .HasConstraintName("FK_ProductRequest_Users1");
-        });
-
-        modelBuilder.Entity<ProductRequestStatus>(entity =>
-        {
-            entity.ToTable("ProductRequestStatus");
-
-            entity.Property(e => e.Id)
-                .ValueGeneratedNever()
-                .HasColumnName("id");
-            entity.Property(e => e.IsActive).HasColumnName("is_active");
-            entity.Property(e => e.Label)
-                .HasMaxLength(200)
-                .HasColumnName("label");
-            entity.Property(e => e.Orders).HasColumnName("orders");
         });
 
         modelBuilder.Entity<Role>(entity =>
