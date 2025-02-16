@@ -250,12 +250,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     .BadRequest(ex.Message);
             }
 
-            if (isApprove > 0)
-            {
-                User user = await userRepository.GetUserByEmail(userRequest.Email);
+            //if (isApprove > 0)
+            //{
+            //    User user = await userRepository.GetUserByEmail(userRequest.Email);
 
-                await _userServices.UpdateUserStatus(user.Id, (int)UserStatusEnum.ACTIVE);
-            }
+            //    await _userServices.UpdateUserStatus(user.Id, (int)UserStatusEnum.ACTIVE);
+            //}
 
             return await GetUserRequestDetailsById(userRequest.Id);
         }
