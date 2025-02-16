@@ -230,7 +230,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             if (userRequest.Status != (int)UserRequestStatusEnum.PENDING_TO_APPROVE)
                 return ResponseService<UserRequestDetailsResponseDTO>
-                    .BadRequest("User Request Status must be Pending to Approve");
+                    .BadRequest("You cannot Reject or Approve this Request");
 
             if (isApprove <= 0 && (remark == null || remark.Trim() == ""))
             {
