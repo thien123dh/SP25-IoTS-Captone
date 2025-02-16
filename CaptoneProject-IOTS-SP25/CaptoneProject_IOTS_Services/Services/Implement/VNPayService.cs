@@ -69,7 +69,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 vnpay.AddRequestData("vnp_OrderType", "order");
                 vnpay.AddRequestData("vnp_ReturnUrl", vnp_ReturnUrl);
                 vnpay.AddRequestData("vnp_TxnRef", vnp_TxnRef);
-                vnpay.AddRequestData("vnp_ExpireDate", DateTime.Now.AddMinutes(5).ToString("yyyyMMddHHmmss"));
+                vnpay.AddRequestData("vnp_ExpireDate", vietnamTime.AddMinutes(5).ToString("yyyyMMddHHmmss"));
 
                 string paymentUrl = vnpay.CreateRequestUrl(vnp_Url, vnp_HashSecret);
                 return paymentUrl;

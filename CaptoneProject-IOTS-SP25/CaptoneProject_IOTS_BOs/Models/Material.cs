@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
+﻿using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -32,6 +33,14 @@ public partial class Material
     public string PowerSource { get; set; }
 
     public DateTime? LastWarrentyDate { get; set; } = DateTime.Now.AddDays(30);
+
+    [Column("specifications")]
+    [MaxLength(500)]
+    public string Specifications { set; get; }
+
+    [Column("notes")]
+    [MaxLength(500)]
+    public string Notes { set; get; }
 
     [Column("store_id")]
     [ForeignKey(nameof(Store))]
