@@ -14,7 +14,14 @@ public partial class MaterialGroup
     public string Summary { set; get; }
     public string Name { get; set; }
 
-    public string Description { get; set; }
+    public string Description { get; set; } = "";
+    [Column("specifications")]
+    [MaxLength(500)]
+    public string Specifications { set; get; } = "";
+
+    [Column("notes")]
+    [MaxLength(500)]
+    public string Notes { set; get; }
 
     public int? CategoryId { get; set; }
     [Column("store_id")]
