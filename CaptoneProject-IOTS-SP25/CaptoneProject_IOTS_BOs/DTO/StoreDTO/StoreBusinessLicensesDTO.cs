@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using CaptoneProject_IOTS_BOs.Validation;
 
 namespace CaptoneProject_IOTS_BOs.DTO.StoreDTO
 {
@@ -18,6 +19,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.StoreDTO
         public string BusinessLicences { set; get; }
         public string LiscenseNumber { set; get; }
         public DateTime IssueDate { set; get; }
+        //[FutureDate]
         public DateTime ExpiredDate { set; get; }
         public string IssueBy { set; get; }
     }
@@ -29,6 +31,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.StoreDTO
         public string BackIdentification { set; get; }
         public string BusinessLicences { set; get; }
         public DateTime IssueDate { set; get; }
+        //[FutureDate]
         public DateTime ExpiredDate { set; get; }
         public string IssueBy { set; get; }
     }

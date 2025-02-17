@@ -12,7 +12,7 @@ namespace CaptoneProject_IOTS_BOs.Constant
         public static string USER_EXIST_EXCEPTION = "User already existing. Please try again";
         public static string EMAIL_DOESNT_EXIST = "Email doesn't exist";
         public static string USER_DOESNT_EXIST = "User doesn't exist";
-
+        public static string INVALID_PERMISSION = "You don't have permission to access";
         public static string INVALID_STORE_ROLE = "To do this action. The role of user must be Store Owner";
         public static string INVALID_TRAINER_ROLE = "To do this action. The role of user must be Trainer";
 

@@ -73,6 +73,7 @@ builder.Services.AddScoped<IStaffManagerService, StaffManagerService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IAttachmentsService, AttachmentsService>();
 builder.Services.AddScoped<ITrainerService, TrainerService>();
+builder.Services.AddScoped<IIotDevicesService, IotDeviceService>();
 builder.Services.AddScoped<IVNPayService, VNPayService>();
 builder.Services.AddScoped<IFileService>(provider =>
 {

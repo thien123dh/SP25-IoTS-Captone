@@ -21,5 +21,11 @@ namespace CaptoneProject_IOTS_BOs.Constant
             ACTIVE = 1,
             PENDING = 2
         }
+
+        public enum IotDeviceTypeEnum
+        {
+            NEW = 1,
+            SECOND_HAND = 2
+        }
    }
 }

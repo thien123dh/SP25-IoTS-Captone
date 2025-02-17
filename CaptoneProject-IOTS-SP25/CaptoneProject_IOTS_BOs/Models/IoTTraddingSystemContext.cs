@@ -30,7 +30,7 @@ public partial class IoTTraddingSystemContext : DbContext
 
     public virtual DbSet<BlogsCategory> BlogsCategories { get; set; }
 
-    public virtual DbSet<IotsDevice> Materials { get; set; }
+    public virtual DbSet<IotsDevice> IotDevices { get; set; }
 
     public virtual DbSet<MaterialCategory> MaterialCategories { get; set; }
 
@@ -40,8 +40,6 @@ public partial class IoTTraddingSystemContext : DbContext
     public virtual DbSet<Role> Roles { get; set; }
 
     public virtual DbSet<Store> Stores { get; set; }
-
-    public virtual DbSet<SecondhandInformation> SecondhandInformation { set; get; }
     public virtual DbSet<TrainerBusinessLicense> TrainerBusinessLicenses { set; get; }
 
     public virtual DbSet<User> Users { get; set; }
@@ -233,15 +231,15 @@ public partial class IoTTraddingSystemContext : DbContext
 
             entity.HasOne(d => d.Category).WithMany(p => p.IotDevices)
                 .HasForeignKey(d => d.CategoryId)
-                .HasConstraintName("FK_Material_MaterialCategory");
+                .HasConstraintName("FK_IotsDevices_MaterialCategory");
 
             entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.MaterialCreatedByNavigations)
                 .HasForeignKey(d => d.CreatedBy)
-                .HasConstraintName("FK_Material_Users");
+                .HasConstraintName("FK_IotsDevices_Users");
 
             entity.HasOne(d => d.UpdatedByNavigation).WithMany(p => p.MaterialUpdatedByNavigations)
                 .HasForeignKey(d => d.UpdatedBy)
-                .HasConstraintName("FK_Material_Users1");
+                .HasConstraintName("FK_IotsDevices_Users1");
         });
 
         modelBuilder.Entity<MaterialCategory>(entity =>
