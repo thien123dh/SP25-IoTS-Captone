@@ -51,12 +51,10 @@ builder.Services.AddScoped<UserRoleRepository>();
 builder.Services.AddScoped<UserRequestRepository>();
 builder.Services.AddScoped<ActivityLogRepository>();
 builder.Services.AddScoped<MaterialCategoryRepository>();
-builder.Services.AddScoped<MaterialRepository>();
-builder.Services.AddScoped<MaterialGroupCategoryRepository>();
+builder.Services.AddScoped<IotsDeviceRepository>();
 builder.Services.AddScoped<StoreRepository>();
 builder.Services.AddScoped<StoreAttachmentRepository>();
 builder.Services.AddScoped<AttachmentRepository>();
-builder.Services.AddScoped<ProductRequestRepository>();
 builder.Services.AddScoped<BusinessLicenseRepository>();
 builder.Services.AddScoped<TrainerBusinessLicensesRepository>();
 
@@ -66,7 +64,6 @@ builder.Services.AddScoped<MyHttpAccessor>();
 builder.Services.AddScoped<IUserServices, UserService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IMaterialCategoryService, MaterialCategoryService>();
-builder.Services.AddScoped<IMaterialGroupCategoryService, MaterialGroupCategoryService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped(typeof(IMapService<,>), typeof(MapService<,>));
 builder.Services.AddScoped<IUserRequestService, UserRequestService>();
@@ -74,10 +71,9 @@ builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
 builder.Services.AddScoped<IStoreService, StoreService>();
 builder.Services.AddScoped<IStaffManagerService, StaffManagerService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
-builder.Services.AddScoped<IMaterialService, MaterialService>();
 builder.Services.AddScoped<IAttachmentsService, AttachmentsService>();
-builder.Services.AddScoped<IProductRequestService, ProductRequestService>();
 builder.Services.AddScoped<ITrainerService, TrainerService>();
+builder.Services.AddScoped<IIotDevicesService, IotDeviceService>();
 builder.Services.AddScoped<IVNPayService, VNPayService>();
 builder.Services.AddScoped<IFileService>(provider =>
 {

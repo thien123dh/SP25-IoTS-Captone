@@ -10,9 +10,9 @@ namespace CaptoneProject_IOTS_Service.Mapper
 {
     public static class AttachmentMapper
     {
-        public static AttachmentsDTO MapToAttachmentDTO(Attachment source)
+        public static AttachmentsModelDTO MapToAttachmentDTO(Attachment source)
         {
-            return new AttachmentsDTO
+            return new AttachmentsModelDTO
             {
                 Id = source.Id,
                 ImageUrl = source.ImageUrl,

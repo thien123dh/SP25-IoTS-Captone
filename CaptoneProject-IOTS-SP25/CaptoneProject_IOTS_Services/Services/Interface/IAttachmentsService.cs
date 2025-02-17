@@ -10,6 +10,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
 {
     public interface IAttachmentsService
     {
-        public Task<ResponseDTO> CreateOrUpdateAttachments(int entityId, int entityType, List<AttachmentsDTO>? payload);
+        public Task<List<AttachmentsModelDTO>?> GetByEntityId(int entityId, int entityType);
+        public Task<ResponseDTO> CreateOrUpdateAttachments(int entityId, int entityType, List<AttachmentsModelDTO>? payload);
     }
 }

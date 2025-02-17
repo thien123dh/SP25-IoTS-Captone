@@ -1,4 +1,5 @@
-﻿using CaptoneProject_IOTS_Repository.Repository.Implement;
+﻿using CaptoneProject_IOTS_BOs.Models;
+using CaptoneProject_IOTS_Repository.Repository.Implement;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,8 +11,7 @@ namespace CaptoneProject_IOTS_Service
     public class UnitOfWork
     {
         private MaterialCategoryRepository _materialCategoryRepository;
-        private MaterialGroupCategoryRepository _materialGroupCategoryRepository;
-        private MaterialRepository _materialRepository;
+        private IotsDeviceRepository _iotDeviceRepository;
         public UnitOfWork()
         {
         }
@@ -24,19 +24,11 @@ namespace CaptoneProject_IOTS_Service
             }
         }
 
-        public MaterialRepository MaterialRepository
+        public IotsDeviceRepository MaterialRepository
         {
             get
             {
-                return _materialRepository ??= new MaterialRepository();
-            }
-        }
-
-        public MaterialGroupCategoryRepository MaterialGroupCategoryRepository
-        {
-            get
-            {
-                return _materialGroupCategoryRepository ??= new MaterialGroupCategoryRepository();
+                return _iotDeviceRepository ??= new IotsDeviceRepository();
             }
         }
     }

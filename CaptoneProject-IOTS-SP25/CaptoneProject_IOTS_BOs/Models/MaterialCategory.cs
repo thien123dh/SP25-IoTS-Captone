@@ -21,5 +21,5 @@ public partial class MaterialCategory
     public int? IsActive { get; set; } = 1;
 
     [JsonIgnore]
-    public virtual ICollection<Material>? Materials { get; set; } = new List<Material>();
+    public virtual ICollection<IotsDevice>? IotDevices { get; set; } = new List<IotsDevice>();
 }
