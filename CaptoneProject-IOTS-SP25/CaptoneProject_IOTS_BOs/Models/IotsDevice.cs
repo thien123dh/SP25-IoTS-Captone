@@ -16,7 +16,14 @@ public partial class IotsDevice
     public string Name { get; set; }
 
     [Column("device_type")]
-    public int device_type { set; get; } = 1;
+    public int DeviceType { set; get; } = 1;
+
+    [Column("secondhand_price")]
+    public decimal? SecondHandPrice { set; get; } = 0;
+
+    [Column("secondhand_quality_percent")]
+    [Range(0, 100)]
+    public int? SecondhandQualityPercent { set; get; } = 0;
 
     public int? IsHardwareInformation { set; get; } = 1;
     //HARDWARE INFORMATION

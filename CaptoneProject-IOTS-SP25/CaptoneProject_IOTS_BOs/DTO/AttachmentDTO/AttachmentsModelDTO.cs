@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace CaptoneProject_IOTS_BOs.DTO.AttachmentDTO
 {
-    public class AttachmentsDTO
+    public class AttachmentsModelDTO
     {
         public int Id { set; get; }
         public string? ImageUrl { set; get; }

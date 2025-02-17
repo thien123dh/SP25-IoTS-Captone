@@ -23,7 +23,20 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             this.userServices = userServices;
         }
 
-        public async Task<ResponseDTO> CreateOrUpdateAttachments(int entityId, int entityType, List<AttachmentsDTO>? payload)
+        public async Task<List<AttachmentsModelDTO>?> GetByEntityId(int entityId, int entityType)
+        {
+            var res = attachmentRepository.GetAttachmentsByEntityId(entityId, entityType);
+
+            return res?.Select(item => new AttachmentsModelDTO
+            {
+                Id = item.Id,
+                CreatedDate = item.CreatedDate,
+                ImageUrl = item.ImageUrl,
+                MetaData = item.MetaData
+            }).ToList();
+        }
+
+        public async Task<ResponseDTO> CreateOrUpdateAttachments(int entityId, int entityType, List<AttachmentsModelDTO>? payload)
         {
             List<Attachment>? dbAttachments = attachmentRepository.GetAttachmentsByEntityId(entityId, entityType);
 
