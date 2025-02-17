@@ -3,6 +3,7 @@ using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
+using CaptoneProject_IOTS_BOs.DTO.WalletDTO;
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
 using CaptoneProject_IOTS_Service.Mapper;
@@ -25,12 +26,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly PasswordHasher<string> _passwordHasher;
         private readonly MyHttpAccessor httpAccessor;
         private readonly IRoleService roleService;
+        private readonly IWalletService walletService;
         public UserService (
             UserRepository userService, 
             ITokenServices tokenGenerator,
             UserRoleRepository userRoleRepository,
             MyHttpAccessor httpAccessor,
-            IRoleService roleService
+            IRoleService roleService,
+            IWalletService walletService
         )
         {
             _userRepository = userService;
@@ -39,6 +42,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             _passwordHasher = new PasswordHasher<string>();
             this.httpAccessor = httpAccessor;
             this.roleService = roleService;
+            this.walletService = walletService;
         }
 
         public async Task<ResponseDTO> UpdateUserPassword(int userId, string password)
@@ -296,7 +300,16 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 if (user.Id > 0) //Update
                     user = _userRepository.Update(user);
                 else //Create
+                {
                     user = _userRepository.Create(user);
+
+                    //Create Default Wallet
+                    await walletService.CreateOrUpdateWallet(new CreateUpdateWalletDTO
+                    {
+                        UserId = user.Id,
+                        Ballance = 0
+                    });
+                }
 
                 ResponseDTO response = await UpdateUserRole(user.Id, [payload.RoleId]);
 

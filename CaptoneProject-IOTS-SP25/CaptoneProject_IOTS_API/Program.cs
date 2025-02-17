@@ -57,6 +57,9 @@ builder.Services.AddScoped<StoreAttachmentRepository>();
 builder.Services.AddScoped<AttachmentRepository>();
 builder.Services.AddScoped<BusinessLicenseRepository>();
 builder.Services.AddScoped<TrainerBusinessLicensesRepository>();
+builder.Services.AddScoped<WalletRepository>();
+builder.Services.AddScoped<MembershipPackageRepository>();
+builder.Services.AddScoped<AccountMembershipPackageRepository>();
 
 // Register Services
 builder.Services.AddHttpContextAccessor();
@@ -74,6 +77,8 @@ builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IAttachmentsService, AttachmentsService>();
 builder.Services.AddScoped<ITrainerService, TrainerService>();
 builder.Services.AddScoped<IIotDevicesService, IotDeviceService>();
+builder.Services.AddScoped<IWalletService, WalletService>();
+builder.Services.AddScoped<IAccountMembershipPackageService, AccountMembershipPackageService>();
 builder.Services.AddScoped<IVNPayService, VNPayService>();
 builder.Services.AddScoped<IFileService>(provider =>
 {

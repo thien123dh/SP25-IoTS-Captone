@@ -18,7 +18,7 @@ public partial class IoTTraddingSystemContext : DbContext
         : base(options)
     {
     }
-
+    public virtual DbSet<AccountMembershipPackage> AccountMembershipPackages { set; get; }
     public virtual DbSet<ActivityLog> ActivityLogs { get; set; }
     public virtual DbSet<Attachment> Attachments { set; get; }
 
@@ -33,6 +33,7 @@ public partial class IoTTraddingSystemContext : DbContext
     public virtual DbSet<IotsDevice> IotDevices { get; set; }
 
     public virtual DbSet<MaterialCategory> MaterialCategories { get; set; }
+    public virtual DbSet<MembershipPackage> MembershipPackages { set; get; }
 
     public virtual DbSet<Notifications> Notifications { set; get; }
 
@@ -51,6 +52,8 @@ public partial class IoTTraddingSystemContext : DbContext
     public virtual DbSet<UserRequestStatus> UserRequestStatuses { get; set; }
 
     public virtual DbSet<UserRole> UserRoles { get; set; }
+
+    public virtual DbSet<Wallet> Wallets { set; get; }
 
 //    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 //#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
