@@ -1,0 +1,34 @@
+﻿using CaptoneProject_IOTS_Service.Services.Interface;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CaptoneProject_IOTS_API.Controllers.AccountMembershipPackageController
+{
+    [Route("api/account-membership-package")]
+    [ApiController]
+    public class AccountMembershipPackageControllerController : MyBaseController.MyBaseController
+    {
+        private readonly IAccountMembershipPackageService accountMembershipPackageService;
+
+        public AccountMembershipPackageControllerController(IAccountMembershipPackageService accountMembershipPackageService)
+        {
+            this.accountMembershipPackageService = accountMembershipPackageService;
+        }
+
+        [HttpGet("get-all-membership-package-options")]
+        public IActionResult GetAllMembershipPackageOptions()
+        {
+            var res = accountMembershipPackageService.GetAllMembershipPackage();
+
+            return Ok(res);
+        }
+
+        [HttpGet("get-account-membership-package/{userId}")]
+        public async Task<IActionResult> GetAccountMembershipPackageByUserId(int userId)
+        {
+            var res = await accountMembershipPackageService.GetAccountMembershipPackageByUserId(userId);
+
+            return GetActionResult(res);
+        }
+    }
+}
