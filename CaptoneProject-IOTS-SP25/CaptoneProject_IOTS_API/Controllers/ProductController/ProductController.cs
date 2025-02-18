@@ -1,5 +1,4 @@
-﻿using CaptoneProject_IOTS_BOs.Migrations;
-using CaptoneProject_IOTS_BOs.Models;
+﻿using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
