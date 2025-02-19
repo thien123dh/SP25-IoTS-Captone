@@ -1,4 +1,5 @@
 ﻿using CaptoneProject_IOTS_BOs.DTO.VNPayDTO;
+using CaptoneProject_IOTS_BOs.DTO.WalletDTO;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
 using CaptoneProject_IOTS_Service.Business;
 using CaptoneProject_IOTS_Service.Services.Interface;
@@ -14,13 +15,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
     public class VNPayService : IVNPayService
     {
         private readonly IUserServices _userService;
-
-        public VNPayService(IUserServices userService)
+        private readonly IWalletService _walletService;
+        public VNPayService(IUserServices userService, IWalletService walletService)
         {
             _userService = userService;
+            _walletService = walletService;
         }
 
-        public async Task<string> CallAPIPayByUserId(int userId, string returnUrl, string paymentType)
+        public async Task<string> CallAPIPayByUserId(int userId,string returnUrl, long amount)
         {
             try
             {
@@ -35,21 +37,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 }
 
                 // Fix cứng số tiền theo loại thanh toán
-                long amount;
-                switch (paymentType.ToLower())
-                {
-                    case "short-term":
-                        amount = 100000;
-                        break;
-                    case "normal":
-                        amount = 500000;
-                        break;
-                    case "long-term":
-                        amount = 1000000;
-                        break;
-                    default:
-                        throw new Exception("Invalid payment type.");
-                }
                 var amounts = ((long)amount * 100).ToString();
                 var vnp_TxnRef = $"{userId}{DateTime.Now:HHmmss}";
                 var vnp_Amount = amounts;
@@ -65,7 +52,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 vnpay.AddRequestData("vnp_CurrCode", "VND");
                 vnpay.AddRequestData("vnp_IpAddr", Utils.GetIpAddress());
                 vnpay.AddRequestData("vnp_Locale", "vn");
-                vnpay.AddRequestData("vnp_OrderInfo", $"Payment type: {paymentType}");
+                vnpay.AddRequestData("vnp_OrderInfo", $"Payment type: VNPay");
                 vnpay.AddRequestData("vnp_OrderType", "order");
                 vnpay.AddRequestData("vnp_ReturnUrl", vnp_ReturnUrl);
                 vnpay.AddRequestData("vnp_TxnRef", vnp_TxnRef);
@@ -154,6 +141,15 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var responseCodeMessage = ReturnedErrorMessageResponseCode(responseCode);
             var transactionStatusMessage = ReturnedErrorMessageTransactionStatus(transactionStatus);
 
+            var createTransactionPayment = new CreateTransactionWalletDTO
+            {
+                UserId = userId,
+                Amount = (vnp_Amount / 1000),
+                Description = $"You have deposited {vnp_Amount} VND into your account.",
+                TransactionType = "VNPAY Payment"
+            };
+
+
             VnPayResponse response = new VnPayResponse()
             {
                 TransactionId = vnpayTranId,
@@ -170,6 +166,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (vnp_ResponseCode == "00" && transactionStatus == "00")
             {
                 await _userService.UpdateUserStatus(userId, 1);
+                await _walletService.CreateTransactionUserWallet(createTransactionPayment);
+
             }
             else
             {
