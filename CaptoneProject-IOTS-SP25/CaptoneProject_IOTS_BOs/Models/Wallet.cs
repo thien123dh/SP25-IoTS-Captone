@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace CaptoneProject_IOTS_BOs.Models
@@ -23,13 +24,14 @@ namespace CaptoneProject_IOTS_BOs.Models
         [Column("user_id")]
         [ForeignKey(nameof(User))]
         public int UserId { set; get; }
-
+        [JsonIgnore]
         [Column("created_date")]
         public DateTime CreatedDate = DateTime.Now;
-
+        [JsonIgnore]
         [Column("updated_date")]
         public DateTime UpdatedDate = DateTime.Now;
 
+        [JsonIgnore]
         public virtual User UserNavigation { set; get; }
     }
 }

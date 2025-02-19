@@ -1,6 +1,7 @@
 ﻿using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.MembershipPackageDTO;
+using CaptoneProject_IOTS_BOs.DTO.WalletDTO;
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
 using CaptoneProject_IOTS_Service.ResponseService;
@@ -84,7 +85,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             package.LastPaymentDate = DateTime.Now;
             package.NextPaymentDate = DateTime.Now.AddMonths(packageOption.NumberOfMonth);
             package.UserId = userId;
-            package.MembershipPackageType = request.MembershipPackageId;
+            package.MembershipPackageType = packageOption.Id;
             //SET DATA
 
             try
@@ -106,7 +107,51 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         public async Task<GenericResponseDTO<AccountMembershipPackage>> RegisterAccountMembershipPackage(AccountRegisterMembershipPackageDTO request)
         {
-            return null;
+            var user = userRepository.GetById(request.UserId);
+
+            if (user == null)
+            {
+                return ResponseService<AccountMembershipPackage>.NotFound(ExceptionMessage.USER_DOESNT_EXIST);
+            }
+
+            var package = GetMembershipPackageById(request.MembershipPackageId);
+
+            if (package == null)
+                return ResponseService<AccountMembershipPackage>.NotFound("Membership Package Not Found");
+
+            var accountMembershipPackage = accountMembershipPackageRepository.GetByUserId(request.UserId);
+
+            accountMembershipPackage = accountMembershipPackage == null ? new AccountMembershipPackage() : accountMembershipPackage;
+
+            accountMembershipPackage.Fee = package.Fee;
+            accountMembershipPackage.LastPaymentDate = DateTime.Now;
+            accountMembershipPackage.NextPaymentDate = DateTime.Now;
+            accountMembershipPackage.UserId = user.Id;
+            accountMembershipPackage.MembershipPackageType = package.Id;
+
+            try
+            {
+                if (await walletService.CheckWalletBallance(package.Fee, user.Id))
+                    return ResponseService<AccountMembershipPackage>.BadRequest(ExceptionMessage.INSUFFICIENT_WALLET);
+
+                if (accountMembershipPackage.Id > 0)
+                    accountMembershipPackage = accountMembershipPackageRepository.Update(accountMembershipPackage);
+                else
+                    accountMembershipPackage = accountMembershipPackageRepository.Create(accountMembershipPackage);
+
+                walletService.CreateTransactionUserWallet(new CreateTransactionWalletDTO
+                {
+                    Amount = -accountMembershipPackage.Fee,
+                    Description = $"You have been charged {accountMembershipPackage.Fee} gold",
+                    TransactionType = "Register Membership Package",
+                    UserId = user.Id,
+                });
+            } catch
+            {
+                return ResponseService<AccountMembershipPackage>.BadRequest("Cannot register membership package. Please try again");
+            }
+
+            return ResponseService<AccountMembershipPackage>.OK(accountMembershipPackage);
         }
     }
 }

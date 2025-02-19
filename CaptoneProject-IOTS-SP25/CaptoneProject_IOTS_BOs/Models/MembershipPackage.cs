@@ -25,7 +25,7 @@ namespace CaptoneProject_IOTS_BOs.Models
 
         [Column("fee")]
         [Precision(18, 1)]
-        public decimal? Fee { set; get; }
+        public decimal Fee { set; get; }
 
         [Column("is_active")]
         [Range(0, 5)]

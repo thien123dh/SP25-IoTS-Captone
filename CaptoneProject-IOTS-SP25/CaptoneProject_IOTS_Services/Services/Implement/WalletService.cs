@@ -37,6 +37,15 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             throw new NotImplementedException();
         }
 
+        public async Task<bool> CheckWalletBallance(decimal fee, int userId)
+        {
+            var wallet = await GetWalletByUserId(userId);
+
+            var newBallance = (wallet?.Data?.Ballance == null ? 0 : wallet.Data.Ballance) - fee;
+
+            return newBallance < 0;
+        }
+
         public async Task<GenericResponseDTO<Wallet>> CreateOrUpdateWallet(CreateUpdateWalletDTO source)
         {
             var user = userRepository.GetById(source.UserId);
