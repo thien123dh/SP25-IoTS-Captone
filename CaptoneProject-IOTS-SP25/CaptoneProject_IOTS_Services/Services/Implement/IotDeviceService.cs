@@ -13,6 +13,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using static CaptoneProject_IOTS_BOs.Constant.EntityTypeConst;
+using static CaptoneProject_IOTS_BOs.Constant.ProductConst;
 using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
 
 namespace CaptoneProject_IOTS_Service.Services.Implement
@@ -35,6 +36,13 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             this.storeRepository = storeRepository;
         }
 
+        private string GetApplicationSerialNumber(int storeId, string serialNumber, int deviceType)
+        {
+            return "DV{StoreId}{DeviceType}{SerialNumber}"
+                .Replace("{StoreId}", storeId.ToString())
+                .Replace("{DeviceType}", (deviceType == (int)IotDeviceTypeEnum.NEW ? "N" : "O"))
+                .Replace("{SerialNumber}", serialNumber);
+        }
         public async Task<GenericResponseDTO<IotDeviceDetailsDTO>> CreateOrUpdateIotDevice(int? id, CreateUpdateIotDeviceDTO payload)
         {
             var loginUser = userServices.GetLoginUser();
@@ -69,6 +77,15 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             saveDevice.UpdatedBy = loginUserId;
             saveDevice.Id = (id == null) ? saveDevice.Id : (int)id;
             saveDevice.StoreId = (int)storeId;
+            saveDevice.ApplicationSerialNumber = GetApplicationSerialNumber((int)storeId, payload.SerialNumber, (int)payload.DeviceType);
+
+            var checkExistRecord = iotsDeviceRepository.GetByApplicationSerialNumber(saveDevice.ApplicationSerialNumber);
+
+            //Existing application serial number
+            if (saveDevice.Id > 0 && checkExistRecord != null && checkExistRecord.Id != saveDevice.Id)
+            {
+                return ResponseService<IotDeviceDetailsDTO>.BadRequest("The Serial Number was duplicated in your Store. Please enter another Serial Number");
+            }
 
             try
             {

@@ -1,4 +1,5 @@
-﻿using CaptoneProject_IOTS_Service.Services.Interface;
+﻿using CaptoneProject_IOTS_BOs.DTO.MembershipPackageDTO;
+using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,11 +7,11 @@ namespace CaptoneProject_IOTS_API.Controllers.AccountMembershipPackageController
 {
     [Route("api/account-membership-package")]
     [ApiController]
-    public class AccountMembershipPackageControllerController : MyBaseController.MyBaseController
+    public class AccountMembershipPackageController : MyBaseController.MyBaseController
     {
         private readonly IAccountMembershipPackageService accountMembershipPackageService;
 
-        public AccountMembershipPackageControllerController(IAccountMembershipPackageService accountMembershipPackageService)
+        public AccountMembershipPackageController(IAccountMembershipPackageService accountMembershipPackageService)
         {
             this.accountMembershipPackageService = accountMembershipPackageService;
         }
@@ -29,6 +30,12 @@ namespace CaptoneProject_IOTS_API.Controllers.AccountMembershipPackageController
             var res = await accountMembershipPackageService.GetAccountMembershipPackageByUserId(userId);
 
             return GetActionResult(res);
+        }
+
+        [HttpPost("register-membership-package")]
+        public async Task<IActionResult> RegisterMembershipPackage([FromBody] AccountRegisterMembershipPackageDTO payload)
+        {
+            return null;
         }
     }
 }

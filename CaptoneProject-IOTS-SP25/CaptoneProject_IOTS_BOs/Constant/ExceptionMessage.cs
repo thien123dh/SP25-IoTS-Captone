@@ -39,5 +39,6 @@ namespace CaptoneProject_IOTS_BOs.Constant
         public static string MATERIAL_NOTFOUND = "Cannot find material";
 
         public static string STORE_NOTFOUND = "Store cannot be found";
+        public static string INSUFFICIENT_WALLET = "Wallet balance is insufficient. Please add funds to your wallet.";
     }
 }

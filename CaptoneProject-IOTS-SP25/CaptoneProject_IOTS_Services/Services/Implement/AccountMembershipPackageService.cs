@@ -19,16 +19,19 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly AccountMembershipPackageRepository accountMembershipPackageRepository;
         private readonly MembershipPackageRepository membershipPackageRepository;
         private readonly UserRepository userRepository;
+        private readonly IWalletService walletService;
 
         public AccountMembershipPackageService (
             AccountMembershipPackageRepository accountMembershipPackageRepository,
             MembershipPackageRepository membershipPackageRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            IWalletService walletService
         )
         {
             this.accountMembershipPackageRepository = accountMembershipPackageRepository;
             this.membershipPackageRepository = membershipPackageRepository;
             this.userRepository = userRepository;
+            this.walletService = walletService;
         }
         public async Task<GenericResponseDTO<AccountMembershipPackage>> GetAccountMembershipPackageByUserId(int userId)
         {
@@ -57,7 +60,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return membershipPackageRepository.GetById(id);
         }
 
-        public async Task<GenericResponseDTO<AccountMembershipPackage>> CreateOrUpdateAccountMembershipPackage(CreateUpdateAccountMembershipPackage request)
+        public async Task<GenericResponseDTO<AccountMembershipPackage>> CreateOrUpdateAccountMembershipPackage(AccountRegisterMembershipPackageDTO request)
         {
             var user = userRepository.GetUserById(request.UserId);
 
@@ -99,6 +102,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
 
             return ResponseService<AccountMembershipPackage>.OK(package);
+        }
+
+        public async Task<GenericResponseDTO<AccountMembershipPackage>> RegisterAccountMembershipPackage(AccountRegisterMembershipPackageDTO request)
+        {
+            return null;
         }
     }
 }

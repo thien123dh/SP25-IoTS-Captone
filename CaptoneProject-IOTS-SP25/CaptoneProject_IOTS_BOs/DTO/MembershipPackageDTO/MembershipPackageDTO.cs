@@ -7,7 +7,8 @@ using System.Threading.Tasks;
 
 namespace CaptoneProject_IOTS_BOs.DTO.MembershipPackageDTO
 {
-    public class CreateUpdateAccountMembershipPackage
+
+    public class AccountRegisterMembershipPackageDTO
     {
         public int UserId { set; get; }
         public int MembershipPackageId { set; get; }

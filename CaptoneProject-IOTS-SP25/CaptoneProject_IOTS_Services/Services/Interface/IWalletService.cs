@@ -13,5 +13,6 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
     {
         Task<GenericResponseDTO<Wallet>> CreateOrUpdateWallet(CreateUpdateWalletDTO source);
         Task<GenericResponseDTO<Wallet>> GetWalletByUserId(int userId);
+        Task<GenericResponseDTO<Wallet>> CreateTransactionUserWallet(CreateTransactionWalletDTO source);
     }
 }
