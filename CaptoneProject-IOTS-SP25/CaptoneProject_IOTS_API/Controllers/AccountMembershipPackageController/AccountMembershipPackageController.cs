@@ -35,7 +35,9 @@ namespace CaptoneProject_IOTS_API.Controllers.AccountMembershipPackageController
         [HttpPost("register-membership-package")]
         public async Task<IActionResult> RegisterMembershipPackage([FromBody] AccountRegisterMembershipPackageDTO payload)
         {
-            return null;
+            var res = await accountMembershipPackageService.RegisterAccountMembershipPackage(payload);
+
+            return GetActionResult(res);
         }
     }
 }

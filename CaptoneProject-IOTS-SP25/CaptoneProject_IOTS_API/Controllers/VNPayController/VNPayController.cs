@@ -20,12 +20,12 @@ namespace CaptoneProject_IOTS_API.Controllers.VNPayController
         }
 
         [HttpGet("vnpay-create-pay-with-account")]
-        public async Task<IActionResult> PayWithUserId([FromQuery] string paymentType, string returnUrl = null)
+        public async Task<IActionResult> PayWithUserId([FromQuery] long amount, string returnUrl = null)
         {
             try
             {
                 var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-                var result = await _vnPayService.CallAPIPayByUserId(userId, returnUrl, paymentType);
+                var result = await _vnPayService.CallAPIPayByUserId(userId, returnUrl, amount);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -35,7 +35,7 @@ namespace CaptoneProject_IOTS_API.Controllers.VNPayController
         }
 
         [HttpPost("check-payment")]
-        public async Task<IActionResult> Check(VNPayRequestDTO dto)
+        public async Task<IActionResult> Check([FromBody] VNPayRequestDTO dto)
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var result = await _vnPayService.GetInformationPayment(userId, dto);
