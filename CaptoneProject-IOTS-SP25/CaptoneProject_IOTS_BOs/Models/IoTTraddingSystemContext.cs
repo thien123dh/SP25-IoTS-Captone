@@ -42,6 +42,7 @@ public partial class IoTTraddingSystemContext : DbContext
 
     public virtual DbSet<Store> Stores { get; set; }
     public virtual DbSet<TrainerBusinessLicense> TrainerBusinessLicenses { set; get; }
+    public virtual DbSet<Transaction> Transactions { set; get; }
 
     public virtual DbSet<User> Users { get; set; }
 

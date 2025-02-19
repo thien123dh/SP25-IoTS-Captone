@@ -1,6 +1,8 @@
 ﻿using Azure;
+using CaptoneProject_IOTS_BOs.DTO.MaterialDTO;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.Identity.Client;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -140,6 +142,8 @@ public partial class IotsDevice
     public string Model { get; set; }
 
     public string SerialNumber { get; set; }
+
+    public string ApplicationSerialNumber { set; get; }
 
     [Column("specifications")]
     [MaxLength(500)]

@@ -1,5 +1,6 @@
 ﻿using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Base;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,9 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
     {
         public Wallet? GetByUserId(int userId)
         {
-            return _dbSet.SingleOrDefault(item => item.UserId == userId);
+            return _dbSet
+                .Include("UserNavigation")
+                .SingleOrDefault(item => item.UserId == userId);
         }
     }
 }
