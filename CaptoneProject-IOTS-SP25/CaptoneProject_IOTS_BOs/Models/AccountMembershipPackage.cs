@@ -32,6 +32,6 @@ namespace CaptoneProject_IOTS_BOs.Models
 
         public DateTime NextPaymentDate { set; get; } = DateTime.Now;
 
-        public virtual MembershipPackage MembershipPackageNavigation { set; get; }
+        //public virtual MembershipPackage? MembershipPackageTypeNavigation { set; get; }
     }
 }

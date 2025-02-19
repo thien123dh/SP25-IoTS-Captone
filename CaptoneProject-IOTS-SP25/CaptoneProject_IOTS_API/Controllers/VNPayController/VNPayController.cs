@@ -35,7 +35,7 @@ namespace CaptoneProject_IOTS_API.Controllers.VNPayController
         }
 
         [HttpPost("check-payment")]
-        public async Task<IActionResult> Check(VNPayRequestDTO dto)
+        public async Task<IActionResult> Check([FromBody] VNPayRequestDTO dto)
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var result = await _vnPayService.GetInformationPayment(userId, dto);

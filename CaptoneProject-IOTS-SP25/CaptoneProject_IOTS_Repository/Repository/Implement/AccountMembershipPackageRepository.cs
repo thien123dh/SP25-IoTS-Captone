@@ -14,7 +14,7 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
         public AccountMembershipPackage? GetByUserId(int userId)
         {
             return _dbSet
-                .Include(item => item.MembershipPackageNavigation)
+                //.Include(item => item.MembershipPackageTypeNavigation)
                 .SingleOrDefault(item => item.UserId == userId);
         }
     }
