@@ -190,6 +190,8 @@ namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
 
         public string SerialNumber { get; set; }
 
+        public string ApplicationSerialNumber { set; get; }
+
         public string Specifications { set; get; }
 
         public string Notes { set; get; }

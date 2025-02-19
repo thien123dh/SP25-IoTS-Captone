@@ -25,15 +25,13 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly ITokenServices _tokenGenerator;
         private readonly PasswordHasher<string> _passwordHasher;
         private readonly MyHttpAccessor httpAccessor;
-        private readonly IRoleService roleService;
-        private readonly IWalletService walletService;
+        private readonly WalletRepository walletRepository;
         public UserService (
             UserRepository userService, 
             ITokenServices tokenGenerator,
             UserRoleRepository userRoleRepository,
             MyHttpAccessor httpAccessor,
-            IRoleService roleService,
-            IWalletService walletService
+            WalletRepository walletRepository
         )
         {
             _userRepository = userService;
@@ -41,8 +39,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             _tokenGenerator = tokenGenerator;
             _passwordHasher = new PasswordHasher<string>();
             this.httpAccessor = httpAccessor;
-            this.roleService = roleService;
-            this.walletService = walletService;
+            this.walletRepository = walletRepository;
         }
 
         public async Task<ResponseDTO> UpdateUserPassword(int userId, string password)
@@ -304,10 +301,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     user = _userRepository.Create(user);
 
                     //Create Default Wallet
-                    await walletService.CreateOrUpdateWallet(new CreateUpdateWalletDTO
+                    walletRepository.Create(new Wallet
                     {
-                        UserId = user.Id,
-                        Ballance = 0
+                        Ballance = 0,
+                        CreatedDate = DateTime.Now,
+                        UpdatedDate = DateTime.Now,
+                        UserId = user.Id
                     });
                 }
 
@@ -395,6 +394,16 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var roles = await GetLoginUserRoles();
 
             return roles?.Count(item => item.Id == (int)role) > 0;
+        }
+
+        public async Task<bool> CheckUserRole(int userId, RoleEnum role)
+        {
+            var user = await GetUserDetailsById(userId);
+
+            if (user == null)
+                return false;
+
+            return user?.Data?.Roles?.Count(item => item.Id == (int)role) > 0;
         }
     }
 }
