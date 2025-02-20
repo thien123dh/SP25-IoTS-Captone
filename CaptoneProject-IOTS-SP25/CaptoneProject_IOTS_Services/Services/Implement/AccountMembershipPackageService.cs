@@ -12,36 +12,34 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
 
 namespace CaptoneProject_IOTS_Service.Services.Implement
 {
     public class AccountMembershipPackageService : IAccountMembershipPackageService
     {
-        private readonly AccountMembershipPackageRepository accountMembershipPackageRepository;
-        private readonly MembershipPackageRepository membershipPackageRepository;
-        private readonly UserRepository userRepository;
+        private readonly IUserServices userService;
         private readonly IWalletService walletService;
+        private readonly UnitOfWork unitOfWork;
 
-        public AccountMembershipPackageService (
-            AccountMembershipPackageRepository accountMembershipPackageRepository,
-            MembershipPackageRepository membershipPackageRepository,
-            UserRepository userRepository,
-            IWalletService walletService
+        public AccountMembershipPackageService(
+            IWalletService walletService,
+            UnitOfWork unitOfWork,
+            IUserServices userServices
         )
         {
-            this.accountMembershipPackageRepository = accountMembershipPackageRepository;
-            this.membershipPackageRepository = membershipPackageRepository;
-            this.userRepository = userRepository;
             this.walletService = walletService;
+            this.unitOfWork = unitOfWork;
+            this.userService = userServices;
         }
         public async Task<GenericResponseDTO<AccountMembershipPackage>> GetAccountMembershipPackageByUserId(int userId)
         {
-            var user = userRepository.GetById(userId);
+            var user = unitOfWork.UserRepository.GetById(userId);
 
             if (user == null)
                 return ResponseService<AccountMembershipPackage>.BadRequest(ExceptionMessage.EMAIL_DOESNT_EXIST);
 
-            var package = accountMembershipPackageRepository.GetByUserId(userId);
+            var package = unitOfWork.AccountMembershipPackageRepository.GetByUserId(userId);
 
             if (package == null)
             {
@@ -53,17 +51,17 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         public List<MembershipPackage> GetAllMembershipPackage()
         {
-            return membershipPackageRepository.GetAll();
+            return unitOfWork.MembershipPackageRepository.GetAll();
         }
 
         public MembershipPackage? GetMembershipPackageById(int id)
         {
-            return membershipPackageRepository.GetById(id);
+            return unitOfWork.MembershipPackageRepository.GetById(id);
         }
 
         public async Task<GenericResponseDTO<AccountMembershipPackage>> CreateOrUpdateAccountMembershipPackage(AccountRegisterMembershipPackageDTO request)
         {
-            var user = userRepository.GetUserById(request.UserId);
+            var user = unitOfWork.UserRepository.GetUserById(request.UserId);
 
             if (user == null)
                 return ResponseService<AccountMembershipPackage>.BadRequest(ExceptionMessage.EMAIL_DOESNT_EXIST);
@@ -75,7 +73,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             int userId = request.UserId;
 
-            var package = accountMembershipPackageRepository.GetByUserId(userId);
+            var package = unitOfWork.AccountMembershipPackageRepository.GetByUserId(userId);
 
             package = package == null ? new AccountMembershipPackage() : package;
 
@@ -92,10 +90,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 if (package.Id > 0) //UPDATE
                 {
-                    package = accountMembershipPackageRepository.Update(package);
+                    package = unitOfWork.AccountMembershipPackageRepository.Update(package);
                 } else
                 {
-                    package = accountMembershipPackageRepository.Create(package);
+                    package = unitOfWork.AccountMembershipPackageRepository.Create(package);
                 }
             } catch
             {
@@ -107,7 +105,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         public async Task<GenericResponseDTO<AccountMembershipPackage>> RegisterAccountMembershipPackage(AccountRegisterMembershipPackageDTO request)
         {
-            var user = userRepository.GetById(request.UserId);
+            var user = unitOfWork.UserRepository.GetById(request.UserId);
 
             if (user == null)
             {
@@ -119,7 +117,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (package == null)
                 return ResponseService<AccountMembershipPackage>.NotFound("Membership Package Not Found");
 
-            var accountMembershipPackage = accountMembershipPackageRepository.GetByUserId(request.UserId);
+            var accountMembershipPackage = unitOfWork.AccountMembershipPackageRepository.GetByUserId(request.UserId);
 
             accountMembershipPackage = accountMembershipPackage == null ? new AccountMembershipPackage() : accountMembershipPackage;
 
@@ -135,11 +133,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     return ResponseService<AccountMembershipPackage>.BadRequest(ExceptionMessage.INSUFFICIENT_WALLET);
 
                 if (accountMembershipPackage.Id > 0)
-                    accountMembershipPackage = accountMembershipPackageRepository.Update(accountMembershipPackage);
+                    accountMembershipPackage = unitOfWork.AccountMembershipPackageRepository.Update(accountMembershipPackage);
                 else
-                    accountMembershipPackage = accountMembershipPackageRepository.Create(accountMembershipPackage);
+                    accountMembershipPackage = unitOfWork.AccountMembershipPackageRepository.Create(accountMembershipPackage);
 
-                walletService.CreateTransactionUserWallet(new CreateTransactionWalletDTO
+                //Update user status ==> 1
+                await userService.UpdateUserStatus(user.Id, (int)UserStatusEnum.ACTIVE);
+
+                await walletService.CreateTransactionUserWallet(new CreateTransactionWalletDTO
                 {
                     Amount = -accountMembershipPackage.Fee,
                     Description = $"You have been charged {accountMembershipPackage.Fee} gold",
