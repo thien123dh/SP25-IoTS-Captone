@@ -19,5 +19,8 @@ namespace CaptoneProject_IOTS_Service
         public virtual IotsDeviceRepository IotsDeviceRepository => new IotsDeviceRepository();
         public virtual UserRoleRepository UserRoleRepository => new UserRoleRepository();
         public virtual WalletRepository WalletRepository => new WalletRepository();
+        public virtual BlogCategoryRepository BlogCategoryRepository => new BlogCategoryRepository();
+        public virtual BlogRepository BlogRepository => new BlogRepository();
+        public virtual StoreRepository StoreRepository => new StoreRepository();
     }
 }
