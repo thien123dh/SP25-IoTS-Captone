@@ -2,6 +2,7 @@
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Base;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
+using CaptoneProject_IOTS_Service;
 using CaptoneProject_IOTS_Service.Services.Implement;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -61,6 +62,7 @@ builder.Services.AddScoped<WalletRepository>();
 builder.Services.AddScoped<MembershipPackageRepository>();
 builder.Services.AddScoped<AccountMembershipPackageRepository>();
 builder.Services.AddScoped<TransactionRepository>();
+builder.Services.AddScoped<UnitOfWork>();
 
 // Register Services
 builder.Services.AddHttpContextAccessor();

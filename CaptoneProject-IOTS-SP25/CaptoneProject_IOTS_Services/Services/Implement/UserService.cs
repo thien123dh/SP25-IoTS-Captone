@@ -20,26 +20,20 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 {
     public class UserService : IUserServices
     {
-        private readonly UserRepository _userRepository;
-        private readonly UserRoleRepository _userRoleRepository;
         private readonly ITokenServices _tokenGenerator;
         private readonly PasswordHasher<string> _passwordHasher;
         private readonly MyHttpAccessor httpAccessor;
-        private readonly WalletRepository walletRepository;
-        public UserService (
-            UserRepository userService, 
+        private readonly UnitOfWork unitOfWork;
+        public UserService(
+            UnitOfWork unitOfWork,
             ITokenServices tokenGenerator,
-            UserRoleRepository userRoleRepository,
-            MyHttpAccessor httpAccessor,
-            WalletRepository walletRepository
+            MyHttpAccessor httpAccessor
         )
         {
-            _userRepository = userService;
-            _userRoleRepository = userRoleRepository;
+            this.unitOfWork = unitOfWork;
             _tokenGenerator = tokenGenerator;
             _passwordHasher = new PasswordHasher<string>();
             this.httpAccessor = httpAccessor;
-            this.walletRepository = walletRepository;
         }
 
         public async Task<ResponseDTO> UpdateUserPassword(int userId, string password)
@@ -55,11 +49,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
             int? loginUserId = GetLoginUserId();
 
-            User user = _userRepository.GetById(userId);
+            User user = unitOfWork.UserRepository.GetById(userId);
             user.Password = _passwordHasher.HashPassword(null, password);
             user.UpdatedBy = loginUserId;
 
-            _userRepository.Update(user);
+            unitOfWork.UserRepository.Update(user);
 
             return new ResponseDTO
             {
@@ -81,7 +75,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     StatusCode = HttpStatusCode.BadRequest
                 };
 
-            var user = await _userRepository.GetUserById((int)loginUserId);
+            var user = await unitOfWork.UserRepository.GetUserById((int)loginUserId);
 
             return
                 new GenericResponseDTO<UserResponseDTO>
@@ -96,7 +90,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         }
         public async Task<GenericResponseDTO<UserResponseDTO>> UpdateUserStatus(int userId, int isActive)
         {
-            User u = _userRepository.GetById(userId);
+            User u = unitOfWork.UserRepository.GetById(userId);
 
             if (u == null)
             {
@@ -109,7 +103,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
 
             u.IsActive = isActive;
-            u = _userRepository.Update(u);
+            u = unitOfWork.UserRepository.Update(u);
 
             return new GenericResponseDTO<UserResponseDTO>
             {
@@ -122,7 +116,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         public async Task<ResponseDTO> GetAllUsers()
         {
-            List<User> userList = _userRepository.GetAll();
+            List<User> userList = unitOfWork.UserRepository.GetAll();
 
             if (userList == null)
             {
@@ -148,7 +142,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         }
         public async Task<ResponseDTO> LoginUserAsync(string email, string password)
         {
-            var user = await _userRepository.CheckLoginAsync(email, password);
+            var user = await unitOfWork.UserRepository.CheckLoginAsync(email, password);
 
             if (user != null)
             {
@@ -191,7 +185,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         public async Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserDetailsById(int id)
         {
-            User user = await _userRepository.GetUserById(id);
+            User user = await unitOfWork.UserRepository.GetUserById(id);
 
             if (user == null)
             {
@@ -206,7 +200,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         public async Task<GenericResponseDTO<UserDetailsResponseDTO>> UpdateUserRole(int userId, List<int>? roleList)
         {
             roleList = (roleList == null) ? new List<int>() : roleList;
-            User user = await _userRepository.GetUserById(userId);
+            User user = await unitOfWork.UserRepository.GetUserById(userId);
 
             if (user == null)
                 return ResponseService<UserDetailsResponseDTO>.NotFound(ExceptionMessage.USER_DOESNT_EXIST);
@@ -217,7 +211,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             IEnumerable<UserRole>? deleteUserRoleList = userRoleList?.Where(ur => !roleList.Contains(ur.RoleId));
             //REMOVE user role
             if (deleteUserRoleList != null)
-                await _userRoleRepository.RemoveAsync(deleteUserRoleList);
+                await unitOfWork.UserRoleRepository.RemoveAsync(deleteUserRoleList);
 
             int? loginUserId = GetLoginUserId();
 
@@ -235,14 +229,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             });
 
             //Create user role list
-            await _userRoleRepository.CreateAsync(insertUserRoleList);
+            await unitOfWork.UserRoleRepository.CreateAsync(insertUserRoleList);
 
             return ResponseService<UserDetailsResponseDTO>.OK((await GetUserDetailsById(userId)).Data);
         }
 
         public async Task<ResponseDTO> GetUsersPagination(PaginationRequest paginationRequest, int? roleId)
         {
-            PaginationResponseDTO<User> response = _userRepository.GetPaginate(
+            PaginationResponseDTO<User> response = unitOfWork.UserRepository.GetPaginate(
                     filter: user => (
                     !user.UserRoles.Any(userRole => userRole.RoleId == 1) &&
                     ((roleId == null) || user.UserRoles.SingleOrDefault(userRole => userRole.RoleId == roleId) != null)
@@ -268,7 +262,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         //set id = 0 to create new
         public async Task<GenericResponseDTO<UserResponseDTO>> CreateOrUpdateUser(int id, CreateUserDTO payload, int isActive)
         {
-            User user = await _userRepository.GetUserByEmail(payload.Email);
+            User user = await unitOfWork.UserRepository.GetUserByEmail(payload.Email);
 
             if (user != null)
             {
@@ -295,13 +289,13 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             try
             {
                 if (user.Id > 0) //Update
-                    user = _userRepository.Update(user);
+                    user = unitOfWork.UserRepository.Update(user);
                 else //Create
                 {
-                    user = _userRepository.Create(user);
+                    user = unitOfWork.UserRepository.Create(user);
 
                     //Create Default Wallet
-                    walletRepository.Create(new Wallet
+                    unitOfWork.WalletRepository.Create(new Wallet
                     {
                         Ballance = 0,
                         CreatedDate = DateTime.Now,
@@ -357,7 +351,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         public async Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserDetailsByEmail(string email)
         {
-            User user = await _userRepository.GetUserByEmail(email);
+            User user = await unitOfWork.UserRepository.GetUserByEmail(email);
 
             if (user == null)
                 return ResponseService<UserDetailsResponseDTO>.NotFound(ExceptionMessage.USER_DOESNT_EXIST);
@@ -372,7 +366,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (loginUserId == null)
                 return null;
 
-            User user = _userRepository.GetById((int)loginUserId);
+            User user = unitOfWork.UserRepository.GetById((int)loginUserId);
 
             return user;
         }
@@ -384,7 +378,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (loginUserId == null)
                 return null;
 
-            var user = await _userRepository.GetUserById((int)loginUserId);
+            var user = await unitOfWork.UserRepository.GetUserById((int)loginUserId);
 
             return user?.UserRoles?.Select(u => u.Role)?.ToList();
         }

@@ -15,7 +15,6 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         public MembershipPackage? GetMembershipPackageById(int id);
         public Task<GenericResponseDTO<AccountMembershipPackage>> CreateOrUpdateAccountMembershipPackage(AccountRegisterMembershipPackageDTO request);
         public Task<GenericResponseDTO<AccountMembershipPackage>> GetAccountMembershipPackageByUserId(int userId);
-
         public Task<GenericResponseDTO<AccountMembershipPackage>> RegisterAccountMembershipPackage(AccountRegisterMembershipPackageDTO request);
     }
 }
