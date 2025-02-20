@@ -15,7 +15,7 @@ using CaptoneProject_IOTS_Service.Business;
 
 namespace CaptoneProject_IOTS_Service.Services.Implement
 {
-    public class BlogCategoryService : IBlogService
+    public class BlogCategoryService : IBlogCategoryService
     {
         private readonly UnitOfWork _unitOfWork;
 

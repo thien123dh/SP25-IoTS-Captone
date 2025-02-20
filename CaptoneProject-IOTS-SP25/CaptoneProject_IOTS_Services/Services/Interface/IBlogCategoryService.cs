@@ -12,7 +12,7 @@ using CaptoneProject_IOTS_BOs.DTO.BlogDTO;
 
 namespace CaptoneProject_IOTS_Service.Services.Interface
 {
-    public interface IBlogService
+    public interface IBlogCategoryService
     {
         Task<ResponseDTO> CreateOrUpdateBlogCategory(int? id, CreateUpdateBlogCategoryDTO blogCategoryDTO);
         Task<ResponseDTO> UpdateBlogCategoryStatus(int id, int IsActive);

@@ -14,8 +14,8 @@ namespace CaptoneProject_IOTS_API.Controllers.BlogCategoryController
     [ApiController]
     public class BlogCategoryController : ControllerBase
     {
-        private readonly IBlogService _blogCategoryService;
-        public BlogCategoryController(IBlogService blogCategoryService)
+        private readonly IBlogCategoryService _blogCategoryService;
+        public BlogCategoryController(IBlogCategoryService blogCategoryService)
         {
             this._blogCategoryService = blogCategoryService;
         }
