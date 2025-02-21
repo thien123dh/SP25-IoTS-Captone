@@ -49,9 +49,20 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return ResponseService<AccountMembershipPackage>.OK(package);
         }
 
-        public List<MembershipPackage> GetAllMembershipPackage()
+        public async Task<ResponseDTO> GetAllMembershipPackage()
         {
-            return unitOfWork.MembershipPackageRepository.GetAll();
+            int? packageFor = await userService.CheckLoginUserRole(RoleEnum.STORE) ? 
+                (int)MembershipPackageTypeEnum.STORE : 
+                await userService.CheckLoginUserRole(RoleEnum.TRAINER) ? (int)MembershipPackageTypeEnum.TRAINER : null;
+
+            if (packageFor == null && !(await userService.CheckLoginUserRole(RoleEnum.ADMIN) || await userService.CheckLoginUserRole(RoleEnum.STAFF)))
+                return ResponseService<object>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
+
+            return ResponseService<object>.OK(
+                unitOfWork.MembershipPackageRepository.GetAll().Where(
+                    item => (packageFor == null) || item.PackageFor == packageFor
+                ).ToList()
+            );
         }
 
         public MembershipPackage? GetMembershipPackageById(int id)
@@ -121,9 +132,16 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             accountMembershipPackage = accountMembershipPackage == null ? new AccountMembershipPackage() : accountMembershipPackage;
 
+            //If user register package days < 5 days
+            if (accountMembershipPackage.NextPaymentDate.Subtract(DateTime.Now).TotalDays > 5)
+                return ResponseService<AccountMembershipPackage>.BadRequest(ExceptionMessage.REGISTER_PACKAGE_TOO_SOON);
+
+            DateTime nextPayment = (DateTime.Now > accountMembershipPackage.NextPaymentDate) ? DateTime.Now : accountMembershipPackage.NextPaymentDate;
+            
+            int numberOfMonth = package.NumberOfMonth;
             accountMembershipPackage.Fee = package.Fee;
+            accountMembershipPackage.NextPaymentDate = nextPayment.AddMonths(numberOfMonth);
             accountMembershipPackage.LastPaymentDate = DateTime.Now;
-            accountMembershipPackage.NextPaymentDate = DateTime.Now;
             accountMembershipPackage.UserId = user.Id;
             accountMembershipPackage.MembershipPackageType = package.Id;
 

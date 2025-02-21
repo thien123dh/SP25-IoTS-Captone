@@ -383,11 +383,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return user?.UserRoles?.Select(u => u.Role)?.ToList();
         }
 
-        public async Task<Boolean> CheckLoginUserRole(RoleEnum role)
+        public async Task<bool> CheckLoginUserRole(RoleEnum role)
         {
             var roles = await GetLoginUserRoles();
 
-            return roles?.Count(item => item.Id == (int)role) > 0;
+            return (roles == null) ? false : roles?.Count(item => item.Id == (int)role) > 0;
         }
 
         public async Task<bool> CheckUserRole(int userId, RoleEnum role)

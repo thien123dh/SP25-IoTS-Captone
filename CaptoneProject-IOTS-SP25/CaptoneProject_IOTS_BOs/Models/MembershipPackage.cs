@@ -19,8 +19,11 @@ namespace CaptoneProject_IOTS_BOs.Models
         [Column("label")]
         public string Label { set; get; }
 
+        [Column("PackageFor")]
+        public int? PackageFor { set; get; } = 1;
+
         [Column("number_of_month")]
-        [JsonIgnore]
+        //[JsonIgnore]
         public int NumberOfMonth { set; get; }
 
         [Column("fee")]
