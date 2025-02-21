@@ -20,20 +20,16 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 {
     public class IotDeviceService : IIotDevicesService
     {
-        private readonly IotsDeviceRepository iotsDeviceRepository;
         private readonly IAttachmentsService attachmentsService;
         private readonly IUserServices userServices;
-        private readonly StoreRepository storeRepository;
-
-        public IotDeviceService(IotsDeviceRepository iotsDeviceRepository, 
-            IAttachmentsService attachmentsService,
+        private readonly UnitOfWork unitOfWork;
+        public IotDeviceService(IAttachmentsService attachmentsService,
             IUserServices userServices,
-            StoreRepository storeRepository)
+            UnitOfWork unitOfWork)
         {
-            this.iotsDeviceRepository = iotsDeviceRepository;
             this.attachmentsService = attachmentsService;
             this.userServices = userServices;
-            this.storeRepository = storeRepository;
+            this.unitOfWork = unitOfWork;
         }
 
         private string GetApplicationSerialNumber(int storeId, string serialNumber, int deviceType)
@@ -52,7 +48,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var loginUserId = loginUser.Id;
 
-            var saveDevice = (id == null) ? new IotsDevice() : iotsDeviceRepository.GetById((int)id);
+            var saveDevice = (id == null) ? new IotsDevice() : unitOfWork.IotsDeviceRepository.GetById((int)id);
 
             if (saveDevice == null)
                 return ResponseService<IotDeviceDetailsDTO>.NotFound("Iot device cannot be found. Please try again");
@@ -62,7 +58,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             if (id != null && saveDevice.CreatedBy != loginUserId)
                 return ResponseService<IotDeviceDetailsDTO>.Unauthorize("You don't have permission to access");
-            int? storeId = id == null ? storeRepository.GetByUserId(loginUserId)?.Id : saveDevice.StoreId;
+            int? storeId = id == null ? unitOfWork.StoreRepository.GetByUserId(loginUserId)?.Id : saveDevice.StoreId;
             
             if (storeId == null)
             {
@@ -79,7 +75,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             saveDevice.StoreId = (int)storeId;
             saveDevice.ApplicationSerialNumber = GetApplicationSerialNumber((int)storeId, payload.SerialNumber, (int)payload.DeviceType);
 
-            var checkExistRecord = iotsDeviceRepository.GetByApplicationSerialNumber(saveDevice.ApplicationSerialNumber);
+            var checkExistRecord = unitOfWork.IotsDeviceRepository.GetByApplicationSerialNumber(saveDevice.ApplicationSerialNumber);
 
             //Existing application serial number
             if (saveDevice.Id > 0 && checkExistRecord != null && checkExistRecord.Id != saveDevice.Id)
@@ -90,9 +86,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             try
             {
                 if (id > 0) //Update
-                    saveDevice = iotsDeviceRepository.Update(saveDevice);
+                    saveDevice = unitOfWork.IotsDeviceRepository.Update(saveDevice);
                 else
-                    saveDevice = iotsDeviceRepository.Create(saveDevice);
+                    saveDevice = unitOfWork.IotsDeviceRepository.Create(saveDevice);
 
                 var res = await attachmentsService.CreateOrUpdateAttachments(saveDevice.Id,
                     (int)EntityTypeEnum.IOT_DEVICE,
@@ -110,9 +106,17 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         {
             try
             {
-                var device = iotsDeviceRepository.GetById(id);
+                var device = unitOfWork.IotsDeviceRepository.GetById(id);
+                
+                var loginUserId = userServices.GetLoginUserId();
+
+                bool isEdit = loginUserId == null ? false : unitOfWork.StoreRepository
+                                                                .GetByUserId((int)loginUserId)?
+                                                                .Id == device.StoreId;
 
                 var res = IotDeviceMapper.MapToIotDeviceDetailsDTO(device);
+                
+                res.IsEdit = isEdit;
 
                 if (res == null)
                     return ResponseService<IotDeviceDetailsDTO>.NotFound("Iot device cannot be found. Please try again");
@@ -129,17 +133,22 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
-        public async Task<GenericResponseDTO<PaginationResponseDTO<IotDeviceItem>>> GetPagination(PaginationRequest payload)
+        public async Task<GenericResponseDTO<PaginationResponseDTO<IotDeviceItem>>> GetPagination(int? filterStoreId, PaginationRequest payload)
         {
             int? loginUserId = userServices.GetLoginUserId();
             var isStore = await userServices.CheckLoginUserRole(RoleEnum.STORE);
             var isAnonymousOrCustomer = (loginUserId == null) || await userServices.CheckLoginUserRole(RoleEnum.CUSTOMER);
 
-            var res = iotsDeviceRepository.GetPaginate(
+            int? loginStoreId = isStore && loginUserId != null ? unitOfWork.StoreRepository.GetByUserId((int)loginUserId).Id : null;
+
+            var res = unitOfWork.IotsDeviceRepository.GetPaginate(
                 filter: item => (item.Name.Contains(payload.SearchKeyword))
-                    && ((isStore && item.CreatedBy == loginUserId) || !isStore)
-                    && ((isAnonymousOrCustomer && item.IsActive > 0) || !isAnonymousOrCustomer),
-                orderBy: null,
+                    && ((isStore && item.StoreId == loginStoreId) || !isStore)
+                    && ((isAnonymousOrCustomer && item.IsActive > 0) || !isAnonymousOrCustomer)
+                    && (filterStoreId == null || filterStoreId == item.StoreId)
+                    && (payload.StartFilterDate == null || payload.StartFilterDate <= item.CreatedDate)
+                    && (payload.EndFilterDate == null || item.CreatedDate <= payload.EndFilterDate),
+                orderBy: ob => ob.OrderByDescending(item => item.CreatedDate),
                 includeProperties: "StoreNavigation,Category",
                 pageIndex: payload.PageIndex,
                 pageSize: payload.PageSize
@@ -150,7 +159,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 {
                     Id = res.Id,
                     DeviceType = res.DeviceType,
-                    DeviceTypeLabel = (res.DeviceType == 1) ? "New" : "Second Hand",
+                    DeviceTypeLabel = (res.DeviceType == 1) ? "New" : "Second-hand",
                     Category = res.Category,
                     ImageUrl = res.ImageUrl,
                     Name = res.Name,
@@ -159,7 +168,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     SecondHandPrice = res.SecondHandPrice,
                     SecondhandQualityPercent = res.SecondhandQualityPercent,
                     StoreNavigation = res.StoreNavigation,
-                    Summary = res.Summary
+                    Summary = res.Summary,
+                    IsActive = res.IsActive
                 }, res)
             );
         }
@@ -173,7 +183,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var isAdminOrManager = await userServices.CheckLoginUserRole(RoleEnum.MANAGER) || await userServices.CheckLoginUserRole(RoleEnum.ADMIN);
 
-            var device = iotsDeviceRepository.GetById(id);
+            var device = unitOfWork.IotsDeviceRepository.GetById(id);
 
             if (device == null)
                 return ResponseService<IotDeviceDetailsDTO>.NotFound("The Iot Device cannot be found");
@@ -186,7 +196,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     device.UpdatedBy = loginUserId;
                     device.UpdatedDate = DateTime.Now;
 
-                    device = iotsDeviceRepository.Update(device);
+                    device = unitOfWork.IotsDeviceRepository.Update(device);
                 } catch
                 {
                     return ResponseService<IotDeviceDetailsDTO>.BadRequest("Cannot Update the Iot Device");

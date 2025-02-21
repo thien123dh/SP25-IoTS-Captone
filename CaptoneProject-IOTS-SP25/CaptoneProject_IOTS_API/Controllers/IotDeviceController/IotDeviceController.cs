@@ -46,9 +46,10 @@ namespace CaptoneProject_IOTS_API.Controllers.IotDeviceController
         }
 
         [HttpPost("get-pagination")]
-        public async Task<IActionResult> GetPaginationIotDevices([FromBody] PaginationRequest payload)
+        public async Task<IActionResult> GetPaginationIotDevices([FromBody] PaginationRequest payload,
+            [FromQuery] int? filterStoreId)
         {
-            var res = await iotDevicesService.GetPagination(payload);
+            var res = await iotDevicesService.GetPagination(filterStoreId, payload);
 
             return GetActionResult(res);
         }

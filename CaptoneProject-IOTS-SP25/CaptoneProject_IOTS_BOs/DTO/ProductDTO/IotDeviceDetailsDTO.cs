@@ -215,6 +215,8 @@ namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
         public IEnumerable<AttachmentsModelDTO>? Attachments { set; get; }
         public decimal? SecondHandPrice { set; get; }
         public int? SecondhandQualityPercent { set; get; }
+
+        public bool IsEdit { set; get; }
     }
 
     public class IotDeviceItem
@@ -229,10 +231,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
         public int? Quantity { get; set; }
         public decimal Price { get; set; }
         public string? ImageUrl { set; get; }
-        public int? ProductStatus
-        {
-            set; get;
-        }
+        public int? IsActive { set; get; }
         public decimal? SecondHandPrice { set; get; }
         public int? SecondhandQualityPercent { set; get; }
     }

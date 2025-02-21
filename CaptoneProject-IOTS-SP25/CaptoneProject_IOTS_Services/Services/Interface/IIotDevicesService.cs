@@ -13,7 +13,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
     {
         public Task<GenericResponseDTO<IotDeviceDetailsDTO>> GetIotDeviceById(int id);
         public Task<GenericResponseDTO<IotDeviceDetailsDTO>> CreateOrUpdateIotDevice(int? id, CreateUpdateIotDeviceDTO payload);
-        public Task<GenericResponseDTO<PaginationResponseDTO<IotDeviceItem>>> GetPagination(PaginationRequest payload);
+        public Task<GenericResponseDTO<PaginationResponseDTO<IotDeviceItem>>> GetPagination(int? storeId, PaginationRequest payload);
         public Task<GenericResponseDTO<IotDeviceDetailsDTO>> UpdateIotDeviceStatus(int id, int status);
     }
 }

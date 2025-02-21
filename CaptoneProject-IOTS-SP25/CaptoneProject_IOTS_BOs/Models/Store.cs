@@ -26,11 +26,13 @@ public partial class Store
     [JsonIgnore]
     public DateTime? CreatedDate { get; set; } = DateTime.Now;
 
+    [JsonIgnore]
     public int? CreatedBy { get; set; }
 
     [JsonIgnore]
     public DateTime? UpdatedDate { get; set; } = DateTime.Now;
 
+    [JsonIgnore]
     public int? UpdatedBy { get; set; }
     
     [Column("image_url")]

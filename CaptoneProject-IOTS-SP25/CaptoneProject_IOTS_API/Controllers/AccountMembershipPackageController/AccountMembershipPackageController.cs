@@ -17,11 +17,10 @@ namespace CaptoneProject_IOTS_API.Controllers.AccountMembershipPackageController
         }
 
         [HttpGet("get-all-membership-package-options")]
-        public IActionResult GetAllMembershipPackageOptions()
+        public async Task<IActionResult> GetAllMembershipPackageOptions()
         {
-            var res = accountMembershipPackageService.GetAllMembershipPackage();
-
-            return Ok(res);
+            var res = await accountMembershipPackageService.GetAllMembershipPackage();
+            return GetActionResult(res);
         }
 
         [HttpGet("get-account-membership-package/{userId}")]
