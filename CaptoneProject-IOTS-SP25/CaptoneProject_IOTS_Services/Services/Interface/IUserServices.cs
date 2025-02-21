@@ -23,7 +23,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         Task<List<Role>?> GetLoginUserRoles();
         Task<GenericResponseDTO<UserResponseDTO>> GetUserLoginInfo();
         Task<ResponseDTO> UserChangePassword(ChangePasswordRequestDTO payload);
-        Task<Boolean> CheckLoginUserRole(RoleEnum role);
+        Task<bool> CheckLoginUserRole(RoleEnum role);
         Task<Boolean> CheckUserRole(int userId, RoleEnum role);
     }
 }

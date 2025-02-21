@@ -1,9 +1,6 @@
-﻿using CaptoneProject_IOTS_BOs.DTO.MaterialCategotyDTO;
-using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
+﻿using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs;
-using CaptoneProject_IOTS_Service.Services.Implement;
 using CaptoneProject_IOTS_Service.Services.Interface;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using CaptoneProject_IOTS_BOs.DTO.BlogCategoryDTO;

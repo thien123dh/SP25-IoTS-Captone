@@ -40,9 +40,7 @@ namespace CaptoneProject_IOTS_BOs.Constant
 
         public static string STORE_NOTFOUND = "Store cannot be found";
         public static string INSUFFICIENT_WALLET = "Wallet balance is insufficient. Please add funds to your wallet.";
-
-
-        //BLOG
+        public static string REGISTER_PACKAGE_TOO_SOON = "It's too early to buy a new package. You can only purchase it at most 5 days before the payment date.";
         public static string BLOG_CATEGORY_NOTFOUND = "Cannot find blog category";
     }
 }
