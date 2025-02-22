@@ -37,10 +37,10 @@ namespace CaptoneProject_IOTS_BOs.Models
         public string LiscenseNumber { set; get; } = "";
 
         [Column("issue_date")]
-        public DateTime IssueDate { set; get; }
+        public DateTime IssueDate { set; get; } = DateTime.Now;
 
         [Column("expired_date")]
-        public DateTime ExpiredDate { set; get; }
+        public DateTime ExpiredDate { set; get; } = DateTime.Now;
 
         [Column("issue_by")]
         [MaxLength(255)]

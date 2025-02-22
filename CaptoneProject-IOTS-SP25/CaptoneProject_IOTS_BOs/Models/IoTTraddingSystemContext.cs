@@ -18,6 +18,12 @@ public partial class IoTTraddingSystemContext : DbContext
         : base(options)
     {
     }
+    public virtual DbSet<Orders> Orders { set; get; }
+    public virtual DbSet<OrderItem> OrderItems { set; get; }
+    public virtual DbSet<CartItem> CartItems { set; get; }
+    public virtual DbSet<Lab> Labs { set; get; }
+    public virtual DbSet<Combo> Combos { set; get; }
+    public virtual DbSet<IotsDevicesCombo> IotsDevicesCombos { set; get; }
     public virtual DbSet<AccountMembershipPackage> AccountMembershipPackages { set; get; }
     public virtual DbSet<ActivityLog> ActivityLogs { get; set; }
     public virtual DbSet<Attachment> Attachments { set; get; }
