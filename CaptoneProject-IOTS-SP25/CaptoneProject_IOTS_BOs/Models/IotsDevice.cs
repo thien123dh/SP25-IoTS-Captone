@@ -1,5 +1,6 @@
 ﻿using Azure;
 using CaptoneProject_IOTS_BOs.DTO.MaterialDTO;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Identity.Client;
@@ -172,6 +173,10 @@ public partial class IotsDevice
 
     public int? IsActive { get; set; } = 1;
 
+    [Range(0, 5)]
+
+    [Precision(2, 1)]
+    public decimal? Rating { set; get; } = 4;
     [MaxLength(1000)]
     [Column("image_url")]
     public string? ImageUrl { set; get; }

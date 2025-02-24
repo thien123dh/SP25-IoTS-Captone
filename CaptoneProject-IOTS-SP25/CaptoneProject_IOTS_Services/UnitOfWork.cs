@@ -1,4 +1,5 @@
 ﻿using CaptoneProject_IOTS_BOs.Models;
+using CaptoneProject_IOTS_Repository.Base;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
 using Microsoft.Identity.Client;
 using System;
@@ -22,5 +23,8 @@ namespace CaptoneProject_IOTS_Service
         public virtual BlogCategoryRepository BlogCategoryRepository => new BlogCategoryRepository();
         public virtual BlogRepository BlogRepository => new BlogRepository();
         public virtual StoreRepository StoreRepository => new StoreRepository();
+        public virtual CartRepository CartRepository => new CartRepository();
+        public virtual LabRepository LabRepository => new LabRepository();
+        public virtual ComboRepository ComboRepository => new ComboRepository();
     }
 }
