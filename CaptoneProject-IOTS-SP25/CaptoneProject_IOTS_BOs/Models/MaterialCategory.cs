@@ -12,6 +12,9 @@ public partial class MaterialCategory
 
     public string Label { get; set; }
 
+    [MaxLength(1000)]
+    public string? Description { set; get; }
+
     [ForeignKey(nameof(User))]
     public int? CreatedBy { set; get; }
     public DateTime? CreatedDate { set; get; } = DateTime.Now;

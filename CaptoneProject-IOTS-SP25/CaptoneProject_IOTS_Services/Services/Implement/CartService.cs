@@ -80,36 +80,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return source;
         }
 
-        //public async Task<bool> CreateOrUpdateLabCartItem(List<int> LabIdsList, int cartParentId, int userId)
-        //{
-        //    var dbCartLabItems = unitOfWork.CartRepository.GetAllCartItemsByUserId(userId, (int)ProductTypeEnum.LAB);
+        public bool CheckExistProductInCart(int userId, int productId, int productType)
+        {
+            var cartItem = unitOfWork.CartRepository.GetCartItemByProductId(userId, productId, productType);
 
-        //    var removeList = dbCartLabItems?.Where(item => !LabIdsList.Contains(item.Id)).ToList();
-
-        //    if (removeList != null)
-        //        await unitOfWork.CartRepository.RemoveAsync(removeList);
-
-        //    var appendList = LabIdsList.Where(
-        //        i => dbCartLabItems == null || dbCartLabItems.FirstOrDefault(item => item.LabId == i) == null
-        //    ).Select(i =>
-        //        SetDataToCartItem(new CartItem(), new AddToCartDTO
-        //        {
-        //            ProductId = i,
-        //            Quantity = 1,
-        //            ProductType = ProductTypeEnum.LAB
-        //        }, userId, cartParentId)
-        //    ).ToList();
-
-        //    try
-        //    {
-        //        await unitOfWork.CartRepository.CreateAsync(appendList);
-
-        //        return true;
-        //    } catch
-        //    {
-        //        return false;
-        //    }
-        //}
+            return !(cartItem == null);
+        }
 
         public async Task<ResponseDTO> AddToCart(AddToCartDTO request)
         {
@@ -124,17 +100,35 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             try
             {
-                cartItem = SetDataToCartItem(cartItem, request, (int)loginUserId, null);
+                int? parentCartId = null;
+
+                if (request.ProductType == ProductTypeEnum.LAB)
+                {
+                    var lab = unitOfWork.LabRepository.GetById(request.ProductId);
+
+                    var parentCartItem = unitOfWork.CartRepository.GetCartItemByProductId((int)loginUserId, lab.ComboId, (int)ProductTypeEnum.COMBO);
+
+                    //Exist combo included lab in cart
+                    if (parentCartItem != null)
+                    {
+                        if (CheckExistProductInCart((int)loginUserId, lab.Id, (int)ProductTypeEnum.COMBO))
+                        {
+                            return ResponseService<object>.BadRequest("The tutorial video has been added to cart");
+                        }
+
+                        parentCartId = parentCartItem.Id;
+                    } else
+                    {
+                        return ResponseService<object>.BadRequest("Please add the current product to cart if you want to buy this tutorial video");
+                    }
+                }
+
+                cartItem = SetDataToCartItem(cartItem, request, (int)loginUserId, parentCartId);
 
                 if (cartItem.Id > 0) //Update
                     cartItem = unitOfWork.CartRepository.Update(cartItem);
                 else
                     cartItem = unitOfWork.CartRepository.Create(cartItem);
-
-                //request.LabIdsList = request.LabIdsList == null ? new List<int>() : request.LabIdsList;
-
-                ////If add more lab
-                //await CreateOrUpdateLabCartItem(request.LabIdsList, cartItem.Id, (int)loginUserId);
 
                 return ResponseService<object>.OK(cartItem);
             } catch (Exception ex)
