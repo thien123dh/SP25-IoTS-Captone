@@ -42,7 +42,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             try
             {
                 materialCategory.Label = payload.Label;
-                materialCategory.ImageUrl = payload.ImageUrl;
 
                 MaterialCategory? response;
 

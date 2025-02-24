@@ -263,8 +263,6 @@ public partial class IoTTraddingSystemContext : DbContext
                 .HasMaxLength(200)
                 .HasColumnName("label");
             entity.Property(e => e.Orders).HasColumnName("orders");
-            entity.Property(e => e.ImageUrl).HasColumnName("image_url")
-                .HasMaxLength(500);
         });
 
         modelBuilder.Entity<Role>(entity =>
