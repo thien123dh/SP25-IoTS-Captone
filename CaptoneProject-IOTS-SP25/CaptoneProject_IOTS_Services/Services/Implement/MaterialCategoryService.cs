@@ -40,8 +40,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var loginUser = userServices.GetLoginUser();
 
-            if (loginUser == null || !await userServices.CheckLoginUserRole(RoleEnum.ADMIN) || !await userServices.CheckLoginUserRole(RoleEnum.MANAGER))
-                return ResponseService<IotDeviceDetailsDTO>.Unauthorize("You don't have permission to access");
+            if ((loginUser == null || !await userServices.CheckLoginUserRole(RoleEnum.ADMIN)) && (loginUser == null || !await userServices.CheckLoginUserRole(RoleEnum.MANAGER)))
+                return ResponseService<MaterialCategoryResponeDTO>.Unauthorize("You don't have permission to access");
 
             var loginUserId = loginUser.Id;
 
@@ -52,6 +52,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             try
             {
                 materialCategory.Label = payload.Label;
+                materialCategory.Description = payload.Description;
                 materialCategory.IsActive = 1;
                 materialCategory.CreatedDate = DateTime.Now; ;
                 materialCategory.CreatedBy = loginUserId;
@@ -90,6 +91,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             try
             {
                 materialCategory.Label = payload.Label;
+                materialCategory.Description = payload.Description;
                 materialCategory.IsActive = 2;
                 materialCategory.CreatedDate = DateTime.Now; 
                 materialCategory.CreatedBy = loginUserId;
@@ -109,9 +111,41 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
-        public Task<IBusinessResult> DeleteMaterialCategoryAsync(int id)
+        public async Task<ResponseDTO> DeleteMaterialCategory(int id)
         {
-            throw new NotImplementedException();
+            MaterialCategory category = _unitOfWork.MaterialCategoryRepository.GetById(id);
+
+            if (category == null)
+            {
+                return new ResponseDTO
+                {
+                    IsSuccess = false,
+                    StatusCode = System.Net.HttpStatusCode.NotFound,
+                    Message = ExceptionMessage.MATERIAL_CATEGORY_NOTFOUND
+                };
+            }
+
+            bool hasProducts = _unitOfWork.IotsDeviceRepository.GetAll().Any(p => p.CategoryId == id);
+
+            if (hasProducts)
+            {
+                return new ResponseDTO
+                {
+                    IsSuccess = false,
+                    StatusCode = System.Net.HttpStatusCode.BadRequest,
+                    Message = "Cannot delete category because it contains IOT device."
+                };
+            }
+
+            _unitOfWork.MaterialCategoryRepository.Remove(category);
+            await _unitOfWork.MaterialCategoryRepository.SaveAsync();
+
+            return new ResponseDTO
+            {
+                IsSuccess = true,
+                StatusCode = System.Net.HttpStatusCode.OK,
+                Message = "Category deleted successfully."
+            };
         }
 
         public async Task<IBusinessResult> GetAllMaterialCategory()
@@ -124,17 +158,28 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             PaginationResponseDTO<MaterialCategory> res = _unitOfWork.MaterialCategoryRepository.GetPaginate(
                 filter: m => m.Label.Contains(searchKeyword) && m.IsActive > 0,
                 orderBy: null,
-                includeProperties: "",
+                includeProperties: "CreatedByNavigation",
                 pageIndex: 0,
                 pageSize: 500000
             );
+
+            var result = res.Data.Select(m => new
+            {
+                m.Id,
+                m.Label,
+                m.CreatedDate,
+                m.Description,
+                m.IsActive,
+                m.CreatedBy,
+                CreatedByEmail = m.CreatedByNavigation != null ? m.CreatedByNavigation.Email : null
+            }).ToList();
 
             return new ResponseDTO
             {
                 IsSuccess = true,
                 Message = "Success",
                 StatusCode = System.Net.HttpStatusCode.OK,
-                Data = res
+                Data = result
             };
         }
 
