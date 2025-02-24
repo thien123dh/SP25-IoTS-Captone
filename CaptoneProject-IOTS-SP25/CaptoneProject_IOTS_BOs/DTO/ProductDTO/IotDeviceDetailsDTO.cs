@@ -234,5 +234,6 @@ namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
         public int? IsActive { set; get; }
         public decimal? SecondHandPrice { set; get; }
         public int? SecondhandQualityPercent { set; get; }
+        public decimal? Rating { set; get; }
     }
 }

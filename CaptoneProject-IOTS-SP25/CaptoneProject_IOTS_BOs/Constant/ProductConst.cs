@@ -10,8 +10,8 @@ namespace CaptoneProject_IOTS_BOs.Constant
    {
         public enum ProductTypeEnum
         {
-            MATERIAL = 1,
-            MATERIAL_GROUP = 2,
+            IOT_DEVICE = 1,
+            COMBO = 2,
             LAB = 3
         }
 
@@ -26,6 +26,14 @@ namespace CaptoneProject_IOTS_BOs.Constant
         {
             NEW = 1,
             SECOND_HAND = 2
+        }
+
+        public enum LabStatusEnum
+        {
+            DRAFT = 0,
+            APPROVED = 1,
+            PENDING_TO_APPROVE = 2,
+            REJECTED = 3
         }
    }
 }

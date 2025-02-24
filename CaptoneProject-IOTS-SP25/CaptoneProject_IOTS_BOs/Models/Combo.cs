@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -19,6 +20,10 @@ namespace CaptoneProject_IOTS_BOs.Models
 
         [ForeignKey(nameof(Store))]
         public int StoreId { set; get; }
+
+        [MaxLength(300)]
+        [Required]
+        public string Summary { set; get; }
 
         [MaxLength(1000)]
         public string? Description { set; get; }
@@ -50,6 +55,10 @@ namespace CaptoneProject_IOTS_BOs.Models
         [ForeignKey(nameof(User))]
         public int? UpdatedBy { set; get; }
 
+        [Range(0, 5)]
+
+        [Precision(2, 1)]
+        public decimal? Rating { set; get; } = 4;
         public int IsActive { set; get; }
     }
 }
