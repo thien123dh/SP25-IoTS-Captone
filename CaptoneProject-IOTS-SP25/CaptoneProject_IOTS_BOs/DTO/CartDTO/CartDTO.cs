@@ -33,24 +33,23 @@ namespace CaptoneProject_IOTS_BOs.DTO.CartDTO
         public bool IsSelected { set; get; } = false;
         public int Id { set; get; }
         public int? LabId { set; get; }
-        public string LabName { set; get; }
-        public string LabSummary { set; get; }
+        public string? LabName { set; get; }
+        public string? LabSummary { set; get; }
         public int? CreatedBy { set; get; }
         public string? CreatedByTrainer { set; get; }
-        public decimal Price { set; get; }
+        public decimal? Price { set; get; }
     }
 
     public class CartItemResponseDTO
     {
         public bool IsSelected { set; get; } = false;
         public int Id { set; get; }
-        public int? IosDeviceId { set; get; }
-        public int? ComboId { set; get; }
+        public int? ProductId { set; get; }
         public int? CreatedBy { set; get; }
         public string CreatedByStore {set; get;}
         public int ProductType { set; get; }
-        public string ProductName { set; get; }
-        public string ProductSummary { set; get; }
+        public string? ProductName { set; get; }
+        public string? ProductSummary { set; get; }
         public int Quantity { set; get; }
         public decimal Price { set; get; }
 

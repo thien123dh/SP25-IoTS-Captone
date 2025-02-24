@@ -1,4 +1,5 @@
-﻿using System;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -22,6 +23,12 @@ namespace CaptoneProject_IOTS_BOs.Models
 
         [ForeignKey(nameof(User))]
         public int OrderBy { set; get; }
+
+        [Precision(18, 1)]
+        public decimal TotalPrice { set; get; } = 0;
+
+        [MaxLength(500)]
+        public string? TxnRef { set; get; }
 
         [MaxLength(500)]
         public string Address { set; get; } = "";

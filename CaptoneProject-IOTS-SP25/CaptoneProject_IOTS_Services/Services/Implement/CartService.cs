@@ -7,6 +7,7 @@ using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Service.Mapper;
 using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -100,7 +101,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             source.CreatedBy = loginUserId;
             source.ParentCartItemId = cartParentId;
             source.Quantity = source.Quantity + request.Quantity;
-           
+            source.ProductType = (int)request.ProductType;
 
             switch (request.ProductType)
             {
@@ -177,6 +178,17 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
+        private GeneralProductDTO MapToGeneralProductInfo(CartItem item)
+        {
+            return new GeneralProductDTO
+            {
+                ProductName = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? item.IosDeviceNavigation?.Name : item.ComboNavigation?.Name,
+                ProductSummary = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? item.IosDeviceNavigation?.Summary : item.ComboNavigation?.Summary,
+                CreatedBy = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? item.IosDeviceNavigation?.CreatedBy : item.ComboNavigation?.CreatedBy,
+                Price = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? (decimal)item.IosDeviceNavigation.Price : (decimal)item.ComboNavigation.Price,
+            };
+        }
+
         public async Task<ResponseDTO> GetCartPagination(PaginationRequest request)
         {
             var loginUserId = userService.GetLoginUserId();
@@ -194,39 +206,37 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 pageSize: request.PageSize
             );
 
+            var subCartItems = unitOfWork.CartRepository.GetSubItemsListByUserId((int)loginUserId);
+
             var res = PaginationMapper<CartItem, CartItemResponseDTO>.MappingTo((item) =>
             {
                 int? productId = (item.IosDeviceId == null) ? item.ComboId : item.IosDeviceId;
 
-                var productInfo = GetProductInfo(
-                    (int)productId,
-                    item.ProductType
-                );
+                var productInfo = MapToGeneralProductInfo(item);
 
-                var cartLabItems = unitOfWork.CartRepository.GetCartItemsListByParentId(item.Id);
+                var dependLabCartItems = subCartItems?.Where(i => i.ParentCartItemId == item.Id).ToList();
 
-                var sumLabPrice = cartLabItems?.Sum(i => i.LabNavigation.Price);
+                var sumLabPrice = dependLabCartItems?.Sum(i => i.LabNavigation?.Price == null ? 0 : i.LabNavigation.Price);
 
                 var response = new CartItemResponseDTO
                 {
                     IsSelected = item.IsSelected,
-                    ComboId = item.ComboId,
-                    IosDeviceId = item.IosDeviceId,
+                    ProductId = item.IosDeviceId != null ? item.IosDeviceId : item.ComboId != null ? item.ComboId : item.LabId,
                     ProductType = item.ProductType,
                     Quantity = item.Quantity,
                     CreatedBy = item.SellerId,
                     Price = productInfo.Price,
                     ProductSummary = productInfo.ProductSummary,
                     ProductName = productInfo.ProductName,
-                    labList = cartLabItems?.Select(i => new CartLabItemDTO
+                    labList = dependLabCartItems?.Select(i => new CartLabItemDTO
                     {
                         IsSelected = i.IsSelected,
-                        LabName = i.LabNavigation.Title,
-                        LabSummary = i.LabNavigation.Summary,
-                        CreatedBy = i.LabNavigation.CreatedBy,
-                        Price = i.LabNavigation.Price,
+                        LabName = i.LabNavigation?.Title,
+                        LabSummary = i.LabNavigation?.Summary,
+                        CreatedBy = i.LabNavigation?.CreatedBy,
+                        Price = i.LabNavigation?.Price,
                         LabId = i.LabId,
-                        CreatedByTrainer = i.LabNavigation.CreatedByNavigation.Fullname,
+                        CreatedByTrainer = i.LabNavigation?.CreatedByNavigation.Fullname,
                     }).ToList(),
                     TotalPrice = (productInfo.Price * item.Quantity + (decimal)(sumLabPrice == null ? 0 : sumLabPrice))
                 };
@@ -235,6 +245,64 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }, pagination);
 
             return ResponseService<object>.OK(res);
+        }
+
+        public async Task<ResponseDTO> SelectOrUnselectCartItem(int cartId)
+        {
+            var cartItem = unitOfWork.CartRepository.GetById(cartId);
+
+            if (cartItem == null)
+                return ResponseService<object>.NotFound("Product cannot be found. Please try again");
+
+            cartItem.IsSelected = !cartItem.IsSelected;
+
+            try
+            {
+                var dependCartItems = unitOfWork.CartRepository.GetCartItemsListByParentId(cartItem.Id);
+                List<CartItem> updatedCartLabItems = new List<CartItem>();
+
+                //Auto set unselected dependence lab
+                if (dependCartItems != null && !cartItem.IsSelected)
+                    foreach(CartItem item in dependCartItems)
+                    {
+                        item.IsSelected = false;
+                        updatedCartLabItems.Append(item);
+                    }
+
+                if (updatedCartLabItems.IsNullOrEmpty())
+
+
+                unitOfWork.CartRepository.Remove(cartItem);
+            }
+            catch
+            {
+                return ResponseService<object>.NotFound("Cannot delete product. Please try again");
+            }
+
+            return ResponseService<object>.OK(null);
+        }
+
+        public async Task<ResponseDTO> DeleteCartItem(int cartId)
+        {
+            var cartItem = unitOfWork.CartRepository.GetById(cartId);
+
+            if (cartItem == null)
+                return ResponseService<object>.NotFound("Product cannot be found. Please try again");
+
+            try
+            {
+                var dependCartItems = unitOfWork.CartRepository.GetCartItemsListByParentId(cartItem.Id);
+
+                if (dependCartItems != null)
+                    await unitOfWork.CartRepository.RemoveAsync(dependCartItems);
+
+                unitOfWork.CartRepository.Remove(cartItem);
+            } catch
+            {
+                return ResponseService<object>.NotFound("Cannot delete product. Please try again");
+            }
+
+            return ResponseService<object>.OK(null);
         }
     }
 }
