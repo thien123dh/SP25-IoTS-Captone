@@ -1,6 +1,7 @@
 ﻿using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.MaterialCategotyDTO;
+using CaptoneProject_IOTS_BOs.DTO.MaterialDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
@@ -13,28 +14,37 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
 
 namespace CaptoneProject_IOTS_Service.Services.Implement
 {
     public class MaterialCategoryService : IMaterialCategoryService
     {
         private readonly UnitOfWork _unitOfWork;
-        private readonly MaterialCategoryRepository materialCategoryRepository;
         private readonly IFileService fileService;
+        private readonly IUserServices userServices;
 
         public MaterialCategoryService(
             IFileService fileService,
-            MaterialCategoryRepository materialCategoryRepository
+            IUserServices userServices
         )
         {
             _unitOfWork ??= new UnitOfWork();
             this.fileService = fileService;
-            this.materialCategoryRepository = materialCategoryRepository;
+            this.userServices = userServices;
         }
 
         public async Task<ResponseDTO> CreateOrUpdateMaterialCategory(int? id, CreateUpdateMaterialCategoryDTO payload)
         {
-            MaterialCategory materialCategory = (id == null) ? new MaterialCategory() : materialCategoryRepository.GetById((int)id);
+            MaterialCategory materialCategory = (id == null) ? new MaterialCategory() : _unitOfWork.MaterialCategoryRepository.GetById((int)id);
+
+            var loginUser = userServices.GetLoginUser();
+
+            if (loginUser == null || !await userServices.CheckLoginUserRole(RoleEnum.ADMIN) || !await userServices.CheckLoginUserRole(RoleEnum.MANAGER))
+                return ResponseService<IotDeviceDetailsDTO>.Unauthorize("You don't have permission to access");
+
+            var loginUserId = loginUser.Id;
+
 
             if (materialCategory == null)
                 return ResponseService<Object>.NotFound(ExceptionMessage.MATERIAL_CATEGORY_NOTFOUND);
@@ -42,13 +52,54 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             try
             {
                 materialCategory.Label = payload.Label;
+                materialCategory.IsActive = 1;
+                materialCategory.CreatedDate = DateTime.Now; ;
+                materialCategory.CreatedBy = loginUserId;
+                
 
                 MaterialCategory? response;
 
                 if (id > 0) //Update
-                    response = materialCategoryRepository.Update(materialCategory);
+                    response = _unitOfWork.MaterialCategoryRepository.Update(materialCategory);
                 else //Create
-                    response = materialCategoryRepository.Create(materialCategory);
+                    response = _unitOfWork.MaterialCategoryRepository.Create(materialCategory);
+
+                return await GetByMaterialCategoryId(response.Id);
+            }
+            catch (Exception ex)
+            {
+                return ResponseService<Object>.BadRequest(ex.Message);
+            }
+        }
+
+        public async Task<ResponseDTO> CreateOrUpdateMaterialCategoryToStore(int? id, CreateUpdateMaterialCategoryDTO payload)
+        {
+            MaterialCategory materialCategory = (id == null) ? new MaterialCategory() : _unitOfWork.MaterialCategoryRepository.GetById((int)id);
+
+            var loginUser = userServices.GetLoginUser();
+
+            if (loginUser == null || !await userServices.CheckLoginUserRole(RoleEnum.STORE))
+                return ResponseService<IotDeviceDetailsDTO>.Unauthorize("You don't have permission to access");
+
+            var loginUserId = loginUser.Id;
+
+
+            if (materialCategory == null)
+                return ResponseService<Object>.NotFound(ExceptionMessage.MATERIAL_CATEGORY_NOTFOUND);
+
+            try
+            {
+                materialCategory.Label = payload.Label;
+                materialCategory.IsActive = 2;
+                materialCategory.CreatedDate = DateTime.Now; 
+                materialCategory.CreatedBy = loginUserId;
+
+                MaterialCategory? response;
+
+                if (id > 0) //Update
+                    response = _unitOfWork.MaterialCategoryRepository.Update(materialCategory);
+                else //Create
+                    response = _unitOfWork.MaterialCategoryRepository.Create(materialCategory);
 
                 return await GetByMaterialCategoryId(response.Id);
             }
@@ -70,7 +121,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         public async Task<ResponseDTO> GetAllMaterialCategory(string searchKeyword)
         {
-            PaginationResponseDTO<MaterialCategory> res = materialCategoryRepository.GetPaginate(
+            PaginationResponseDTO<MaterialCategory> res = _unitOfWork.MaterialCategoryRepository.GetPaginate(
                 filter: m => m.Label.Contains(searchKeyword) && m.IsActive > 0,
                 orderBy: null,
                 includeProperties: "",
@@ -89,7 +140,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         public async Task<GenericResponseDTO<MaterialCategory>> GetByMaterialCategoryId(int id)
         {
-            var res = materialCategoryRepository.GetById(id);
+            var res = _unitOfWork.MaterialCategoryRepository.GetById(id);
 
             if (res == null)
                 return ResponseService<MaterialCategory>.NotFound("Not Found");
@@ -99,7 +150,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         public async Task<GenericResponseDTO<PaginationResponseDTO<MaterialCategory>>> GetPaginationMaterialCategories(PaginationRequest paginate, int? statusFilter)
         {
-            PaginationResponseDTO<MaterialCategory> res = materialCategoryRepository.GetPaginate(
+            PaginationResponseDTO<MaterialCategory> res = _unitOfWork.MaterialCategoryRepository.GetPaginate(
                 filter: m => m.Label.Contains(paginate.SearchKeyword)
                     && (statusFilter == null || m.IsActive == statusFilter),
                 orderBy: orderBy => orderBy.OrderByDescending(item => item.Id),
@@ -113,7 +164,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         public async Task<ResponseDTO> UpdateMaterialCategoryStatus(int id, int isActive)
         {
-            MaterialCategory res = materialCategoryRepository.GetById(id);
+            MaterialCategory res = _unitOfWork.MaterialCategoryRepository.GetById(id);
 
             if (res == null)
                 return new ResponseDTO
@@ -125,7 +176,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             res.IsActive = isActive;
 
-            var response = materialCategoryRepository.Update(res);
+            var response = _unitOfWork.MaterialCategoryRepository.Update(res);
 
             return await GetByMaterialCategoryId(response.Id);
         }

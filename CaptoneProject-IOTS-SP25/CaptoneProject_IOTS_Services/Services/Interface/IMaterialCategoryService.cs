@@ -16,6 +16,8 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
     public interface IMaterialCategoryService
     {
         Task<ResponseDTO> CreateOrUpdateMaterialCategory(int? id, CreateUpdateMaterialCategoryDTO categoryMaterial);
+
+        Task<ResponseDTO> CreateOrUpdateMaterialCategoryToStore(int? id, CreateUpdateMaterialCategoryDTO payload);
         Task<ResponseDTO> UpdateMaterialCategoryStatus(int id, int IsActive);
         Task<ResponseDTO> GetAllMaterialCategory(string searchKeyword);
         Task<GenericResponseDTO<PaginationResponseDTO<MaterialCategory>>> GetPaginationMaterialCategories(PaginationRequest paginate, int? statusFilter);
