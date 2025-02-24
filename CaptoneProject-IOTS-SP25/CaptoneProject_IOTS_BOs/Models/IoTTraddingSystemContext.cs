@@ -18,6 +18,12 @@ public partial class IoTTraddingSystemContext : DbContext
         : base(options)
     {
     }
+    public virtual DbSet<Orders> Orders { set; get; }
+    public virtual DbSet<OrderItem> OrderItems { set; get; }
+    public virtual DbSet<CartItem> CartItems { set; get; }
+    public virtual DbSet<Lab> Labs { set; get; }
+    public virtual DbSet<Combo> Combos { set; get; }
+    public virtual DbSet<IotsDevicesCombo> IotsDevicesCombos { set; get; }
     public virtual DbSet<AccountMembershipPackage> AccountMembershipPackages { set; get; }
     public virtual DbSet<ActivityLog> ActivityLogs { get; set; }
     public virtual DbSet<Attachment> Attachments { set; get; }
@@ -257,8 +263,6 @@ public partial class IoTTraddingSystemContext : DbContext
                 .HasMaxLength(200)
                 .HasColumnName("label");
             entity.Property(e => e.Orders).HasColumnName("orders");
-            entity.Property(e => e.ImageUrl).HasColumnName("image_url")
-                .HasMaxLength(500);
         });
 
         modelBuilder.Entity<Role>(entity =>

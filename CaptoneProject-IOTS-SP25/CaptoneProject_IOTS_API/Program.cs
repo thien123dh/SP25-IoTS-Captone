@@ -1,4 +1,5 @@
 ﻿using CaptoneProject_IOTS_API.Middleware;
+using CaptoneProject_IOTS_BOs.DTO.CartDTO;
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Base;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
@@ -85,6 +86,7 @@ builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IAccountMembershipPackageService, AccountMembershipPackageService>();
 builder.Services.AddScoped<IVNPayService, VNPayService>();
 builder.Services.AddScoped<IBlogCategoryService, BlogCategoryService>();
+builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IFileService>(provider =>
 {
     var bucket = configuration.GetConnectionString("Firebase-Storage-Bucket");

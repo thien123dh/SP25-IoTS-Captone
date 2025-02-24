@@ -49,6 +49,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var loginUserId = loginUser.Id;
 
             var saveDevice = (id == null) ? new IotsDevice() : unitOfWork.IotsDeviceRepository.GetById((int)id);
+            decimal? dbRating = saveDevice.Rating;
 
             if (saveDevice == null)
                 return ResponseService<IotDeviceDetailsDTO>.NotFound("Iot device cannot be found. Please try again");
@@ -74,6 +75,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             saveDevice.Id = (id == null) ? saveDevice.Id : (int)id;
             saveDevice.StoreId = (int)storeId;
             saveDevice.ApplicationSerialNumber = GetApplicationSerialNumber((int)storeId, payload.SerialNumber, (int)payload.DeviceType);
+            saveDevice.Rating = dbRating;
 
             var checkExistRecord = unitOfWork.IotsDeviceRepository.GetByApplicationSerialNumber(saveDevice.ApplicationSerialNumber);
 

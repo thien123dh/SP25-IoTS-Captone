@@ -41,7 +41,7 @@ namespace CaptoneProject_IOTS_API.Controllers.CategoryMaterialController
             return Ok(response);
         }
 
-        [HttpGet("get-all-active-material-categories")]
+        [HttpGet("get-all-material-categories")]
         public async  Task<IActionResult> GetAll([FromQuery] string? searchKeyword)
         {
             var result = await _materialCategoryService.GetAllMaterialCategory(searchKeyword == null ? "" : searchKeyword);
@@ -74,7 +74,18 @@ namespace CaptoneProject_IOTS_API.Controllers.CategoryMaterialController
             return GetActionResult(response);
         }
 
-        [HttpPut("update-material-category/{id}")]
+        [HttpPost("create-material-category-to-store")]
+        public async Task<IActionResult> AddCategoryMaterialToStore(
+            [FromBody] CreateUpdateMaterialCategoryDTO payload
+        )
+        {
+            var response = await _materialCategoryService.CreateOrUpdateMaterialCategoryToStore(null, payload);
+
+            return GetActionResult(response);
+        }
+
+
+        [HttpPut("Update-material-category/{id}")]
         public async Task<IActionResult> UpdateMaterialCategory(
             int id,
             [FromBody] CreateUpdateMaterialCategoryDTO payload
@@ -85,7 +96,7 @@ namespace CaptoneProject_IOTS_API.Controllers.CategoryMaterialController
             return GetActionResult(response);
         }
 
-        [HttpPut("activate-material-category/{id}")]
+        [HttpPut("Approve-material-category/{id}")]
         public async Task<IActionResult> ActivateMaterialCategory(int id)
         {
             var response = await _materialCategoryService.UpdateMaterialCategoryStatus(id, 1);
@@ -93,10 +104,10 @@ namespace CaptoneProject_IOTS_API.Controllers.CategoryMaterialController
             return GetActionResult(response);
         }
 
-        [HttpPut("deactive-material-category/{id}")]
-        public async Task<IActionResult> DeactiveMaterialCategory(int id)
+        [HttpDelete("Reject-material-category/{id}")]
+        public async Task<IActionResult> DeleteMaterialCategory(int id)
         {
-            var response = await _materialCategoryService.UpdateMaterialCategoryStatus(id, 0);
+            var response = await _materialCategoryService.DeleteMaterialCategory(id);
 
             return GetActionResult(response);
         }

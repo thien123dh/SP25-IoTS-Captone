@@ -9,6 +9,7 @@ namespace CaptoneProject_IOTS_BOs.Constant
     public static class ExceptionMessage
     {
         public static string SESSION_EXPIRED = "Your session is expired. Please login";
+        public static string INVALID_LOGIN = "Please login to access";
         public static string USER_EXIST_EXCEPTION = "User already existing. Please try again";
         public static string EMAIL_DOESNT_EXIST = "Email doesn't exist";
         public static string USER_DOESNT_EXIST = "User doesn't exist";
