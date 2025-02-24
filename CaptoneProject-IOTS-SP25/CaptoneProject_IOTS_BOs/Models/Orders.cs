@@ -23,6 +23,12 @@ namespace CaptoneProject_IOTS_BOs.Models
         [ForeignKey(nameof(User))]
         public int OrderBy { set; get; }
 
+        [MaxLength(500)]
+        public string Address { set; get; } = "";
+
+        [MaxLength(150)]
+        public string ContactNumber { set; get; } = "";
+
         [MaxLength(300)]
         public string? Notes { set; get; } = "";
 

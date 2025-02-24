@@ -11,7 +11,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
 {
     public interface ICartService
     {
-        public GenericResponseDTO<PaginationResponseDTO<CartItemResponseDTO>> GetCartPagination(PaginationRequest request);
+        public Task<ResponseDTO> GetCartPagination(PaginationRequest request);
 
         public Task<ResponseDTO> AddToCart(AddToCartDTO request);
     }

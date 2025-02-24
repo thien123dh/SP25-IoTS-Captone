@@ -2,7 +2,9 @@
 using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.CartDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
+using CaptoneProject_IOTS_BOs.DTO.ProductDTO;
 using CaptoneProject_IOTS_BOs.Models;
+using CaptoneProject_IOTS_Service.Mapper;
 using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using System;
@@ -25,35 +27,73 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             this.userService = userService;
         }
 
-        private int? GetProductSeller(int productId, int productType)
+        private GeneralProductDTO GetProductInfo(int productId, int productType)
         {
-            int? sellerId;
-
+            GeneralProductDTO res;
             switch (productType)
             {
                 case (int)ProductTypeEnum.IOT_DEVICE:
-                    sellerId = unitOfWork.IotsDeviceRepository.GetById(productId)?.CreatedBy;
+                    var p = unitOfWork.IotsDeviceRepository.GetById(productId);
+
+                    if (p == null)
+                        throw new Exception("Product cannot be found");
+
+                    res = new GeneralProductDTO
+                    {
+                        ProductName = p.Name,
+                        ProductSummary = p.Summary,
+                        CreatedBy = p.CreatedBy,
+                        Price = p.Price
+                    };
+
                     break;
                 case (int)ProductTypeEnum.COMBO:
-                    sellerId = unitOfWork.ComboRepository.GetById(productId)?.CreatedBy;
+                    var combo = unitOfWork.ComboRepository.GetById(productId);
+
+                    if (combo == null)
+                        throw new Exception("Combo cannot be found");
+
+                    res = new GeneralProductDTO
+                    {
+                        ProductName = combo.Name,
+                        ProductSummary = combo.Summary,
+                        CreatedBy = combo.CreatedBy,
+                        Price = combo.Price
+                    };
                     break;
                 case (int)ProductTypeEnum.LAB:
-                    sellerId = unitOfWork.LabRepository.GetById(productId)?.CreatedBy;
+                    var lab = unitOfWork.LabRepository.GetById(productId);
+
+                    if (lab == null)
+                        throw new Exception("Combo cannot be found");
+
+                    res = new GeneralProductDTO
+                    {
+                        ProductName = lab.Title,
+                        ProductSummary = lab.Summary,
+                        CreatedBy = lab.CreatedBy,
+                        Price = lab.Price
+                    };
+
                     break;
                 default:
-                    sellerId = null;
-                    break;
+                    throw new Exception("Product cannot be found");
             }
 
-            return sellerId;
+            return res;
         }
 
         private CartItem SetDataToCartItem(CartItem source, AddToCartDTO request, int loginUserId, int? cartParentId)
         {
-            var sellerId = GetProductSeller(request.ProductId, (int)request.ProductType);
+            int? sellerId = 0;
 
-            if (sellerId == null)
+            try
+            {
+                sellerId = GetProductInfo(request.ProductId, (int)request.ProductType).CreatedBy;
+            } catch
+            {
                 throw new Exception("Seller cannot be found. Please try again");
+            }            
 
             source.SellerId = (int)sellerId;
             source.UpdatedDate = DateTime.Now;
@@ -137,9 +177,64 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
-        public GenericResponseDTO<PaginationResponseDTO<CartItemResponseDTO>> GetCartPagination(PaginationRequest request)
+        public async Task<ResponseDTO> GetCartPagination(PaginationRequest request)
         {
-            throw new NotImplementedException();
+            var loginUserId = userService.GetLoginUserId();
+
+            if (loginUserId == null)
+                return ResponseService<object>.Unauthorize(ExceptionMessage.INVALID_LOGIN);
+
+            var pagination = unitOfWork.CartRepository.GetPaginate(
+                filter: item => item.CreatedBy == loginUserId && (
+                    item.ProductType == (int)ProductTypeEnum.COMBO || item.ProductType == (int)ProductTypeEnum.IOT_DEVICE
+                ),
+                orderBy: ob => ob.OrderByDescending(item => item.Id),
+                includeProperties: "IosDeviceNavigation,ComboNavigation",
+                pageIndex: request.PageIndex,
+                pageSize: request.PageSize
+            );
+
+            var res = PaginationMapper<CartItem, CartItemResponseDTO>.MappingTo((item) =>
+            {
+                int? productId = (item.IosDeviceId == null) ? item.ComboId : item.IosDeviceId;
+
+                var productInfo = GetProductInfo(
+                    (int)productId,
+                    item.ProductType
+                );
+
+                var cartLabItems = unitOfWork.CartRepository.GetCartItemsListByParentId(item.Id);
+
+                var sumLabPrice = cartLabItems?.Sum(i => i.LabNavigation.Price);
+
+                var response = new CartItemResponseDTO
+                {
+                    IsSelected = item.IsSelected,
+                    ComboId = item.ComboId,
+                    IosDeviceId = item.IosDeviceId,
+                    ProductType = item.ProductType,
+                    Quantity = item.Quantity,
+                    CreatedBy = item.SellerId,
+                    Price = productInfo.Price,
+                    ProductSummary = productInfo.ProductSummary,
+                    ProductName = productInfo.ProductName,
+                    labList = cartLabItems?.Select(i => new CartLabItemDTO
+                    {
+                        IsSelected = i.IsSelected,
+                        LabName = i.LabNavigation.Title,
+                        LabSummary = i.LabNavigation.Summary,
+                        CreatedBy = i.LabNavigation.CreatedBy,
+                        Price = i.LabNavigation.Price,
+                        LabId = i.LabId,
+                        CreatedByTrainer = i.LabNavigation.CreatedByNavigation.Fullname,
+                    }).ToList(),
+                    TotalPrice = (productInfo.Price * item.Quantity + (decimal)(sumLabPrice == null ? 0 : sumLabPrice))
+                };
+
+                return response;
+            }, pagination);
+
+            return ResponseService<object>.OK(res);
         }
     }
 }
