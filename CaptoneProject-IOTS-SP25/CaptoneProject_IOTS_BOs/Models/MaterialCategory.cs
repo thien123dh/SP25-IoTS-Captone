@@ -12,9 +12,9 @@ public partial class MaterialCategory
 
     public string Label { get; set; }
 
-    [MaxLength(1000)]
-    [Column("image_url")]
-    public string? ImageUrl { set; get; }
+    [ForeignKey(nameof(User))]
+    public int? CreatedBy { set; get; }
+    public DateTime? CreatedDate { set; get; } = DateTime.Now;
     [JsonIgnore]
     public int? Orders { get; set; }
     [JsonIgnore]
