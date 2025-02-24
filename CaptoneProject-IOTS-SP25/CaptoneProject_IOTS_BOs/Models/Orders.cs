@@ -1,4 +1,3 @@
-﻿using CaptoneProject_IOTS_BOs.Migrations;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;

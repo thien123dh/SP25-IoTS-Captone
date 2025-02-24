@@ -17,6 +17,8 @@ public partial class MaterialCategory
 
     [ForeignKey(nameof(User))]
     public int? CreatedBy { set; get; }
+    [ForeignKey("CreatedBy")]
+    public virtual User? CreatedByNavigation {set; get;}
     public DateTime? CreatedDate { set; get; } = DateTime.Now;
     [JsonIgnore]
     public int? Orders { get; set; }
