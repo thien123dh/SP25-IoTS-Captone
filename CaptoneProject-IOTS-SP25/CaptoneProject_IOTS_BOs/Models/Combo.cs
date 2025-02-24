@@ -21,6 +21,9 @@ namespace CaptoneProject_IOTS_BOs.Models
         [ForeignKey(nameof(Store))]
         public int StoreId { set; get; }
 
+        [ForeignKey("StoreId")]
+        public Store? StoreNavigation { set; get; }
+
         [MaxLength(300)]
         [Required]
         public string Summary { set; get; }
