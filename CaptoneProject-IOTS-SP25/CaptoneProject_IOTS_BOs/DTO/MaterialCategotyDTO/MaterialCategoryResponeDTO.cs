@@ -10,6 +10,8 @@ namespace CaptoneProject_IOTS_BOs.DTO.MaterialCategotyDTO
     {
         public int Id { get; set; }
         public string Label { get; set; }
+        public int? CreatedBy { set; get; }
+        public DateTime? CreatedDate { set; get; }
         public int? Orders { get; set; }
         public int? IsActive { get; set; }
     }

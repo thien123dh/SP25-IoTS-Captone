@@ -74,6 +74,17 @@ namespace CaptoneProject_IOTS_API.Controllers.CategoryMaterialController
             return GetActionResult(response);
         }
 
+        [HttpPost("create-material-category-to-store")]
+        public async Task<IActionResult> AddCategoryMaterialToStore(
+            [FromBody] CreateUpdateMaterialCategoryDTO payload
+        )
+        {
+            var response = await _materialCategoryService.CreateOrUpdateMaterialCategoryToStore(null, payload);
+
+            return GetActionResult(response);
+        }
+
+
         [HttpPut("update-material-category/{id}")]
         public async Task<IActionResult> UpdateMaterialCategory(
             int id,
