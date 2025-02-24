@@ -45,12 +45,18 @@ namespace CaptoneProject_IOTS_BOs.Models
         [MaxLength(1000)]
         public string PreviewVideoUrl { set; get; }
 
+        [Precision(18, 1)]
+        public decimal Price { set; get; } = 0;
+
         public DateTime CreatedDate { set; get; } = DateTime.Now;
 
         public DateTime UpdatedDate { set; get; } = DateTime.Now;
 
         [ForeignKey(nameof(User))]
         public int? CreatedBy { set; get; }
+
+        [ForeignKey("CreatedBy")]
+        public virtual User CreatedByNavigation {set; get;}
 
         [ForeignKey(nameof(User))]
         public int? UpdatedBy { set; get; }

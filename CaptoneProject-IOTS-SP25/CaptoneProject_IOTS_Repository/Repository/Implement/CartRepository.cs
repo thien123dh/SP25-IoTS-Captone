@@ -28,5 +28,12 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
         {
             return _dbSet.Where(item => item.CreatedBy == userId && item.ProductType == productType)?.ToList();
         }
+
+        public List<CartItem>? GetCartItemsListByParentId(int parentId)
+        {
+            return _dbSet
+                .Include(item => item.LabNavigation)
+                .Where(item => item.ParentCartItemId == parentId)?.ToList();
+        }
     }
 }
