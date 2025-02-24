@@ -186,6 +186,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 ProductSummary = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? item.IosDeviceNavigation?.Summary : item.ComboNavigation?.Summary,
                 CreatedBy = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? item.IosDeviceNavigation?.CreatedBy : item.ComboNavigation?.CreatedBy,
                 Price = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? (decimal)item.IosDeviceNavigation.Price : (decimal)item.ComboNavigation.Price,
+                CreatedByStore = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? item?.IosDeviceNavigation?.StoreNavigation.Name : item.ComboNavigation?.StoreNavigation?.Name,
             };
         }
 
@@ -201,7 +202,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     item.ProductType == (int)ProductTypeEnum.COMBO || item.ProductType == (int)ProductTypeEnum.IOT_DEVICE
                 ),
                 orderBy: ob => ob.OrderByDescending(item => item.Id),
-                includeProperties: "IosDeviceNavigation,ComboNavigation",
+                includeProperties: "IosDeviceNavigation,ComboNavigation,IosDeviceNavigation.StoreNavigation,ComboNavigation.StoreNavigation",
                 pageIndex: request.PageIndex,
                 pageSize: request.PageSize
             );
@@ -221,6 +222,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 var response = new CartItemResponseDTO
                 {
                     IsSelected = item.IsSelected,
+                    Id = item.Id,
                     ProductId = item.IosDeviceId != null ? item.IosDeviceId : item.ComboId != null ? item.ComboId : item.LabId,
                     ProductType = item.ProductType,
                     Quantity = item.Quantity,
@@ -228,6 +230,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     Price = productInfo.Price,
                     ProductSummary = productInfo.ProductSummary,
                     ProductName = productInfo.ProductName,
+                    CreatedByStore = productInfo.CreatedByStore,
                     labList = dependLabCartItems?.Select(i => new CartLabItemDTO
                     {
                         IsSelected = i.IsSelected,
@@ -269,14 +272,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         updatedCartLabItems.Append(item);
                     }
 
-                if (updatedCartLabItems.IsNullOrEmpty())
+                if (updatedCartLabItems.Count > 0)
+                    await unitOfWork.CartRepository.UpdateAsync(updatedCartLabItems);
 
-
-                unitOfWork.CartRepository.Remove(cartItem);
+                unitOfWork.CartRepository.Update(cartItem);
             }
             catch
             {
-                return ResponseService<object>.NotFound("Cannot delete product. Please try again");
+                return ResponseService<object>.NotFound("Cannot select or unselect product. Please try again");
             }
 
             return ResponseService<object>.OK(null);

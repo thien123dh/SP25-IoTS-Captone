@@ -46,7 +46,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.CartDTO
         public int Id { set; get; }
         public int? ProductId { set; get; }
         public int? CreatedBy { set; get; }
-        public string CreatedByStore {set; get;}
+        public string? CreatedByStore {set; get;}
         public int ProductType { set; get; }
         public string? ProductName { set; get; }
         public string? ProductSummary { set; get; }

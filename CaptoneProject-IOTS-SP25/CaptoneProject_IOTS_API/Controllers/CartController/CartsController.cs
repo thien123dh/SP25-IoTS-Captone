@@ -32,6 +32,22 @@ namespace CaptoneProject_IOTS_API.Controllers.CartController
             var res = await cartService.AddToCart(payload);
 
             return GetActionResult(res);
-        } 
+        }
+
+        [HttpPost("select-or-unselect-cart-item/{cartId}")]
+        public async Task<IActionResult> SelectOrUnselectCartItems(int cartId)
+        {
+            var res = await cartService.SelectOrUnselectCartItem(cartId);
+
+            return GetActionResult(res);
+        }
+
+        [HttpDelete("remove-cart-item/{cartId}")]
+        public async Task<IActionResult> RemoveCartItem(int cartId)
+        {
+            var res = await cartService.SelectOrUnselectCartItem(cartId);
+
+            return GetActionResult(res);
+        }
     }
 }
