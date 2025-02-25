@@ -56,6 +56,10 @@ namespace CaptoneProject_IOTS_Repository.Base
         }
 
         #endregion Separating asign entity and save operators
+        public IQueryable<T> Search(Expression<Func<T, bool>> func)
+        {
+            return _dbSet.Where(func);
+        }
 
         public virtual PaginationResponseDTO<T> GetPaginate(
             Expression<Func<T, bool>> filter = null,

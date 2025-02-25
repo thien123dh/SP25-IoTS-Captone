@@ -231,16 +231,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     ProductSummary = productInfo.ProductSummary,
                     ProductName = productInfo.ProductName,
                     CreatedByStore = productInfo.CreatedByStore,
-                    labList = dependLabCartItems?.Select(i => new CartLabItemDTO
-                    {
-                        IsSelected = i.IsSelected,
-                        LabName = i.LabNavigation?.Title,
-                        LabSummary = i.LabNavigation?.Summary,
-                        CreatedBy = i.LabNavigation?.CreatedBy,
-                        Price = i.LabNavigation?.Price,
-                        LabId = i.LabId,
-                        CreatedByTrainer = i.LabNavigation?.CreatedByNavigation.Fullname,
-                    }).ToList(),
+                    NumberOfIncludedLabs = dependLabCartItems?.Count() == null ? 0 : dependLabCartItems.Count(),
                     TotalPrice = (productInfo.Price * item.Quantity + (decimal)(sumLabPrice == null ? 0 : sumLabPrice))
                 };
 
@@ -264,11 +255,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 var dependCartItems = unitOfWork.CartRepository.GetCartItemsListByParentId(cartItem.Id);
                 List<CartItem> updatedCartLabItems = new List<CartItem>();
 
-                //Auto set unselected dependence lab
-                if (dependCartItems != null && !cartItem.IsSelected)
+                //Auto set selected or unselect dependence lab
+                if (dependCartItems != null)
                     foreach(CartItem item in dependCartItems)
                     {
-                        item.IsSelected = false;
+                        item.IsSelected = cartItem.IsSelected;
                         updatedCartLabItems.Append(item);
                     }
 
@@ -306,6 +297,55 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
 
             return ResponseService<object>.OK(null);
+        }
+
+        public async Task<GenericResponseDTO<List<CartLabItemDTO>?>> GetCartLabItemsByParentId(int parentId)
+        {
+            var cart = unitOfWork.CartRepository.GetById(parentId);
+
+            if (cart == null)
+                return ResponseService<List<CartLabItemDTO>?>.NotFound("Product cannot be found. Please try again");
+
+            var list = unitOfWork.CartRepository.GetCartItemsListByParentId(parentId);
+
+            if (list == null)
+                return ResponseService<List<CartLabItemDTO>?>.NotFound("Lab list cannot be found. Please try again");
+
+            var res = list?.Select(item =>
+                new CartLabItemDTO
+                {
+                    //IsSelected = item.IsSelected,
+                    CreatedBy = item.CreatedBy,
+                    CreatedByTrainer = item?.LabNavigation?.CreatedByNavigation.Fullname,
+                    LabId = item?.LabId,
+                    LabName = item?.LabNavigation?.Title,
+                    LabSummary = item?.LabNavigation?.Summary,
+                    Id = item.Id,
+                    Price = item?.LabNavigation?.Price
+                }
+            )?.ToList();
+
+            return ResponseService<List<CartLabItemDTO>?>.OK(res);
+        }
+
+        public ResponseDTO GetNumberSelectedCartItems()
+        {
+            var loginUserId = userService.GetLoginUserId();
+
+            if (loginUserId == null)
+            {
+                return ResponseService<object>.Unauthorize(ExceptionMessage.INVALID_LOGIN);
+            }
+
+            var res = unitOfWork.CartRepository.Search(
+                item => item.IsSelected
+                &&
+                item.CreatedBy == loginUserId
+                &&
+                item.ParentCartItemId == null
+            )?.Count();
+
+            return ResponseService<object>.OK(res == null ? 0 : res);
         }
     }
 }

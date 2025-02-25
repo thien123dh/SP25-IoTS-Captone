@@ -13,10 +13,14 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
     {
         public Task<ResponseDTO> GetCartPagination(PaginationRequest request);
 
+        public Task<GenericResponseDTO<List<CartLabItemDTO>?>> GetCartLabItemsByParentId(int parentId);
+
         public Task<ResponseDTO> AddToCart(AddToCartDTO request);
 
         public Task<ResponseDTO> SelectOrUnselectCartItem(int cartId);
 
         public Task<ResponseDTO> DeleteCartItem(int cartId);
+
+        public ResponseDTO GetNumberSelectedCartItems();
     }
 }
