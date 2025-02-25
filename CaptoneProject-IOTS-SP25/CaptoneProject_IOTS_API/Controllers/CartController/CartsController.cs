@@ -49,5 +49,21 @@ namespace CaptoneProject_IOTS_API.Controllers.CartController
 
             return GetActionResult(res);
         }
+
+        [HttpGet("get-all-combo-included-labs/{cartId}")]
+        public async Task<IActionResult> GetAllComboIncludedLabs(int cartId)
+        {
+            var res = await cartService.GetCartLabItemsByParentId(cartId);
+
+            return GetActionResult(res);
+        }
+
+        [HttpGet("get-number-selected-cart-items")]
+        public IActionResult GetNumberSelectedCartItems()
+        {
+            var res = cartService.GetNumberSelectedCartItems();
+
+            return GetActionResult(res);
+        }
     }
 }

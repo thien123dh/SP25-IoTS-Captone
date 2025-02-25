@@ -30,7 +30,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.CartDTO
 
     public class CartLabItemDTO
     {
-        public bool IsSelected { set; get; } = false;
+        //public bool IsSelected { set; get; } = false;
         public int Id { set; get; }
         public int? LabId { set; get; }
         public string? LabName { set; get; }
@@ -52,9 +52,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.CartDTO
         public string? ProductSummary { set; get; }
         public int Quantity { set; get; }
         public decimal Price { set; get; }
-
-        public List<CartLabItemDTO>? labList { set; get; }
-
+        public int NumberOfIncludedLabs { set; get; }
         public decimal TotalPrice { set; get; }
     }
 }
