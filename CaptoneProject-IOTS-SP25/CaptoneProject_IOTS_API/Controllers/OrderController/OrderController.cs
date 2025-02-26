@@ -27,5 +27,16 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
 
             return Ok(result);
         }
+
+        [HttpGet("check-order-success")]
+        public async Task<IActionResult> CheckOrderSuccess([FromBody] OrderRequestDTO payload)
+        {
+            var result = await _orderService.CheckOrderSuccessfull(null, payload);
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
     }
 }
