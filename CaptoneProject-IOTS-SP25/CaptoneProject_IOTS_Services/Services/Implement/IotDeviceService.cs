@@ -135,21 +135,22 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
-        public async Task<GenericResponseDTO<PaginationResponseDTO<IotDeviceItem>>> GetPagination(int? filterStoreId, PaginationRequest payload)
+        public async Task<GenericResponseDTO<PaginationResponseDTO<IotDeviceItem>>> GetPagination(int? filterStoreId, int? categoryFilterId, PaginationRequest payload)
         {
             int? loginUserId = userServices.GetLoginUserId();
             var isStore = await userServices.CheckLoginUserRole(RoleEnum.STORE);
             var isAnonymousOrCustomer = (loginUserId == null) || await userServices.CheckLoginUserRole(RoleEnum.CUSTOMER);
 
-            int? loginStoreId = isStore && loginUserId != null ? unitOfWork.StoreRepository.GetByUserId((int)loginUserId).Id : null;
+            int? loginStoreId = isStore && loginUserId != null ? unitOfWork?.StoreRepository?.GetByUserId((int)loginUserId)?.Id : null;
 
-            var res = unitOfWork.IotsDeviceRepository.GetPaginate(
+            var res = unitOfWork?.IotsDeviceRepository.GetPaginate(
                 filter: item => (item.Name.Contains(payload.SearchKeyword))
                     && ((isStore && item.StoreId == loginStoreId) || !isStore)
                     && ((isAnonymousOrCustomer && item.IsActive > 0) || !isAnonymousOrCustomer)
                     && (filterStoreId == null || filterStoreId == item.StoreId)
                     && (payload.StartFilterDate == null || payload.StartFilterDate <= item.CreatedDate)
-                    && (payload.EndFilterDate == null || item.CreatedDate <= payload.EndFilterDate),
+                    && (payload.EndFilterDate == null || item.CreatedDate <= payload.EndFilterDate)
+                    && (categoryFilterId == null) || (item.CategoryId == categoryFilterId),
                 orderBy: ob => ob.OrderByDescending(item => item.CreatedDate),
                 includeProperties: "StoreNavigation,Category",
                 pageIndex: payload.PageIndex,
@@ -162,14 +163,17 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     Id = res.Id,
                     DeviceType = res.DeviceType,
                     DeviceTypeLabel = (res.DeviceType == 1) ? "New" : "Second-hand",
-                    Category = res.Category,
+                    CategoryId = res.CategoryId,
+                    CategoryName = res.Category.Label,
                     ImageUrl = res.ImageUrl,
                     Name = res.Name,
                     Price = res.Price,
                     Quantity = res.Quantity,
                     SecondHandPrice = res.SecondHandPrice,
                     SecondhandQualityPercent = res.SecondhandQualityPercent,
-                    StoreNavigation = res.StoreNavigation,
+                    StoreId = res.StoreId,
+                    StoreNavigationName = res.StoreNavigation.Name,
+                    StoreNavigationImageUrl = res.StoreNavigation.ImageUrl,
                     Summary = res.Summary,
                     IsActive = res.IsActive
                 }, res)

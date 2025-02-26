@@ -226,8 +226,11 @@ namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
         public string? DeviceTypeLabel { set; get; }
         public string Name { get; set; }
         public string Summary { get; set; }
-        public MaterialCategory? Category { set; get; }
-        public Store? StoreNavigation { set; get; }
+        public int StoreId { set; get; }
+        public int CategoryId { set; get; }
+        public string? CategoryName { set; get; }
+        public string? StoreNavigationName { set; get; }
+        public string? StoreNavigationImageUrl { set; get; }
         public int? Quantity { get; set; }
         public decimal Price { get; set; }
         public string? ImageUrl { set; get; }

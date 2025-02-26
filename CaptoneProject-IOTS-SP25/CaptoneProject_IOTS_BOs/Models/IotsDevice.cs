@@ -136,7 +136,8 @@ public partial class IotsDevice
     public string Summary { set; get; }
     public string Description { get; set; }
 
-    public int? CategoryId { get; set; }
+    [ForeignKey(nameof(MaterialCategory))]
+    public int CategoryId { get; set; }
 
     public string Manufacturer { get; set; }
 
@@ -155,6 +156,7 @@ public partial class IotsDevice
     public string Notes { set; get; }
 
     [Column("price")]
+    [Precision(18, 1)]
     public decimal Price { set; get; } = 0;
 
     [Column("quantity")]
@@ -182,7 +184,7 @@ public partial class IotsDevice
     public string? ImageUrl { set; get; }
 
     public virtual Store StoreNavigation { get; set; }
-    public MaterialCategory Category { get; set; }
+    public virtual MaterialCategory Category { get; set; }
 
     public virtual User CreatedByNavigation { get; set; }
 

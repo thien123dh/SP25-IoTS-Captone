@@ -12,6 +12,14 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
 {
     public class CartRepository : RepositoryBase<CartItem>
     {
+        public CartItem? GetById(int id) => _dbSet
+            .Include(item => item.IosDeviceNavigation)
+            .ThenInclude(iot => iot.StoreNavigation)
+            .Include(item => item.LabNavigation)
+            .ThenInclude(lab => lab.CreatedByNavigation)
+            .Include(item => item.ComboNavigation)
+            .ThenInclude(combo => combo.StoreNavigation)
+            .SingleOrDefault(item => item.Id == id);
         public CartItem? GetCartItemByProductId(int userId, int productId, int productType)
         {
             return _dbSet

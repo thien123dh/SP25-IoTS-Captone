@@ -55,4 +55,11 @@ namespace CaptoneProject_IOTS_BOs.DTO.CartDTO
         public int NumberOfIncludedLabs { set; get; }
         public decimal TotalPrice { set; get; }
     }
+
+    public class UpdateCartQuantityDTO
+    {
+        public int CartId { set; get; }
+
+        public int Quantity { set; get; }
+    }
 }
