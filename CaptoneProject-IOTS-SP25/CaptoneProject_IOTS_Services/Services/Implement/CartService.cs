@@ -37,12 +37,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     var p = unitOfWork.IotsDeviceRepository.GetById(productId);
 
                     if (p == null)
-                        throw new Exception("Product cannot be found");
+                        throw new Exception(ExceptionMessage.PRODUCT_CANNOT_BE_FOUND);
 
                     res = new GeneralProductDTO
                     {
-                        ProductName = p.Name,
-                        ProductSummary = p.Summary,
+                        Name = p.Name,
+                        Summary = p.Summary,
                         CreatedBy = p.CreatedBy,
                         Price = p.Price
                     };
@@ -52,12 +52,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     var combo = unitOfWork.ComboRepository.GetById(productId);
 
                     if (combo == null)
-                        throw new Exception("Combo cannot be found");
+                        throw new Exception(ExceptionMessage.PRODUCT_CANNOT_BE_FOUND);
 
                     res = new GeneralProductDTO
                     {
-                        ProductName = combo.Name,
-                        ProductSummary = combo.Summary,
+                        Name = combo.Name,
+                        Summary = combo.Summary,
                         CreatedBy = combo.CreatedBy,
                         Price = combo.Price
                     };
@@ -66,19 +66,19 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     var lab = unitOfWork.LabRepository.GetById(productId);
 
                     if (lab == null)
-                        throw new Exception("Combo cannot be found");
+                        throw new Exception(ExceptionMessage.PRODUCT_CANNOT_BE_FOUND);
 
                     res = new GeneralProductDTO
                     {
-                        ProductName = lab.Title,
-                        ProductSummary = lab.Summary,
+                        Name = lab.Title,
+                        Summary = lab.Summary,
                         CreatedBy = lab.CreatedBy,
                         Price = lab.Price
                     };
 
                     break;
                 default:
-                    throw new Exception("Product cannot be found");
+                    throw new Exception(ExceptionMessage.PRODUCT_CANNOT_BE_FOUND);
             }
 
             return res;
@@ -91,9 +91,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             try
             {
                 sellerId = GetProductInfo(request.ProductId, (int)request.ProductType).CreatedBy;
-            } catch
+            } catch (Exception ex)
             {
-                throw new Exception("Seller cannot be found. Please try again");
+                throw new Exception(ex.Message);
             }            
 
             source.SellerId = (int)sellerId;
@@ -128,12 +128,32 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return !(cartItem == null);
         }
 
-        public async Task<ResponseDTO> AddToCart(AddToCartDTO request)
+        private bool CheckProductQuantityAvailable(int cartId, int addToCartQuantity)
+        {
+            var cart = unitOfWork.CartRepository.GetById(cartId);
+
+            if (cart == null)
+                throw new Exception(ExceptionMessage.PRODUCT_CANNOT_BE_FOUND);
+
+            switch (cart.ProductType)
+            {
+                case (int)ProductTypeEnum.IOT_DEVICE:
+                    return cart.IosDeviceNavigation.Quantity >= addToCartQuantity;
+                    break;
+                //case (int)ProductTypeEnum.COMBO:
+                //    return cart.ComboNavigation.Quantity >= addToCartQuantity;
+                //    break;
+                default:
+                    throw new Exception("Product type cannot be found. Please try again");
+            }
+        }
+
+        public async Task<object> AddToCart(AddToCartDTO request)
         {
             var loginUserId = userService.GetLoginUserId();
 
             if (loginUserId == null)
-                return ResponseService<object>.BadRequest(ExceptionMessage.INVALID_LOGIN);
+                throw new Exception(ExceptionMessage.INVALID_LOGIN);
 
             var cartItem = unitOfWork.CartRepository.GetCartItemByProductId((int)loginUserId, request.ProductId, (int)request.ProductType);
 
@@ -154,27 +174,34 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     {
                         if (CheckExistProductInCart((int)loginUserId, lab.Id, (int)ProductTypeEnum.COMBO))
                         {
-                            return ResponseService<object>.BadRequest("The tutorial video has been added to cart");
+                            throw new Exception("The tutorial video has been added already");
                         }
 
                         parentCartId = parentCartItem.Id;
                     } else
                     {
-                        return ResponseService<object>.BadRequest("Please add the current product to cart if you want to buy this tutorial video");
+                        throw new Exception("Please add the current product to cart if you want to buy this tutorial video");
                     }
                 }
 
                 cartItem = SetDataToCartItem(cartItem, request, (int)loginUserId, parentCartId);
+
+                if (cartItem.Id > 0 && !CheckProductQuantityAvailable(cartItem.Id, cartItem.Quantity))
+                    throw new Exception(ExceptionMessage.Insufficient_product_quantity);
 
                 if (cartItem.Id > 0) //Update
                     cartItem = unitOfWork.CartRepository.Update(cartItem);
                 else
                     cartItem = unitOfWork.CartRepository.Create(cartItem);
 
-                return ResponseService<object>.OK(cartItem);
+                if (cartItem.ProductType == (int)ProductTypeEnum.LAB)
+                    return cartItem;
+
+                return await GetCartItemById(cartItem.Id);
+
             } catch (Exception ex)
             {
-                return ResponseService<object>.BadRequest(ex.Message);
+                throw new Exception(ex.Message);
             }
         }
 
@@ -182,8 +209,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         {
             return new GeneralProductDTO
             {
-                ProductName = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? item.IosDeviceNavigation?.Name : item.ComboNavigation?.Name,
-                ProductSummary = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? item.IosDeviceNavigation?.Summary : item.ComboNavigation?.Summary,
+                Name = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? item.IosDeviceNavigation?.Name : item.ComboNavigation?.Name,
+                Summary = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? item.IosDeviceNavigation?.Summary : item.ComboNavigation?.Summary,
                 CreatedBy = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? item.IosDeviceNavigation?.CreatedBy : item.ComboNavigation?.CreatedBy,
                 Price = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? (decimal)item.IosDeviceNavigation.Price : (decimal)item.ComboNavigation.Price,
                 CreatedByStore = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? item?.IosDeviceNavigation?.StoreNavigation.Name : item.ComboNavigation?.StoreNavigation?.Name,
@@ -228,8 +255,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     Quantity = item.Quantity,
                     CreatedBy = item.SellerId,
                     Price = productInfo.Price,
-                    ProductSummary = productInfo.ProductSummary,
-                    ProductName = productInfo.ProductName,
+                    ProductSummary = productInfo.Summary,
+                    ProductName = productInfo.Name,
                     CreatedByStore = productInfo.CreatedByStore,
                     NumberOfIncludedLabs = dependLabCartItems?.Count() == null ? 0 : dependLabCartItems.Count(),
                     TotalPrice = (productInfo.Price * item.Quantity + (decimal)(sumLabPrice == null ? 0 : sumLabPrice))
@@ -246,7 +273,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var cartItem = unitOfWork.CartRepository.GetById(cartId);
 
             if (cartItem == null)
-                return ResponseService<object>.NotFound("Product cannot be found. Please try again");
+                return ResponseService<object>.NotFound(ExceptionMessage.PRODUCT_CANNOT_BE_FOUND);
 
             cartItem.IsSelected = !cartItem.IsSelected;
 
@@ -281,7 +308,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var cartItem = unitOfWork.CartRepository.GetById(cartId);
 
             if (cartItem == null)
-                return ResponseService<object>.NotFound("Product cannot be found. Please try again");
+                return ResponseService<object>.NotFound(ExceptionMessage.PRODUCT_CANNOT_BE_FOUND);
 
             try
             {
@@ -293,23 +320,22 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 unitOfWork.CartRepository.Remove(cartItem);
             } catch
             {
-                return ResponseService<object>.NotFound("Cannot delete product. Please try again");
+                return ResponseService<object>.NotFound("Cannot remove the product. Please try again");
             }
 
             return ResponseService<object>.OK(null);
         }
 
-        public async Task<GenericResponseDTO<List<CartLabItemDTO>?>> GetCartLabItemsByParentId(int parentId)
+        
+
+        public async Task<List<CartLabItemDTO>?> GetCartLabItemsByParentId(int parentId)
         {
             var cart = unitOfWork.CartRepository.GetById(parentId);
 
             if (cart == null)
-                return ResponseService<List<CartLabItemDTO>?>.NotFound("Product cannot be found. Please try again");
+                throw new Exception(ExceptionMessage.PRODUCT_CANNOT_BE_FOUND);
 
             var list = unitOfWork.CartRepository.GetCartItemsListByParentId(parentId);
-
-            if (list == null)
-                return ResponseService<List<CartLabItemDTO>?>.NotFound("Lab list cannot be found. Please try again");
 
             var res = list?.Select(item =>
                 new CartLabItemDTO
@@ -325,7 +351,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 }
             )?.ToList();
 
-            return ResponseService<List<CartLabItemDTO>?>.OK(res);
+            return res;
         }
 
         public ResponseDTO GetNumberSelectedCartItems()
@@ -346,6 +372,69 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             )?.Count();
 
             return ResponseService<object>.OK(res == null ? 0 : res);
+        }
+
+        public async Task<CartItemResponseDTO> GetCartItemById(int cartId)
+        {
+            var item = unitOfWork.CartRepository.GetById(cartId);
+
+            if (item == null)
+               throw new Exception(ExceptionMessage.PRODUCT_CANNOT_BE_FOUND);
+
+            var includedLabs = unitOfWork.CartRepository.GetCartItemsListByParentId(item.Id);
+
+            var productInfo = MapToGeneralProductInfo(item);
+
+            var sumLabPrice = includedLabs?.Sum(i => i.LabNavigation?.Price == null ? 0 : i.LabNavigation.Price);
+
+            var response = new CartItemResponseDTO
+            {
+                IsSelected = item.IsSelected,
+                Id = item.Id,
+                ProductId = item.IosDeviceId != null ? item.IosDeviceId : item.ComboId != null ? item.ComboId : item.LabId,
+                ProductType = item.ProductType,
+                Quantity = item.Quantity,
+                CreatedBy = item.SellerId,
+                Price = productInfo.Price,
+                ProductSummary = productInfo.Summary,
+                ProductName = productInfo.Name,
+                CreatedByStore = productInfo.CreatedByStore,
+                NumberOfIncludedLabs = includedLabs?.Count() == null ? 0 : includedLabs.Count(),
+                TotalPrice = (productInfo.Price * item.Quantity + (decimal)(sumLabPrice == null ? 0 : sumLabPrice))
+            };
+
+            return response;
+        }
+
+        public async Task<ResponseDTO> UpdateCartItemQuantity(UpdateCartQuantityDTO request)
+        {
+            var loginUserId = userService.GetLoginUserId();
+
+            if (loginUserId == null)
+                return ResponseService<object>.NotFound(ExceptionMessage.INVALID_LOGIN);
+
+            var cart = unitOfWork.CartRepository.GetById(request.CartId);
+
+            if (cart == null)
+                return ResponseService<object>.NotFound(ExceptionMessage.PRODUCT_CANNOT_BE_FOUND);
+
+            cart.Quantity = request.Quantity;
+
+            if (!CheckExistProductInCart((int)loginUserId, (cart.ComboId == null ? (int)cart.IosDeviceId : (int)cart.ComboId), cart.ProductType))
+            {
+                return ResponseService<object>.BadRequest(ExceptionMessage.Insufficient_product_quantity);
+            }
+
+            try
+            {
+                cart = unitOfWork.CartRepository.Update(cart);
+
+                return ResponseService<object>.OK(await GetCartItemById(cart.Id));
+
+            } catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
         }
     }
 }

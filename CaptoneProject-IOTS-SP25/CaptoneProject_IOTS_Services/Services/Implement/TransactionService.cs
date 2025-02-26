@@ -58,7 +58,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 return ResponseService<PaginationResponseDTO<Transaction>>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
 
             var pagination = transactionRepository.GetPaginate(
-                filter: item => item.UserId == loginUserId,
+                filter: item => item.UserId == loginUserId && 
+                    (request.SearchKeyword == null || item.Description.Contains(request.SearchKeyword) || item.TransactionType.Contains(request.SearchKeyword))
+                    &&
+                    (request.StartFilterDate == null) || (request.StartFilterDate <= item.CreatedDate)
+                    &&
+                    (request.EndFilterDate == null) || (item.CreatedDate <= request.EndFilterDate),
                 orderBy: o => o.OrderByDescending(item => item.CreatedDate),
                 pageIndex: request.PageIndex,
                 pageSize: request.PageSize

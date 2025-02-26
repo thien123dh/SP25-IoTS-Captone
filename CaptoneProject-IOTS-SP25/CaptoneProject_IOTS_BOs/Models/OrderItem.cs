@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace CaptoneProject_IOTS_BOs.Models
 {
@@ -40,7 +41,8 @@ namespace CaptoneProject_IOTS_BOs.Models
         public int Quantity { set; get; } = 0;
 
         [Required]
-        public int Price { set; get; }
+        [Precision(18, 1)]
+        public decimal Price { set; get; }
 
         public DateTime? WarrantyEndDate { set; get; } = null;
 

@@ -25,4 +25,23 @@ namespace CaptoneProject_IOTS_BOs.Validation
             return new ValidationResult("Invalid date format");
         }
     }
+
+    public class PastDateAttribute : ValidationAttribute
+    {
+        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+        {
+            if (value is DateTime dateValue)
+            {
+                if (dateValue <= DateTime.Now)
+                {
+                    return ValidationResult.Success;
+                }
+                else
+                {
+                    return new ValidationResult("Date must be the past");
+                }
+            }
+            return new ValidationResult("Invalid date format");
+        }
+    }
 }

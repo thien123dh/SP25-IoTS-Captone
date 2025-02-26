@@ -14,8 +14,14 @@ namespace CaptoneProject_IOTS_BOs.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { set; get; }
 
+        [ForeignKey(nameof(Combo))]
+        public int ComboId { set; get; }
+
         [ForeignKey(nameof(IotsDevice))]
         public int IotDeviceId { set; get; }
+
+        [ForeignKey(nameof(IotDeviceId))]
+        public virtual IotsDevice? IotDeviceNavigation { set; get; }
 
         public DateTime CreatedDate { set; get; } = DateTime.Now;
     }
