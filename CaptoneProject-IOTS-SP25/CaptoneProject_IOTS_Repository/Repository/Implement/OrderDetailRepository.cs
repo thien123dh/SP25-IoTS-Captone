@@ -1,4 +1,5 @@
-﻿using CaptoneProject_IOTS_Repository.Base;
+﻿using CaptoneProject_IOTS_BOs.Models;
+using CaptoneProject_IOTS_Repository.Base;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace CaptoneProject_IOTS_Repository.Repository.Implement
 {
-    public class OrderDetailRepository : RepositoryBase<OrderDetailRepository>
+    public class OrderDetailRepository : RepositoryBase<OrderItem>
     {
     }
 }

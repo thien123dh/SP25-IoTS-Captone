@@ -65,8 +65,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             );
             var serialNumber = "OR";
             
-
-
             var createTransactionPayment = new Orders
             {
                 ApplicationSerialNumber = GetApplicationSerialNumberOrder(loginUserId,serialNumber),
@@ -81,29 +79,43 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 OrderStatusId = (int)OrderStatusEnum.PENDING
             };
 
-            await _unitOfWork.OrderRepository.SaveAsync();
-
-
-            /*decimal ItemPrice = 0;
-            foreach(var item in selectedItems)
+            decimal ItemPrice = 0;
+            foreach (var item in selectedItems)
             {
-                decimal itemPrice = (item.IosDeviceNavigation?.Price ?? 0m) * item.Quantity;
                 var orderDetail = new OrderItem
                 {
-                    OrderId = createTransactionPayment.Id, 
-                    IosDeviceId = item.IosDeviceNavigation?.Id ?? 0,
-                    ComboId = item.ComboNavigation?.Id ?? 0,
-                    LabId = item.LabNavigation?.Id ?? 0,
+                    OrderId = createTransactionPayment.Id,
                     SellerId = item.SellerId,
-                    Price = item.IosDeviceNavigation?.Price ?? 0m,
-                    TotalPrice = itemPrice,
-                    CreatedBy = loginUserId,
-                    CreatedDate = DateTime.Now
+                    OrderBy = loginUserId
                 };
-            }*/
+                // Xác định loại sản phẩm
+                if (item.IosDeviceNavigation != null)
+                {
+                    orderDetail.ProductType = (int)ProductTypeEnum.IOT_DEVICE;
+                    orderDetail.IosDeviceId = item.IosDeviceNavigation.Id;
+                    orderDetail.Price = item.IosDeviceNavigation?.Price ?? 0m;
+                }
+                else if (item.ComboNavigation != null)
+                {
+                    orderDetail.ProductType = (int)ProductTypeEnum.COMBO;
+                    orderDetail.ComboId = item.ComboNavigation.Id;
+                    orderDetail.Price = item.ComboNavigation?.Price ?? 0m;
+                }
+                else if (item.LabNavigation != null)
+                {
+                    orderDetail.ProductType = (int)ProductTypeEnum.LAB;
+                    orderDetail.LabId = item.LabNavigation.Id;
+                    orderDetail.Price = item.LabNavigation?.Price ?? 0m;
+                }
+                else
+                {
+                    throw new Exception("Cannot Add to Order this Product. Please try again");
+                }
 
+                _unitOfWork.OrderDetailRepository.Create(orderDetail);
+            }
 
-
+            await _unitOfWork.OrderRepository.SaveAsync();
             _unitOfWork.CartRepository.RemoveAsync(selectedItems);
             await _unitOfWork.CartRepository.SaveAsync();
 
