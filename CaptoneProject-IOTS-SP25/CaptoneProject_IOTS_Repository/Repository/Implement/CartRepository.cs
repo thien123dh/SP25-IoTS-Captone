@@ -55,5 +55,10 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
                 .Where(item => item.CreatedBy == userId && item.ParentCartItemId != null)?.ToList();
 
         }
+
+        public IQueryable<CartItem> GetQueryable(int userId)
+        {
+            return _dbSet.AsQueryable();
+        }
     }
 }

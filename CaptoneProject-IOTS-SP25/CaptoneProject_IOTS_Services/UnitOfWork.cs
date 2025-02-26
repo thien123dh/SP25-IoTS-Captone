@@ -26,5 +26,7 @@ namespace CaptoneProject_IOTS_Service
         public virtual CartRepository CartRepository => new CartRepository();
         public virtual LabRepository LabRepository => new LabRepository();
         public virtual ComboRepository ComboRepository => new ComboRepository();
+        public virtual OrderRepository OrderRepository => new OrderRepository();
+        public virtual OrderDetailRepository OrderDetailRepository => new OrderDetailRepository();
     }
 }

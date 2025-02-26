@@ -29,4 +29,8 @@
     <ProjectReference Include="..\CaptoneProject_IOTS_Services\CaptoneProject_IOTS_Service.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Controllers\OrderItemController\" />
+  </ItemGroup>
+
 </Project>
