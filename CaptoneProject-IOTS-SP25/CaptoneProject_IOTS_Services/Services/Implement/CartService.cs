@@ -268,14 +268,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return ResponseService<object>.OK(res);
         }
 
-        public async Task<ResponseDTO> SelectOrUnselectCartItem(int cartId)
+        public async Task<ResponseDTO> SelectOrUnselectCartItem(int cartId, bool isSelect)
         {
             var cartItem = unitOfWork.CartRepository.GetById(cartId);
 
             if (cartItem == null)
                 return ResponseService<object>.NotFound(ExceptionMessage.PRODUCT_CANNOT_BE_FOUND);
 
-            cartItem.IsSelected = !cartItem.IsSelected;
+            cartItem.IsSelected = isSelect;
 
             try
             {
@@ -286,7 +286,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 if (dependCartItems != null)
                     foreach(CartItem item in dependCartItems)
                     {
-                        item.IsSelected = cartItem.IsSelected;
+                        item.IsSelected = isSelect;
                         updatedCartLabItems.Append(item);
                     }
 

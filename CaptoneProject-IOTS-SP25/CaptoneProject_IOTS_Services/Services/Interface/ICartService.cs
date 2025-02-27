@@ -18,7 +18,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         public Task<CartItemResponseDTO> GetCartItemById(int cartId);
         public Task<object> AddToCart(AddToCartDTO request);
 
-        public Task<ResponseDTO> SelectOrUnselectCartItem(int cartId);
+        public Task<ResponseDTO> SelectOrUnselectCartItem(int cartId, bool isSelect);
 
         public Task<ResponseDTO> DeleteCartItem(int cartId);
 

@@ -44,11 +44,20 @@ namespace CaptoneProject_IOTS_API.Controllers.CartController
             }
         }
 
-        [HttpPost("select-or-unselect-cart-item/{cartId}")]
+        [HttpPost("select-cart-item/{cartId}")]
         [Authorize]
         public async Task<IActionResult> SelectOrUnselectCartItems(int cartId)
         {
-            var res = await cartService.SelectOrUnselectCartItem(cartId);
+            var res = await cartService.SelectOrUnselectCartItem(cartId, isSelect: true);
+
+            return GetActionResult(res);
+        }
+
+        [HttpPost("unselect-cart-item/{cartId}")]
+        [Authorize]
+        public async Task<IActionResult> UnselectOrUnselectCartItems(int cartId)
+        {
+            var res = await cartService.SelectOrUnselectCartItem(cartId, isSelect: false);
 
             return GetActionResult(res);
         }
@@ -57,7 +66,7 @@ namespace CaptoneProject_IOTS_API.Controllers.CartController
         [Authorize]
         public async Task<IActionResult> RemoveCartItem(int cartId)
         {
-            var res = await cartService.SelectOrUnselectCartItem(cartId);
+            var res = await cartService.DeleteCartItem(cartId);
 
             return GetActionResult(res);
         }

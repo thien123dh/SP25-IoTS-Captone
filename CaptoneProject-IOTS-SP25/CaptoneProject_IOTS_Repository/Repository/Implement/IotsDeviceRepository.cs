@@ -21,7 +21,7 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
                 .SingleOrDefault(item => item.Id == id);
         }
         
-        public IotsDevice GetByApplicationSerialNumber(string applicationSerialNumber)
+        public IotsDevice? GetByApplicationSerialNumber(string applicationSerialNumber)
         {
             return _dbSet
                 .Include(item => item.Category)
