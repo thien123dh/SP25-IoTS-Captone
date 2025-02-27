@@ -62,6 +62,6 @@ namespace CaptoneProject_IOTS_BOs.Models
 
         [Precision(2, 1)]
         public decimal? Rating { set; get; } = 4;
-        public int IsActive { set; get; }
+        public int IsActive { set; get; } = 1;
     }
 }

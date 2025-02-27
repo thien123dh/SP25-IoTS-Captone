@@ -20,8 +20,10 @@ namespace CaptoneProject_IOTS_BOs.Models
         [ForeignKey(nameof(IotsDevice))]
         public int IotDeviceId { set; get; }
 
+        public int Amount { set; get; }
+
         [ForeignKey(nameof(IotDeviceId))]
-        public virtual IotsDevice? IotDeviceNavigation { set; get; }
+        public virtual IotsDevice IotDeviceNavigation { set; get; }
 
         public DateTime CreatedDate { set; get; } = DateTime.Now;
     }

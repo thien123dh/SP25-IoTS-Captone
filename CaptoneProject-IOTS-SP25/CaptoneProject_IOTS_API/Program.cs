@@ -87,6 +87,7 @@ builder.Services.AddScoped<IAccountMembershipPackageService, AccountMembershipPa
 builder.Services.AddScoped<IVNPayService, VNPayService>();
 builder.Services.AddScoped<IBlogCategoryService, BlogCategoryService>();
 builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IComboService, ComboService>();
 builder.Services.AddScoped<IFileService>(provider =>
 {
     var bucket = configuration.GetConnectionString("Firebase-Storage-Bucket");

@@ -80,7 +80,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var checkExistRecord = unitOfWork.IotsDeviceRepository.GetByApplicationSerialNumber(saveDevice.ApplicationSerialNumber);
 
             //Existing application serial number
-            if (saveDevice.Id > 0 && checkExistRecord != null && checkExistRecord.Id != saveDevice.Id)
+            if (checkExistRecord != null && checkExistRecord.Id != saveDevice.Id)
             {
                 return ResponseService<IotDeviceDetailsDTO>.BadRequest("The Serial Number was duplicated in your Store. Please enter another Serial Number");
             }
@@ -148,10 +148,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     && ((isStore && item.StoreId == loginStoreId) || !isStore)
                     && ((isAnonymousOrCustomer && item.IsActive > 0) || !isAnonymousOrCustomer)
                     && (filterStoreId == null || filterStoreId == item.StoreId)
-                    && (payload.StartFilterDate == null || payload.StartFilterDate <= item.CreatedDate)
-                    && (payload.EndFilterDate == null || item.CreatedDate <= payload.EndFilterDate)
                     && (categoryFilterId == null) || (item.CategoryId == categoryFilterId),
-                orderBy: ob => ob.OrderByDescending(item => item.CreatedDate),
+                orderBy: ob => ob.OrderByDescending(item => item.Rating),
                 includeProperties: "StoreNavigation,Category",
                 pageIndex: payload.PageIndex,
                 pageSize: payload.PageSize

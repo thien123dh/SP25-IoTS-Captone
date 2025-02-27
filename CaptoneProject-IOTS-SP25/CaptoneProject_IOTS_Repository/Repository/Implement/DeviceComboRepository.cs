@@ -11,9 +11,12 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
 {
     public class DeviceComboRepository : RepositoryBase<IotsDevicesCombo>
     {
-        public List<IotsDevicesCombo> GetItemsByComboId(int comboId)
+        public List<IotsDevicesCombo>? GetItemsByComboId(int comboId)
         {
-            return null;
+            return _dbSet
+                .Include(item => item.IotDeviceNavigation)
+                .Where(item => item.ComboId == comboId)?
+                .ToList();
 
         }
     }
