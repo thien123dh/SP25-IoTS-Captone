@@ -50,7 +50,7 @@
                     Code = statusCode,
                     Message = message,
                 };
-
+                
                 var responseText = System.Text.Json.JsonSerializer.Serialize(response);
 
                 await context.Response.WriteAsync(responseText);
