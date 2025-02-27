@@ -1,20 +1,18 @@
+﻿using CaptoneProject_IOTS_BOs.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO;
 
-namespace CaptoneProject_IOTS_BOs.Models
+namespace CaptoneProject_IOTS_BOs.DTO.OrderDTO
 {
-    public partial class Orders
+    public class OrderResponeDTO
     {
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int Id { set; get; }
-
         [MaxLength(200)]
         public string ApplicationSerialNumber { set; get; }
 
@@ -26,9 +24,6 @@ namespace CaptoneProject_IOTS_BOs.Models
 
         [Precision(18, 1)]
         public decimal TotalPrice { set; get; } = 0;
-
-        [MaxLength(500)]
-        public string? TxnRef { set; get; }
 
         [MaxLength(500)]
         public string Address { set; get; } = "";
@@ -54,5 +49,7 @@ namespace CaptoneProject_IOTS_BOs.Models
 
         [Range(1, 15)]
         public int OrderStatusId { set; get; }
+
+        public List<OrderItemResponeDTO> Details { get; set; }
     }
 }

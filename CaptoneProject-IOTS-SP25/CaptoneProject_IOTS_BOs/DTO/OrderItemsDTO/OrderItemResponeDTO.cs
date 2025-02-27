@@ -1,20 +1,16 @@
-﻿using System;
+﻿using CaptoneProject_IOTS_BOs.Models;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 
-namespace CaptoneProject_IOTS_BOs.Models
+namespace CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO
 {
-    public partial class OrderItem
+    public class OrderItemResponeDTO
     {
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int Id { set; get; }
-
         [ForeignKey(nameof(Orders))]
         public int OrderId { set; get; }
 
@@ -41,8 +37,7 @@ namespace CaptoneProject_IOTS_BOs.Models
         public int Quantity { set; get; } = 0;
 
         [Required]
-        [Precision(18, 1)]
-        public decimal Price { set; get; }
+        public int Price { set; get; }
 
         public DateTime? WarrantyEndDate { set; get; } = null;
 

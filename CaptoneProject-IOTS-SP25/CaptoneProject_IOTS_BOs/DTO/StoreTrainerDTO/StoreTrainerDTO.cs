@@ -18,8 +18,9 @@ namespace CaptoneProject_IOTS_BOs.DTO.StoreDTO
         public string BackIdentification { set; get; }
         public string BusinessLicences { set; get; }
         public string LiscenseNumber { set; get; }
+        [PastDate]
         public DateTime IssueDate { set; get; }
-        //[FutureDate]
+        [FutureDate]
         public DateTime ExpiredDate { set; get; }
         public string IssueBy { set; get; }
     }
@@ -30,8 +31,9 @@ namespace CaptoneProject_IOTS_BOs.DTO.StoreDTO
         public string FrontIdentification { set; get; }
         public string BackIdentification { set; get; }
         public string BusinessLicences { set; get; }
+        [PastDate]
         public DateTime IssueDate { set; get; }
-        //[FutureDate]
+        [FutureDate]
         public DateTime ExpiredDate { set; get; }
         public string IssueBy { set; get; }
     }
