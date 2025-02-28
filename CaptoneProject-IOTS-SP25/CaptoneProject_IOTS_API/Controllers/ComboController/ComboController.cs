@@ -49,6 +49,22 @@ namespace CaptoneProject_IOTS_API.Controllers.ComboController
             }
         }
 
+        [HttpPost("update-combo/{comboId}")]
+        public async Task<IActionResult> UpdateCombo(int comboId, 
+            [FromBody] CreateUpdateComboDTO payload)
+        {
+            try
+            {
+                var res = await comboService.CreateOrUpdateCombo(comboId, payload);
+
+                return GetActionResult(res);
+            }
+            catch (Exception ex)
+            {
+                return GetActionResult(ResponseService<object>.BadRequest(ex.Message));
+            }
+        }
+
         [HttpGet("get-combo-details/{comboId}")]
         public async Task<IActionResult> GetComboDetails(int comboId)
         {
