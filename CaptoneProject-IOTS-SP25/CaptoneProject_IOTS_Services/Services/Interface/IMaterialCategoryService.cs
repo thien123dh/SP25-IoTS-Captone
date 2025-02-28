@@ -22,7 +22,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
 
         Task<ResponseDTO> DeleteMaterialCategory(int id);
         Task<ResponseDTO> GetAllMaterialCategory(string searchKeyword);
-        Task<GenericResponseDTO<PaginationResponseDTO<MaterialCategory>>> GetPaginationMaterialCategories(PaginationRequest paginate, int? statusFilter);
+        Task<ResponseDTO> GetPaginationMaterialCategories(PaginationRequest paginate, int? statusFilter);
         Task<GenericResponseDTO<MaterialCategory>> GetByMaterialCategoryId(int id);
     }
 }

@@ -22,9 +22,10 @@ public partial class MaterialCategory
     public DateTime? CreatedDate { set; get; } = DateTime.Now;
     [JsonIgnore]
     public int? Orders { get; set; }
-    [JsonIgnore]
     public int? IsActive { get; set; } = 1;
 
     [JsonIgnore]
     public virtual ICollection<IotsDevice>? IotDevices { get; set; }
+
+    //public virtual string? CreatedByEmail => CreatedByNavigation?.Email;
 }

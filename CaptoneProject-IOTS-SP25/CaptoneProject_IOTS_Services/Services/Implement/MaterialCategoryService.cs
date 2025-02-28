@@ -193,18 +193,28 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return ResponseService<MaterialCategory>.OK(res);
         }
 
-        public async Task<GenericResponseDTO<PaginationResponseDTO<MaterialCategory>>> GetPaginationMaterialCategories(PaginationRequest paginate, int? statusFilter)
+        public async Task<ResponseDTO> GetPaginationMaterialCategories(PaginationRequest paginate, int? statusFilter)
         {
             PaginationResponseDTO<MaterialCategory> res = _unitOfWork.MaterialCategoryRepository.GetPaginate(
-                filter: m => m.Label.Contains(paginate.SearchKeyword)
-                    && (statusFilter == null || m.IsActive == statusFilter),
-                orderBy: orderBy => orderBy.OrderByDescending(item => item.Id),
-                includeProperties: "",
+                filter: m => m.Label.Contains(paginate.SearchKeyword) && ((statusFilter == null) || m.IsActive == statusFilter),
+                orderBy: ob => ob.OrderByDescending(item => item.Id),
+                includeProperties: "CreatedByNavigation",
                 pageIndex: paginate.PageIndex,
                 pageSize: paginate.PageSize
-            );
+             );
 
-            return ResponseService<PaginationResponseDTO<MaterialCategory>>.OK(res);
+            var result = res?.Data?.Select(m => new
+            {
+                m.Id,
+                m.Label,
+                m.CreatedDate,
+                m.Description,
+                m.IsActive,
+                m.CreatedBy,
+                CreatedByEmail = m.CreatedByNavigation != null ? m.CreatedByNavigation.Email : null
+            }).ToList();
+
+            return ResponseService<object>.OK(result);
         }
 
         public async Task<ResponseDTO> UpdateMaterialCategoryStatus(int id, int isActive)
