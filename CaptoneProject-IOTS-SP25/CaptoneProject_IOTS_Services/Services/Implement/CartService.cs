@@ -354,7 +354,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return res;
         }
 
-        public ResponseDTO GetNumberSelectedCartItems()
+        public ResponseDTO GetTotalSelectedCartItems()
         {
             var loginUserId = userService.GetLoginUserId();
 

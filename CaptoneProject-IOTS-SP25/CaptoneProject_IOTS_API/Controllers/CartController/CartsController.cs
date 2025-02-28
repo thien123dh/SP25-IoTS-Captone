@@ -91,7 +91,7 @@ namespace CaptoneProject_IOTS_API.Controllers.CartController
         [Authorize]
         public IActionResult GetNumberSelectedCartItems()
         {
-            var res = cartService.GetNumberSelectedCartItems();
+            var res = cartService.GetTotalSelectedCartItems();
 
             return GetActionResult(res);
         }
