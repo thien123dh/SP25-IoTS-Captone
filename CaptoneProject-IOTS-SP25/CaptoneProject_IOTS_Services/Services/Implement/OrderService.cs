@@ -1,19 +1,25 @@
 ﻿using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.MaterialCategotyDTO;
+using CaptoneProject_IOTS_BOs.DTO.MaterialDTO;
 using CaptoneProject_IOTS_BOs.DTO.OrderDTO;
+using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.VNPayDTO;
 using CaptoneProject_IOTS_BOs.DTO.WalletDTO;
 using CaptoneProject_IOTS_BOs.Models;
+using CaptoneProject_IOTS_Service.Mapper;
 using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using Org.BouncyCastle.Asn1.X9;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
+using static CaptoneProject_IOTS_BOs.Constant.EntityTypeConst;
 using static CaptoneProject_IOTS_BOs.Constant.ProductConst;
 using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
 
@@ -42,114 +48,80 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         }
 
 
-        public async Task<GenericResponseDTO<OrderResponeDTO>> CheckOrderSuccessfull(int? id, VNPayRequestDTO dto)
+        public async Task<GenericResponseDTO<OrderReturnPaymentDTO>> CheckOrderSuccessfull(int? id, VNPayRequestDTO dto)
         {
             var loginUser = userServices.GetLoginUser();
-
             if (loginUser == null || !await userServices.CheckLoginUserRole(RoleEnum.CUSTOMER))
-                return ResponseService<OrderResponeDTO>.Unauthorize("You don't have permission to access");
+                return ResponseService<OrderReturnPaymentDTO>.Unauthorize("You don't have permission to access");
 
             var loginUserId = loginUser.Id;
-
             var selectedItems = await _unitOfWork.CartRepository
                 .GetQueryable((int)loginUserId)
                 .Where(item => item.CreatedBy == loginUserId && item.IsSelected)
                 .Include(item => item.IosDeviceNavigation)
-                .Include (item => item.ComboNavigation)
+                .Include(item => item.ComboNavigation)
                 .ToListAsync();
 
-            string vnp_HashSecret = "UWEORVE5ULXN8YNCLM16TFK1FWPQ0SA9";
-
-            var vnpayData = dto.urlResponse.Split("?")[1];
+            string vnpayData = dto.urlResponse.Split("?")[1];
             VnPayLibrary vnpay = new VnPayLibrary();
-
             foreach (string s in vnpayData.Split("&"))
             {
-                if (!string.IsNullOrEmpty(s) && s.StartsWith("vnp_"))
+                var parts = s.Split("=");
+                if (parts.Length >= 2 && parts[0].StartsWith("vnp_"))
                 {
-                    var parts = s.Split("=");
-                    if (parts.Length >= 2)
-                    {
-                        vnpay.AddResponseData(parts[0], parts[1]);
-                    }
+                    vnpay.AddResponseData(parts[0], parts[1]);
                 }
             }
 
-
-            string vnpayTranId = vnpay.GetResponseData("vnp_TransactionNo");
             string vnp_ResponseCode = vnpay.GetResponseData("vnp_ResponseCode");
+            string vnp_TransactionStatus = vnpay.GetResponseData("vnp_TransactionStatus");
+            string encodedOrderInfo = vnpay.GetResponseData("vnp_OrderInfo");
 
-            string decodedOrderInfo = Uri.UnescapeDataString(vnpay.GetResponseData("vnp_OrderInfo"));
-            string[] orderDetails = decodedOrderInfo.Split('|');
-
-            string address = orderDetails.Length > 0 ? orderDetails[0] : "";
-            string contactPhone = orderDetails.Length > 1 ? orderDetails[1] : "";
-            string notes = orderDetails.Length > 2 ? orderDetails[2] : "";
-
-            string vnp_SecureHash = vnpay.GetResponseData("vnp_SecureHash");
-            string terminalID = vnpay.GetResponseData("vnp_TmnCode");
-            long vnp_Amount = Convert.ToInt64(vnpay.GetResponseData("vnp_Amount")) / 100;
-            string bankCode = vnpay.GetResponseData("vnp_BankCode");
-            string transactionStatus = vnpay.GetResponseData("vnp_TransactionStatus");
-            string txnRef = vnpay.GetResponseData("vnp_TxnRef");
-            string responseCode = vnpay.GetResponseData("vnp_ResponseCode");
-            string bankTranNo = vnpay.GetResponseData("vnp_BankTranNo");
-            string cardType = vnpay.GetResponseData("vnp_CardType");
-            string payDate = vnpay.GetResponseData("vnp_PayDate");
-            string hashSecret = vnpay.GetResponseData("vnp_HashSecret");
-
-            var responseCodeMessage = ReturnedErrorMessageResponseCode(responseCode);
-            var transactionStatusMessage = ReturnedErrorMessageTransactionStatus(transactionStatus);
-
-
-            VnPayResponse response = new VnPayResponse()
+            string address = "", contactPhone = "", notes = "";
+            if (!string.IsNullOrEmpty(encodedOrderInfo))
             {
-                TransactionId = vnpayTranId,
-                OrderInfo = decodedOrderInfo,
-                Amount = vnp_Amount,
-                BankCode = bankCode,
-                BankTranNo = bankTranNo,
-                CardType = cardType,
-                PayDate = payDate,
-                ResponseCode = responseCode,
-                TransactionStatus = transactionStatus,
-                TxnRef = txnRef
-            };
-            if (vnp_ResponseCode == "00" && transactionStatus == "00")
-            {
-               
-            }
-            else
-            {
-                return new GenericResponseDTO<OrderResponeDTO>
+                try
                 {
-                    IsSuccess = true,
+                    string decodedUrl = HttpUtility.UrlDecode(encodedOrderInfo);
+                    byte[] data = Convert.FromBase64String(decodedUrl);
+                    string jsonString = Encoding.UTF8.GetString(data);
+                    var orderInfo = JsonConvert.DeserializeObject<OrderInfo>(jsonString);
+
+                    address = orderInfo?.Address ?? "";
+                    contactPhone = orderInfo?.ContactNumber ?? "";
+                    notes = orderInfo?.Notes ?? "";
+                }
+                catch (FormatException)
+                {
+                    Console.WriteLine("Invalid Base64 format for vnp_OrderInfo. Using raw value.");
+                }
+            }
+
+            if (vnp_ResponseCode != "00" || vnp_TransactionStatus != "00")
+            {
+                return new GenericResponseDTO<OrderReturnPaymentDTO>
+                {
+                    IsSuccess = false,
                     Message = "Thanh toán thất bại.",
                     Data = null
                 };
             }
-            ResponsePayment payment = new ResponsePayment()
-            {
-                ResponseCodeMessage = responseCodeMessage,
-                TransactionStatusMessage = transactionStatusMessage,
-                VnPayResponse = response
-            };
+
             var createTransactionPayment = new Orders
             {
                 ApplicationSerialNumber = GetApplicationSerialNumberOrder(loginUserId),
                 OrderBy = loginUserId,
-                TotalPrice = vnp_Amount,
+                TotalPrice = Convert.ToInt64(vnpay.GetResponseData("vnp_Amount")) / 100,
                 Address = address,
                 ContactNumber = contactPhone,
                 Notes = notes,
                 CreateDate = DateTime.Now,
                 CreatedBy = loginUserId,
                 UpdatedBy = loginUserId,
-                OrderStatusId = (int)OrderStatusEnum.PENDING
+                OrderStatusId = (int)OrderStatusEnum.SUCCESS_TO_ORDER
             };
             _unitOfWork.OrderRepository.Create(createTransactionPayment);
 
-            decimal ItemPrice = 0;
             foreach (var item in selectedItems)
             {
                 var orderDetail = new OrderItem
@@ -158,53 +130,35 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     SellerId = item.SellerId,
                     OrderBy = loginUserId,
                     Quantity = item.Quantity,
+                    ProductType = item.IosDeviceNavigation != null ? (int)ProductTypeEnum.IOT_DEVICE :
+                                  item.ComboNavigation != null ? (int)ProductTypeEnum.COMBO :
+                                  item.LabNavigation != null ? (int)ProductTypeEnum.LAB : throw new Exception("Invalid product type"),
+                    IosDeviceId = item.IosDeviceNavigation?.Id,
+                    ComboId = item.ComboNavigation?.Id,
+                    LabId = item.LabNavigation?.Id,
+                    Price = item.IosDeviceNavigation?.Price ?? item.ComboNavigation?.Price ?? item.LabNavigation?.Price ?? 0m
                 };
-                // Xác định loại sản phẩm
-                if (item.IosDeviceNavigation != null)
-                {
-                    orderDetail.ProductType = (int)ProductTypeEnum.IOT_DEVICE;
-                    orderDetail.IosDeviceId = item.IosDeviceNavigation.Id;
-                    orderDetail.Price = item.IosDeviceNavigation?.Price ?? 0m;
-                }
-                else if (item.ComboNavigation != null)
-                {
-                    orderDetail.ProductType = (int)ProductTypeEnum.COMBO;
-                    orderDetail.ComboId = item.ComboNavigation.Id;
-                    orderDetail.Price = item.ComboNavigation?.Price ?? 0m;
-                }
-                else if (item.LabNavigation != null)
-                {
-                    orderDetail.ProductType = (int)ProductTypeEnum.LAB;
-                    orderDetail.LabId = item.LabNavigation.Id;
-                    orderDetail.Price = item.LabNavigation?.Price ?? 0m;
-                }
-                else
-                {
-                    throw new Exception("Cannot Add to Order this Product. Please try again");
-                }
-
                 _unitOfWork.OrderDetailRepository.Create(orderDetail);
             }
             /*await _unitOfWork.CartRepository.RemoveAsync(selectedItems);
             await _unitOfWork.CartRepository.SaveAsync();*/
-
-            return new GenericResponseDTO<OrderResponeDTO>
+            return new GenericResponseDTO<OrderReturnPaymentDTO>
             {
                 IsSuccess = true,
-                Message = "Đơn hàng đã được xác nhận thành công và sản phẩm đã được xoá khỏi giỏ hàng.",
+                Message = "Đơn hàng đã được xác nhận thành công.",
                 Data = null
             };
-
         }
 
-        public async Task<GenericResponseDTO<OrderResponeDTO>> CreateOrder(int? id, OrderRequestDTO payload, string returnUrl)
+
+        public async Task<GenericResponseDTO<OrderReturnPaymentDTO>> CreateOrder(int? id, OrderRequestDTO payload, string returnUrl)
         {
             try
             {
                 var loginUser = userServices.GetLoginUser();
 
             if (loginUser == null || !await userServices.CheckLoginUserRole(RoleEnum.CUSTOMER))
-                return ResponseService<OrderResponeDTO>.Unauthorize("You don't have permission to access");
+                return ResponseService<OrderReturnPaymentDTO>.Unauthorize("You don't have permission to access");
 
             var loginUserId = loginUser.Id;
 
@@ -222,7 +176,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             if (selectedItems == null || !selectedItems.Any())
             {
-                return new GenericResponseDTO<OrderResponeDTO>
+                return new GenericResponseDTO<OrderReturnPaymentDTO>
                 {
                     IsSuccess = false,
                     Message = "Giỏ hàng trống hoặc không có sản phẩm nào được chọn.",
@@ -236,17 +190,17 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             if (totalPrice <= 0)
             {
-                return new GenericResponseDTO<OrderResponeDTO>
+                return new GenericResponseDTO<OrderReturnPaymentDTO>
                 {
                     IsSuccess = false,
                     Message = "Giá trị đơn hàng không hợp lệ.",
                     Data = null
                 };
             }
-                var orderInfo = new
+                var orderInfo = new OrderInfo
                 {
                     Address = address,
-                    ContactPhone = contactPhone,
+                    ContactNumber = contactPhone,
                     Notes = notes
                 };
 
@@ -255,6 +209,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 string vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
                 string vnp_TmnCode = "2BF25S7Y";
                 string vnp_HashSecret = "UWEORVE5ULXN8YNCLM16TFK1FWPQ0SA9";
+
                 string orderInfoJson = JsonConvert.SerializeObject(orderInfo);
                 string encryptedOrderInfo = Convert.ToBase64String(Encoding.UTF8.GetBytes(orderInfoJson));
 
@@ -285,11 +240,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 vnpay.AddRequestData("vnp_TxnRef", vnp_TxnRef);
                 vnpay.AddRequestData("vnp_ExpireDate", vietnamTime.AddMinutes(5).ToString("yyyyMMddHHmmss"));
                 string paymentUrl = vnpay.CreateRequestUrl(vnp_Url, vnp_HashSecret);
-                return new GenericResponseDTO<OrderResponeDTO>
+                return new GenericResponseDTO<OrderReturnPaymentDTO>
                 {
                     IsSuccess = true,
                     Message = "Tạo đơn hàng thành công, vui lòng thanh toán.",
-                    Data = new OrderResponeDTO { PaymentUrl = paymentUrl } 
+                    Data = new OrderReturnPaymentDTO { PaymentUrl = paymentUrl } 
                 };
             }
             catch (Exception ex)
@@ -335,14 +290,69 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
-        public Task<GenericResponseDTO<OrderResponeDTO>> getOrderDetailsByOrderId(int id)
+        public Task<GenericResponseDTO<OrderReturnPaymentDTO>> getOrderDetailsByOrderId(int id)
         {
             throw new NotImplementedException();
         }
 
-        public Task<GenericResponseDTO<OrderResponeDTO>> GetOrdersByUserID(int userId)
+        public async Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetOrdersByUserPagination(int? filterOrderId, PaginationRequest payload)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var loginUser = userServices.GetLoginUser();
+
+                if (loginUser == null || !await userServices.CheckLoginUserRole(RoleEnum.CUSTOMER))
+                    return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.Unauthorize("You don't have permission to access");
+
+                var loginUserId = loginUser.Id;
+
+                var orders = await _unitOfWork.OrderRepository.GetByUserIdAsync(loginUserId);
+
+                if (orders == null || !orders.Any())
+                    return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.NotFound("No orders found for this user.");
+
+                var filteredOrders = orders.Where(order =>
+                    (filterOrderId == null || order.Id == filterOrderId)
+                );
+
+
+                int totalOrders = filteredOrders.Count();
+
+                var paginatedOrders = filteredOrders
+                    .OrderByDescending(order => order.CreateDate)
+                    .Skip((payload.PageIndex - 1) * payload.PageSize)
+                    .Take(payload.PageSize)
+                    .ToList();
+
+                // Chuyển đổi danh sách Order thành OrderResponseDTO
+                var orderDTOs = paginatedOrders.Select(order => new OrderResponseDTO
+                {
+                    ApplicationSerialNumber = order.ApplicationSerialNumber,
+                    TotalPrice = order.TotalPrice,
+                    Address = order.Address,
+                    ContactNumber = order.ContactNumber,
+                    Notes = order.Notes,
+                    CreateDate = order.CreateDate,
+                    UpdatedDate = order.UpdatedDate,
+                    OrderStatusString = ((OrderStatusEnum)order.OrderStatusId).ToString()
+                }).ToList();
+
+                var paginationResponse = new PaginationResponseDTO<OrderResponseDTO>
+                {
+                    Data = orderDTOs,
+                    TotalCount = totalOrders,
+                    PageIndex = payload.PageIndex,
+                    PageSize = payload.PageSize
+                };
+
+                return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.OK(paginationResponse);
+            }
+            catch (Exception ex)
+            {
+                return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.BadRequest("Cannot get orders. Please try again.");
+            }
         }
+
+
     }
 }

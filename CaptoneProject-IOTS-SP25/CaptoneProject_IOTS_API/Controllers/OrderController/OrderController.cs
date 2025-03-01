@@ -1,4 +1,5 @@
 ﻿using CaptoneProject_IOTS_BOs.DTO.OrderDTO;
+using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.VNPayDTO;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
@@ -33,6 +34,17 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
         public async Task<IActionResult> CheckOrderSuccess([FromBody] VNPayRequestDTO dto)
         {
             var result = await _orderService.CheckOrderSuccessfull(null, dto);
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        [HttpPost("get-order-by-user")]
+        public async Task<IActionResult> GetOrderByUser([FromQuery] int? OrderFilterId, [FromBody] PaginationRequest payload)
+        {
+            var result = await _orderService.GetOrdersByUserPagination(null,payload);
 
             if (!result.IsSuccess)
                 return BadRequest(result);
