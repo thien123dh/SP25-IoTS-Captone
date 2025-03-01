@@ -9,13 +9,10 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderDTO
 {
     public class OrderInfo
     {
-        [MaxLength(500)]
-        public string Address { set; get; } = "";
+        public string Address { set; get; }
 
-        [MaxLength(150)]
-        public string ContactNumber { set; get; } = "";
+        public string ContactNumber { set; get; }
 
-        [MaxLength(300)]
-        public string? Notes { set; get; } = "";
+        public string? Notes { set; get; }
     }
 }

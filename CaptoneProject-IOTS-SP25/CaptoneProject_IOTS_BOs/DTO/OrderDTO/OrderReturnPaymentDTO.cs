@@ -11,7 +11,7 @@ using CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO;
 
 namespace CaptoneProject_IOTS_BOs.DTO.OrderDTO
 {
-    public class OrderResponeDTO
+    public class OrderReturnPaymentDTO
     {
         public string PaymentUrl { get; set; }
     }
