@@ -108,12 +108,15 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 case ProductTypeEnum.IOT_DEVICE:
                     source.IosDeviceId = request.ProductId;
                     break;
+
                 case ProductTypeEnum.COMBO:
                     source.ComboId = request.ProductId;
                     break;
+
                 case ProductTypeEnum.LAB:
                     source.LabId = request.ProductId;
                     break;
+
                 default:
                     throw new Exception("Cannot Add to Cart this Product. Please try again");
             }
@@ -138,11 +141,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             switch (cart.ProductType)
             {
                 case (int)ProductTypeEnum.IOT_DEVICE:
-                    return cart.IosDeviceNavigation.Quantity >= addToCartQuantity;
-                    break;
-                //case (int)ProductTypeEnum.COMBO:
-                //    return cart.ComboNavigation.Quantity >= addToCartQuantity;
-                //    break;
+                    return cart?.IosDeviceNavigation?.Quantity >= addToCartQuantity;
+
+                case (int)ProductTypeEnum.COMBO:
+                    return cart?.ComboNavigation?.Quantity >= addToCartQuantity;
+
                 default:
                     throw new Exception("Product type cannot be found. Please try again");
             }
