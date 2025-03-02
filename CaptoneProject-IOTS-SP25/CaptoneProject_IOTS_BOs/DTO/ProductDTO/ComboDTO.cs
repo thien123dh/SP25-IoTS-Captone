@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CaptoneProject_IOTS_BOs.DTO.AttachmentDTO;
+using CaptoneProject_IOTS_BOs.Validation;
 
 namespace CaptoneProject_IOTS_BOs.DTO.ProductDTO
 {
@@ -25,6 +26,8 @@ namespace CaptoneProject_IOTS_BOs.DTO.ProductDTO
 
         [MaxLength(150)]
         public string? ApplicationSerialNumber { set; get; }
+
+        public int Quantity { set; get; }
 
         public string? ImageUrl { set; get; }
 
@@ -59,6 +62,8 @@ namespace CaptoneProject_IOTS_BOs.DTO.ProductDTO
         public string Name { set; get; }
 
         public int StoreId { set; get; }
+
+        public int Quantity { set; get; }
 
         public string? StoreNavigationName { set; get; }
 
@@ -111,6 +116,11 @@ namespace CaptoneProject_IOTS_BOs.DTO.ProductDTO
         [Required]
         public string? Description { set; get; }
         [Required]
+        [PositiveInt(ErrorMessage = "Quantity cannot be negative")]
+        
+        public int Quantity { set; get; }
+
+        [Required]
         public string? Specifications { set; get; }
         [Required]
         public string? Notes { set; get; }
@@ -119,6 +129,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.ProductDTO
         [Required]
         public string? ImageUrl { set; get; }
         [Required]
+        [PositiveDecimalAttribute(ErrorMessage = "Price cannot be negative")]
         public decimal Price { set; get; }
         [Required]
         public List<CreateUpdateDeviceComboDTO> DeviceComboList { set; get; }

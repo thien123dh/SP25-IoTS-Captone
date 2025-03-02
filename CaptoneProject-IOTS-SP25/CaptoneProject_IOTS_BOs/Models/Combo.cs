@@ -16,7 +16,9 @@ namespace CaptoneProject_IOTS_BOs.Models
         public int Id { set; get; }
 
         [MaxLength(300)]
-        public string? Name { set; get; }
+        public string Name { set; get; } = "";
+
+        public int Quantity { set; get; }
 
         [ForeignKey(nameof(Store))]
         public int StoreId { set; get; }

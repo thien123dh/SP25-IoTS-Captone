@@ -57,26 +57,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 pageSize: request.PageSize
             );
 
-            var res = PaginationMapper<Combo, ComboItemDTO>.MappingTo((item) =>
-            {
-                return new ComboItemDTO
-                {
-                    Id = item.Id,
-                    Name = item.Name,
-                    IsActive = item.IsActive,
-                    ApplicationSerialNumber = item.ApplicationSerialNumber,
-                    CreatedBy = item.CreatedBy,
-                    CreatedDate = item.CreatedDate,
-                    UpdateDate = item.UpdateDate,
-                    UpdatedBy = item.UpdatedBy,
-                    ImageUrl = item.ImageUrl,
-                    Price = item.Price,
-                    StoreId = item.StoreId,
-                    StoreNavigationName = item?.StoreNavigation?.Name,
-                    Rating = item?.Rating,
-                    Summary = item?.Summary
-                };
-            }, pagination);
+            var res = PaginationMapper<Combo, ComboItemDTO>.MappingTo(GenericMapper<Combo, ComboItemDTO>.MapTo, pagination);
 
             return res;
         }
@@ -163,7 +144,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var loginUser = userServices.GetLoginUser();
 
             if (loginUser == null || !await userServices.CheckLoginUserRole(RoleEnum.STORE))
-                return ResponseService<ComboDetailsResponseDTO>.Unauthorize("You don't have permission to access");
+                return ResponseService<ComboDetailsResponseDTO>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
 
             var loginUserId = loginUser.Id;
 
