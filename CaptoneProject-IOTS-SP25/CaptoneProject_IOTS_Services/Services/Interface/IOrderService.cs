@@ -13,7 +13,6 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
 {
     public interface IOrderService
     {
-        public Task<GenericResponseDTO<OrderReturnPaymentDTO>> getOrderDetailsByOrderId(int id);
         public Task<GenericResponseDTO<OrderReturnPaymentDTO>> CreateOrder(int? id, OrderRequestDTO payload, string returnUrl);
         public Task<GenericResponseDTO<OrderReturnPaymentDTO>> CheckOrderSuccessfull(int? id, VNPayRequestDTO dto);
         public Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetOrdersByUserPagination(int? filterOrderId, PaginationRequest payload);

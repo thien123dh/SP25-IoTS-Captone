@@ -22,6 +22,6 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderDTO
 
         public DateTime UpdatedDate { set; get; }
 
-        public string OrderStatusString { set; get; }
+        public int OrderStatusId { set; get; }
     }
 }
