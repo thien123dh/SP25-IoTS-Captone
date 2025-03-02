@@ -136,17 +136,29 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     IosDeviceId = item.IosDeviceNavigation?.Id,
                     ComboId = item.ComboNavigation?.Id,
                     LabId = item.LabNavigation?.Id,
-                    Price = item.IosDeviceNavigation?.Price ?? item.ComboNavigation?.Price ?? item.LabNavigation?.Price ?? 0m
+                    Price = item.IosDeviceNavigation?.Price ?? item.ComboNavigation?.Price ?? item.LabNavigation?.Price ?? 0m,
+                    OrderItemStatus = (int)OrderItemStatusEnum.PENDING
                 };
                 _unitOfWork.OrderDetailRepository.Create(orderDetail);
             }
+
+            var orderReturnPaymentDTO = new OrderReturnPaymentDTO
+            {
+                ApplicationSerialNumber = createTransactionPayment.ApplicationSerialNumber,
+                TotalPrice = createTransactionPayment.TotalPrice,
+                Address = createTransactionPayment.Address,
+                ContactNumber = createTransactionPayment.ContactNumber,
+                Notes = createTransactionPayment.Notes,
+                CreateDate = createTransactionPayment.CreateDate,
+                OrderStatusId = createTransactionPayment.OrderStatusId
+            };
             /*await _unitOfWork.CartRepository.RemoveAsync(selectedItems);
             await _unitOfWork.CartRepository.SaveAsync();*/
             return new GenericResponseDTO<OrderReturnPaymentDTO>
             {
                 IsSuccess = true,
                 Message = "Đơn hàng đã được xác nhận thành công.",
-                Data = null
+                Data = orderReturnPaymentDTO
             };
         }
 
@@ -290,11 +302,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
-        public Task<GenericResponseDTO<OrderReturnPaymentDTO>> getOrderDetailsByOrderId(int id)
-        {
-            throw new NotImplementedException();
-        }
-
         public async Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetOrdersByUserPagination(int? filterOrderId, PaginationRequest payload)
         {
             try
@@ -334,7 +341,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     Notes = order.Notes,
                     CreateDate = order.CreateDate,
                     UpdatedDate = order.UpdatedDate,
-                    OrderStatusString = ((OrderStatusEnum)order.OrderStatusId).ToString()
+                    OrderStatusId = order.OrderStatusId
                 }).ToList();
 
                 var paginationResponse = new PaginationResponseDTO<OrderResponseDTO>
@@ -352,7 +359,5 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.BadRequest("Cannot get orders. Please try again.");
             }
         }
-
-
     }
 }

@@ -22,5 +22,10 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
         {
             return await _dbSet.Where(o => o.OrderBy == userId).ToListAsync();
         }
+
+        public IQueryable<Orders> GetQueryable(int orderId)
+        {
+            return _dbSet.AsQueryable();
+        }
     }
 }
