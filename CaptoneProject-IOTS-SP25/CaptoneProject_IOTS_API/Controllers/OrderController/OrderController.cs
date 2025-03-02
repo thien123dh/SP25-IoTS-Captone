@@ -1,4 +1,6 @@
 ﻿using CaptoneProject_IOTS_BOs.DTO.OrderDTO;
+using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
+using CaptoneProject_IOTS_BOs.DTO.VNPayDTO;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -18,9 +20,9 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
         }
 
         [HttpPost("create-order")]
-        public async Task<IActionResult> CreateOrder([FromBody] OrderRequestDTO payload)
+        public async Task<IActionResult> CreateOrder([FromBody] OrderRequestDTO payload, string returnUrl = null)
         {
-            var result = await _orderService.CreateOrder(null, payload);
+            var result = await _orderService.CreateOrder(null, payload, returnUrl);
 
             if (!result.IsSuccess)
                 return BadRequest(result);
@@ -28,10 +30,21 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
             return Ok(result);
         }
 
-        [HttpGet("check-order-success")]
-        public async Task<IActionResult> CheckOrderSuccess([FromBody] OrderRequestDTO payload)
+        [HttpPost("check-order-success")]
+        public async Task<IActionResult> CheckOrderSuccess([FromBody] VNPayRequestDTO dto)
         {
-            var result = await _orderService.CheckOrderSuccessfull(null, payload);
+            var result = await _orderService.CheckOrderSuccessfull(null, dto);
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        [HttpPost("get-order-by-user")]
+        public async Task<IActionResult> GetOrderByUser([FromQuery] int? OrderFilterId, [FromBody] PaginationRequest payload)
+        {
+            var result = await _orderService.GetOrdersByUserPagination(null,payload);
 
             if (!result.IsSuccess)
                 return BadRequest(result);

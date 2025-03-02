@@ -13,5 +13,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.ProductDTO
         public decimal Price { set; get; }
         public int? CreatedBy { set; get; }
         public string? CreatedByStore { set; get; }
+
+        public string? ImageUrl { set; get; }
     }
 }

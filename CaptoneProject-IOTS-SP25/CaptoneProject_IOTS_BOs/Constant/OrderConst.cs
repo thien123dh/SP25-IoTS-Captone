@@ -8,12 +8,8 @@ namespace CaptoneProject_IOTS_BOs.Constant
 {
     public enum OrderStatusEnum
     {
-        PENDING = 1,
-        DELIVERY = 2,
-        PENDING_TO_CUSTOMER_CONFIRM = 3,
-        COMPLETED = 4,
-        REJECTED = 5,
-        CANCELLED_BY_CUSTOMER = 6
+        SUCCESS_TO_ORDER = 1,
+        REJECTED_BY_CUSTOMER = 2
     }
 
     public enum OrderItemStatusEnum

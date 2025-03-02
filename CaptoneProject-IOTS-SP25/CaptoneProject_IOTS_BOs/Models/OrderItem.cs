@@ -29,6 +29,7 @@ namespace CaptoneProject_IOTS_BOs.Models
 
         [ForeignKey(nameof(User))]
         public int SellerId { set; get; }
+        public virtual User Seller { get; set; }
 
         [ForeignKey(nameof(User))]
         public int OrderBy { set; get; }

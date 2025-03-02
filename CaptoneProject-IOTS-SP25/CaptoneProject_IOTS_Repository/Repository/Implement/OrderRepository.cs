@@ -12,10 +12,20 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
 {
     public class OrderRepository : RepositoryBase<Orders>
     {
-        public async Task<List<Orders>> getAllOrder()
+        public async Task<List<Orders>> getAllOrder(int Id)
         {
             var result = await _dbSet.ToListAsync();
             return result;
+        }
+
+        public async Task<List<Orders>> GetByUserIdAsync(int userId)
+        {
+            return await _dbSet.Where(o => o.OrderBy == userId).ToListAsync();
+        }
+
+        public IQueryable<Orders> GetQueryable(int orderId)
+        {
+            return _dbSet.AsQueryable();
         }
     }
 }
