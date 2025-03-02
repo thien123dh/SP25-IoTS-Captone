@@ -15,6 +15,14 @@ namespace CaptoneProject_IOTS_BOs.DTO.PaginationDTO
         public IEnumerable<T>? Data { set; get; }
     }
 
+    public class GenericPaginationRequest<T>
+    {
+        public T AdvancedFilter { set; get; }
+
+        [Required]
+        public PaginationRequest paginationRequest { set; get; }
+    }
+
     public class PaginationRequest
     {
         [Required]

@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CaptoneProject_IOTS_BOs.Models
 {
@@ -25,6 +20,8 @@ namespace CaptoneProject_IOTS_BOs.Models
 
         [MaxLength(1000)]
         public string VideoUrl { set; get; }
+
+        public int OrderIndex { set; get; }
 
         public DateTime CreatedDate { set; get; } = DateTime.Now;
 
