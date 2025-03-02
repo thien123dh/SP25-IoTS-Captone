@@ -73,8 +73,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     Price = item.Price,
                     StoreId = item.StoreId,
                     StoreNavigationName = item?.StoreNavigation?.Name,
-                    Rating = item.Rating,
-                    Summary = item.Summary
+                    Rating = item?.Rating,
+                    Summary = item?.Summary
                 };
             }, pagination);
 
@@ -118,8 +118,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             if (removeList != null)
                 await unitOfWork.DeviceComboRepository.RemoveAsync(removeList);
-
-            var updateList = new List<IotsDevicesCombo>();
 
             //Update Quantity
             var updatedQuantityList = request.Where(item => item.DeviceComboId > 0).Select(item => new IotsDevicesCombo

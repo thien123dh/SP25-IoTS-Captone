@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -39,11 +40,15 @@ namespace CaptoneProject_IOTS_BOs.Constant
 
         public static string MATERIAL_NOTFOUND = "Cannot find material";
 
+        public static string LAB_NOTFOUND = "The playlist cannot be found. Please try again";
+
         public static string STORE_NOTFOUND = "Store cannot be found";
         public static string INSUFFICIENT_WALLET = "Wallet balance is insufficient. Please add funds to your wallet.";
         public static string REGISTER_PACKAGE_TOO_SOON = "It's too early to buy a new package. You can only purchase it at most 5 days before the payment date.";
         public static string BLOG_CATEGORY_NOTFOUND = "Cannot find blog category";
         public static string PRODUCT_CANNOT_BE_FOUND = "The product cannot be found. Please try again";
         public static string Insufficient_product_quantity = "Insufficient product quantity. Please try again";
+
+        public static string NOTFOUND_PLAYLIST = "Playlist cannot be found. Please try again";
     }
 }

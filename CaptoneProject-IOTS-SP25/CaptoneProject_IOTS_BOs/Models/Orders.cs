@@ -19,9 +19,6 @@ namespace CaptoneProject_IOTS_BOs.Models
         public string ApplicationSerialNumber { set; get; }
 
         [ForeignKey(nameof(User))]
-        public int SellerId { set; get; }
-
-        [ForeignKey(nameof(User))]
         public int OrderBy { set; get; }
 
         [Precision(18, 1)]

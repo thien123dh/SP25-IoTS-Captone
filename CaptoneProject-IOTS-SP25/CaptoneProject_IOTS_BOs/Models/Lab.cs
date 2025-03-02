@@ -27,6 +27,9 @@ namespace CaptoneProject_IOTS_BOs.Models
         [ForeignKey(nameof(Combo))]
         public int ComboId { set; get; }
 
+        [ForeignKey(nameof(ComboId))]
+        public virtual Combo? ComboNavigation { set; get; }
+
         [MaxLength(1000)]
         public string Description { set; get; }
 

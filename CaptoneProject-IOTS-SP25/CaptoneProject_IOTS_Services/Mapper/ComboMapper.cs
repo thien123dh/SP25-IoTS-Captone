@@ -13,17 +13,14 @@ namespace CaptoneProject_IOTS_Service.Mapper
 {
     public static class ComboMapper
     {
-        private readonly static IMapService<Combo, ComboDetailsResponseDTO> comboDetailsMapper = new MapService<Combo, ComboDetailsResponseDTO>();
-        private readonly static IMapService<CreateUpdateComboDTO, Combo> comboMapper = new MapService<CreateUpdateComboDTO, Combo>();
-
         public static ComboDetailsResponseDTO MapToComboDetailsResponseDTO(Combo source)
         {
-            return comboDetailsMapper.MappingTo(source);
+            return GenericMapper<Combo, ComboDetailsResponseDTO>.MapTo(source);
         }
 
         public static Combo MapToCombo(CreateUpdateComboDTO source)
         {
-            return comboMapper.MappingTo(source);
+            return GenericMapper<CreateUpdateComboDTO, Combo>.MapTo(source);
         }
     }
 }

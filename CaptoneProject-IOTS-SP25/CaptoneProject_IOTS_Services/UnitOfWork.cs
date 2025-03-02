@@ -29,5 +29,7 @@ namespace CaptoneProject_IOTS_Service
         public virtual DeviceComboRepository DeviceComboRepository => new DeviceComboRepository();
         public virtual OrderRepository OrderRepository => new OrderRepository();
         public virtual OrderDetailRepository OrderDetailRepository => new OrderDetailRepository();
+
+        public virtual LabAttachmentRepository LabAttachmentRepository => new LabAttachmentRepository();
     }
 }

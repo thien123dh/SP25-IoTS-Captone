@@ -141,10 +141,16 @@ namespace CaptoneProject_IOTS_Repository.Base
             return entity;
         }
 
-        public async Task<int> UpdateAsync(IEnumerable<T> entity)
+        public async Task<int> UpdateAsync(IEnumerable<T> entities)
         {
-            var tracker = _context.Attach(entity);
-            tracker.State = EntityState.Modified;
+            //var tracker = _context.Attach(entity);
+            //tracker.State = EntityState.Modified;
+            //return await _context.SaveChangesAsync();
+
+            foreach (var entity in entities)
+            {
+                _context.Entry(entity).State = EntityState.Modified;
+            }
             return await _context.SaveChangesAsync();
         }
 

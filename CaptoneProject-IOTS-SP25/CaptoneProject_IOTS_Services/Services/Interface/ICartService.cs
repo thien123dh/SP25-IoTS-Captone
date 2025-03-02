@@ -22,7 +22,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
 
         public Task<ResponseDTO> DeleteCartItem(int cartId);
 
-        public ResponseDTO GetNumberSelectedCartItems();
+        public ResponseDTO GetTotalSelectedCartItems();
 
         public Task<ResponseDTO> UpdateCartItemQuantity(UpdateCartQuantityDTO request);
     }

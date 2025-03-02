@@ -214,6 +214,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 CreatedBy = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? item.IosDeviceNavigation?.CreatedBy : item.ComboNavigation?.CreatedBy,
                 Price = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? (decimal)item.IosDeviceNavigation.Price : (decimal)item.ComboNavigation.Price,
                 CreatedByStore = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? item?.IosDeviceNavigation?.StoreNavigation.Name : item.ComboNavigation?.StoreNavigation?.Name,
+                ImageUrl = item?.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? item?.IosDeviceNavigation?.ImageUrl : item.ComboNavigation?.StoreNavigation?.ImageUrl,
             };
         }
 
@@ -259,6 +260,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     ProductName = productInfo.Name,
                     CreatedByStore = productInfo.CreatedByStore,
                     NumberOfIncludedLabs = dependLabCartItems?.Count() == null ? 0 : dependLabCartItems.Count(),
+                    ImageUrl = productInfo.ImageUrl,
                     TotalPrice = (productInfo.Price * item.Quantity + (decimal)(sumLabPrice == null ? 0 : sumLabPrice))
                 };
 
@@ -347,14 +349,15 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     LabName = item?.LabNavigation?.Title,
                     LabSummary = item?.LabNavigation?.Summary,
                     Id = item.Id,
-                    Price = item?.LabNavigation?.Price
+                    Price = item?.LabNavigation?.Price,
+                    ImageUrl = item?.LabNavigation?.ImageUrl
                 }
             )?.ToList();
 
             return res;
         }
 
-        public ResponseDTO GetNumberSelectedCartItems()
+        public ResponseDTO GetTotalSelectedCartItems()
         {
             var loginUserId = userService.GetLoginUserId();
 
@@ -400,7 +403,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 ProductName = productInfo.Name,
                 CreatedByStore = productInfo.CreatedByStore,
                 NumberOfIncludedLabs = includedLabs?.Count() == null ? 0 : includedLabs.Count(),
-                TotalPrice = (productInfo.Price * item.Quantity + (decimal)(sumLabPrice == null ? 0 : sumLabPrice))
+                TotalPrice = (productInfo.Price * item.Quantity + (decimal)(sumLabPrice == null ? 0 : sumLabPrice)),
+                ImageUrl = productInfo.ImageUrl
             };
 
             return response;
