@@ -25,5 +25,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         public ResponseDTO GetTotalSelectedCartItems();
 
         public Task<ResponseDTO> UpdateCartItemQuantity(UpdateCartQuantityDTO request);
+
+        public Task<ResponseDTO> GetCartTotalInformation();
     }
 }

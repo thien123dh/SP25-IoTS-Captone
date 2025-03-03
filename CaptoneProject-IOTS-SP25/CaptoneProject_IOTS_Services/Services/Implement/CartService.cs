@@ -7,6 +7,7 @@ using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Service.Mapper;
 using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
@@ -434,6 +435,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             try
             {
+                if (cart.Quantity <= 0)
+                    cart.Quantity = 1;
+
                 cart = unitOfWork.CartRepository.Update(cart);
 
                 return ResponseService<object>.OK(await GetCartItemById(cart.Id));
@@ -442,6 +446,39 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 throw new Exception(ex.Message);
             }
+        }
+
+        public async Task<ResponseDTO> GetCartTotalInformation()
+        {
+            var loginUserId = userService.GetLoginUserId();
+
+            if (loginUserId == null)
+            {
+                ResponseService<object>.OK(new
+                {
+                    TotalCartItemsAmount = 0,
+                    TotalSelectedItemsPrice = 0
+                });
+            }
+
+            int totalCartItemsAmount = unitOfWork.CartRepository
+                .Search(item => item.CreatedBy == loginUserId && (
+                    item.ProductType == (int)ProductTypeEnum.COMBO || item.ProductType == (int)ProductTypeEnum.IOT_DEVICE
+                    )
+                ).Count();
+
+            decimal totalSelectedCartItemPrice = unitOfWork.CartRepository
+                .Search(item => item.CreatedBy == loginUserId && item.IsSelected && (
+                    item.ProductType == (int)ProductTypeEnum.COMBO || item.ProductType == (int)ProductTypeEnum.IOT_DEVICE
+                    )
+                ).Include(i => i.IosDeviceNavigation).Include(i => i.ComboNavigation).Include(i => i.LabNavigation)
+                .Sum(i => (i.IosDeviceId != null ? i.IosDeviceNavigation.Price : (i.ComboId != null ? i.ComboNavigation.Price : i.LabNavigation.Price)) * (i.LabId != null ? 1 : i.Quantity));
+
+            return ResponseService<object>.OK(new
+            {
+                TotalCartItemsAmount = totalCartItemsAmount,
+                TotalSelectedItemsPrice = totalSelectedCartItemPrice
+            });
         }
     }
 }
