@@ -119,5 +119,14 @@ namespace CaptoneProject_IOTS_API.Controllers.CartController
 
             return GetActionResult(res);
         }
+
+        [HttpGet("get-cart-total-information")]
+        [Authorize]
+        public async Task<IActionResult> GetCartTotalInformation()
+        {
+            var res = await cartService.GetCartTotalInformation();
+
+            return GetActionResult(res);
+        }
     }
 }
