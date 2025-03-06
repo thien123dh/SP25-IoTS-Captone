@@ -16,6 +16,9 @@ public partial class Store
     public string? ContactNumber { set; get; }
     [MaxLength(500)]
     public string? Address { set; get; }
+    public int ProvinceId { set; get; }
+    public int DistrictId { set; get; }
+    public int WardId { set; get; }
     [MaxLength(500)]
     public string? Summary { set; get; }
     [JsonIgnore]
