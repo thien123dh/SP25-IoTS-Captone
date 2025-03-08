@@ -36,6 +36,10 @@ public partial class IoTTraddingSystemContext : DbContext
     public virtual DbSet<BlogFeedback> BlogFeedbacks { get; set; }
 
     public virtual DbSet<BlogsCategory> BlogsCategories { get; set; }
+    
+    public virtual DbSet<DeviceSpecification> DeviceSpecifications { set; get; }
+
+    public virtual DbSet<DeviceSpecificationsItem> DeviceSpecificationsItems { set; get; }
 
     public virtual DbSet<IotsDevice> IotDevices { get; set; }
 
@@ -208,9 +212,6 @@ public partial class IoTTraddingSystemContext : DbContext
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.CategoryId).HasColumnName("category_id");
-            entity.Property(e => e.Connectivity)
-                .HasMaxLength(200)
-                .HasColumnName("connectivity");
             entity.Property(e => e.CreatedBy).HasColumnName("created_by");
             entity.Property(e => e.CreatedDate)
                 .HasColumnType("datetime")
@@ -218,7 +219,6 @@ public partial class IoTTraddingSystemContext : DbContext
             entity.Property(e => e.Description)
                 .HasMaxLength(1000)
                 .HasColumnName("description");
-            entity.Property(e => e.FirmwareVersion).HasColumnName("firmware_version");
             entity.Property(e => e.IsActive).HasColumnName("is_active");
             entity.Property(e => e.Manufacturer)
                 .HasMaxLength(500)
@@ -229,9 +229,6 @@ public partial class IoTTraddingSystemContext : DbContext
             entity.Property(e => e.Name)
                 .HasMaxLength(500)
                 .HasColumnName("name");
-            entity.Property(e => e.PowerSource)
-                .HasMaxLength(200)
-                .HasColumnName("power_source");
             entity.Property(e => e.SerialNumber)
                 .HasMaxLength(200)
                 .HasColumnName("serial_number");
@@ -251,6 +248,11 @@ public partial class IoTTraddingSystemContext : DbContext
             entity.HasOne(d => d.UpdatedByNavigation).WithMany(p => p.MaterialUpdatedByNavigations)
                 .HasForeignKey(d => d.UpdatedBy)
                 .HasConstraintName("FK_IotsDevices_Users1");
+
+            //entity
+            //    .HasMany(d => d.DeviceSpecifications)
+            //    .WithOne(dS => dS.IotsDevice)
+            //    .HasForeignKey(dS => dS.IotDeviceId);
         });
 
         modelBuilder.Entity<MaterialCategory>(entity =>

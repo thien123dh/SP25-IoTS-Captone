@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace CaptoneProject_IOTS_BOs.Models;
 
@@ -28,114 +29,12 @@ public partial class IotsDevice
     [Range(0, 100)]
     public int? SecondhandQualityPercent { set; get; } = 0;
 
-    public int? IsHardwareInformation { set; get; } = 1;
-    //HARDWARE INFORMATION
-    [Column("MCU_MPU")]
-    [MaxLength(250)]
-    public string? MCU_MPU { set; get; }
-
-    [Column("memory")]
-    [MaxLength(250)]
-    public string? Memory { set; get; }
-
-    [Column("wireless_connection")]
-    [MaxLength(250)]
-    public string? WirelessConnection { set; get; }
-
-    public string? Connectivity { get; set; }
-
-    [Column("sensor")]
-    [MaxLength(250)]
-    public string? Sensor { set; get; }
-    //HARDWARE INFORMATION
-
-    //Network Connection
-    public int? IsNetworkConnection { set; get; } = 1;
-
-    [Column("protocol")]
-    [MaxLength(250)]
-    public string? Protocol { set; get; }
-
-    [Column("data_transmission_standard")]
-    [MaxLength(250)]
-    public string? DataTransmissionStandard { set; get; }
-
-    [Column("network_security")]
-    [MaxLength(250)]
-    public string? NetworkSecurity { set; get; }
-    //Network connection
-
-    //Software or operations
-    public int? IsSoftwareOrOperations { set; get; } = 1;
-
-    [Column("firmware")]
-    [MaxLength(250)]
-    public string? Firmware { set; get; }
-
-    public int? FirmwareVersion { get; set; }
-
-    [Column("embedded_operating_system")]
-    [MaxLength(250)]
-    public string? EmbeddedEperatingSystem { set; get; }
-
-    [Column("cloud_service")]
-    [MaxLength(250)]
-    public string? Cloudservice { set; get; }
-
-    [Column("firmware_OTA_support")]
-    public int FirmwareOTASupport { set; get; } = 1;
-    //Software or operations
-
-    //PowerSource
-    public int? IsPowerSource { set; get; } = 1;
-
-    [Column("operating_voltage")]
-    [MaxLength(250)]
-    public string? OperatingVoltage { set; get; }
-
-    [Column("power_consumption")]
-    [MaxLength(250)]
-    public string? PowerConsumption { set; get; }
-
-    public string? PowerSource { get; set; }
-    //PowerSource
-
-    //Security
-    public int? IsSecurity { set; get; } = 1;
-    [Column("data_encryption")]
-    [MaxLength(250)]
-    public string? DataEncryption { set; get; }
-
-    [Column("device_authentication")]
-    [MaxLength(250)]
-    public string? DeviceAuthentication { set; get; }
-    //Security
-
-    //Performance
-    [Column("connection_delay")]
-    [MaxLength(250)]
-    public string? ConnectionDelay { set; get; }
-
-    [Column("processing_speed")]
-    [MaxLength(250)]
-    public string? ProcessingSpeed { set; get; }
-    //Performance
-
-    //Package
-    [Column("service_life")]
-    [MaxLength(250)]
-    public string? ServiceLife { set; get; }
-
-    [Column("durability")]
-    [MaxLength(250)]
-    public string? Durability { set; get; }
-    //Package
-
     [MaxLength(500)]
     [Column("summary")]
     public string Summary { set; get; }
     public string Description { get; set; }
-
+    [Precision(10, 1)]
+    public decimal Weight { set; get; } = 0;
     [ForeignKey(nameof(MaterialCategory))]
     public int CategoryId { get; set; }
 
@@ -189,4 +88,6 @@ public partial class IotsDevice
     public virtual User CreatedByNavigation { get; set; }
 
     public virtual User UpdatedByNavigation { get; set; }
+    [JsonIgnore]
+    public virtual IEnumerable<DeviceSpecification>? DeviceSpecifications { set; get; }
 }
