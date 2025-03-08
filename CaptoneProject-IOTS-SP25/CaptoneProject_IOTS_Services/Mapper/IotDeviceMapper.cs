@@ -13,12 +13,23 @@ namespace CaptoneProject_IOTS_Service.Mapper
 {
     public static class IotDeviceMapper
     {
-        private static readonly IMapService<IotsDevice, IotDeviceDetailsDTO> iotDetailMapper = new MapService<IotsDevice, IotDeviceDetailsDTO>();
         private static readonly IMapService<CreateUpdateIotDeviceDTO, IotsDevice> iotSaveMapper = new MapService<CreateUpdateIotDeviceDTO, IotsDevice>();
 
         public static IotDeviceDetailsDTO MapToIotDeviceDetailsDTO(IotsDevice source)
         {
-            return iotDetailMapper.MappingTo(source);
+            var res = GenericMapper<IotsDevice, IotDeviceDetailsDTO>.MapTo(source);
+
+            res.DeviceSpecificationsList = source?.DeviceSpecifications?.Select(item =>
+            {
+                var spec = GenericMapper<DeviceSpecification, DeviceSpecificationDTO>.MapTo(item);
+
+                spec.DeviceSpecificationItemsList = item?.DeviceSpecificationsItems?
+                        .Select(dSI => GenericMapper<DeviceSpecificationsItem, DeviceSpecificationItemDTO>.MapTo(dSI)).ToList();
+
+                return spec;
+            });
+
+            return res;
         }
          
         public static IotsDevice MapToIotsDevice(CreateUpdateIotDeviceDTO source)

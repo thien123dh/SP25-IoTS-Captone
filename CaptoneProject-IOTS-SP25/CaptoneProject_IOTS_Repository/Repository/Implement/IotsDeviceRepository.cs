@@ -13,9 +13,11 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
 {
     public class IotsDeviceRepository : RepositoryBase<IotsDevice>
     {
-        public IotsDevice GetById(int id)
+        public IotsDevice? GetById(int id)
         {
             return _dbSet
+                .Include(item => item.DeviceSpecifications)
+                .ThenInclude(dS => dS.DeviceSpecificationsItems)
                 .Include(item => item.Category)
                 .Include(item => item.StoreNavigation)
                 .SingleOrDefault(item => item.Id == id);
