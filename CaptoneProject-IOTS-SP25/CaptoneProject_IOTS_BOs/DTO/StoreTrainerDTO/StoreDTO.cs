@@ -33,6 +33,9 @@ namespace CaptoneProject_IOTS_BOs.DTO.StoreDTO
             public string Description { get; set; }
 
             public string? ImageUrl { set; get; }
+            public int ProvinceId { set; get; }
+            public int DistrictId { set; get; }
+            public int WardId { set; get; }
 
             public List<StoreAttachmentRequestDTO>? StoreAttachments { set; get; }
         }
@@ -43,6 +46,9 @@ namespace CaptoneProject_IOTS_BOs.DTO.StoreDTO
             public string? Summary { set; get; }
             public int OwnerId { get; set; }
             public string OwnerName { set; get; }
+            public int ProvinceId { set; get; }
+            public int DistrictId { set; get; }
+            public int WardId { set; get; }
             public DateTime? CreatedDate { set; get; }
             public int? CreatedBy { set; get; }
         }
@@ -53,6 +59,9 @@ namespace CaptoneProject_IOTS_BOs.DTO.StoreDTO
             public string Description { get; set; }
             public string? ContactNumber { set; get; }
             public string? Address { set; get; }
+            public int ProvinceId { set; get; }
+            public int DistrictId { set; get; }
+            public int WardId { set; get; }
             public string? Summary { set; get; }
             public int OwnerId { get; set; }
             public string? ImageUrl { set; get; }

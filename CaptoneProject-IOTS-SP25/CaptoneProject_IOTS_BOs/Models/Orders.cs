@@ -29,6 +29,9 @@ namespace CaptoneProject_IOTS_BOs.Models
 
         [MaxLength(500)]
         public string Address { set; get; } = "";
+        public int ProvinceId { set; get; }
+        public int DistrictId { set; get; }
+        public int WardId { set; get; }
 
         [MaxLength(150)]
         public string ContactNumber { set; get; } = "";
