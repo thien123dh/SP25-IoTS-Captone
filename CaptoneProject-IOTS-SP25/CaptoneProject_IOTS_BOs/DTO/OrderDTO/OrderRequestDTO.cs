@@ -20,5 +20,11 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderDTO
 
         [MaxLength(300)]
         public string? Notes { set; get; } = "";
+
+        public int ProvinceId { set; get; }
+        public int DistrictId { set; get; }
+        public int WardId { set; get; }
+
+
     }
 }

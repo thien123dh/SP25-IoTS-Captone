@@ -31,7 +31,6 @@ namespace CaptoneProject_IOTS_BOs.DTO.StoreDTO
             public string? Address { set; get; }
             public string? Summary { set; get; }
             public string Description { get; set; }
-
             public string? ImageUrl { set; get; }
             public int ProvinceId { set; get; }
             public int DistrictId { set; get; }
