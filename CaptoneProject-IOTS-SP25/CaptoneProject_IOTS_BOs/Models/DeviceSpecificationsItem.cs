@@ -14,12 +14,12 @@ namespace CaptoneProject_IOTS_BOs.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { set; get; }
 
-        public string SpecificationProperty { set; get; }
+        public string? SpecificationProperty { set; get; }
 
-        public string SpecificationValue { set; get; }
+        public string? SpecificationValue { set; get; }
 
         [ForeignKey(nameof(DeviceSpecification))]
-        public int DeviceSpecficationId { set; get; }
+        public int DeviceSpecificationId { set; get; }
 
         public virtual DeviceSpecification DeviceSpecification { set; get; }
         public DateTime CreatedDate { set; get; }

@@ -53,6 +53,8 @@ namespace CaptoneProject_IOTS_BOs.DTO.ProductDTO
         public string? DeviceSummary { set; get; }
         public int Amount { set; get; }
         public decimal OriginalPrice { set; get; }
+
+        public string? ImageUrl { set; get; }
     }
 
     public class ComboDetailsResponseDTO

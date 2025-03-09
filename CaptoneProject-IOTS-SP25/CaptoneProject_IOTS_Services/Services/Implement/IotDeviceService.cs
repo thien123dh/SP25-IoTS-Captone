@@ -66,7 +66,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         CreatedDate = DateTime.Now,
                         SpecificationProperty = specItem?.SpecificationProperty,
                         SpecificationValue = specItem?.SpecificationValue,
-                        DeviceSpecficationId = saveSpec.Id
                     });
 
                     if (specItemsList != null)
@@ -182,7 +181,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
-        public async Task<GenericResponseDTO<PaginationResponseDTO<IotDeviceItem>>> GetPagination(int? filterStoreId, int? categoryFilterId, PaginationRequest payload)
+        public async Task<GenericResponseDTO<PaginationResponseDTO<IotDeviceItem>>> GetPagination(int? filterStoreId, int? categoryFilterId, IotDeviceTypeEnum? deviceTypeFilter, PaginationRequest payload)
         {
             int? loginUserId = userServices.GetLoginUserId();
             var isStore = await userServices.CheckLoginUserRole(RoleEnum.STORE);
@@ -195,12 +194,15 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     && ((isStore && item.StoreId == loginStoreId) || !isStore)
                     && ((isAnonymousOrCustomer && item.IsActive > 0) || !isAnonymousOrCustomer)
                     && (filterStoreId == null || filterStoreId == item.StoreId)
-                    && (categoryFilterId == null) || (item.CategoryId == categoryFilterId),
+                    && ((categoryFilterId == null) || (item.CategoryId == categoryFilterId))
+                    && (deviceTypeFilter == null || (int)deviceTypeFilter == item.DeviceType),
                 orderBy: ob => ob.OrderByDescending(item => item.Rating),
                 includeProperties: "StoreNavigation,Category",
                 pageIndex: payload.PageIndex,
                 pageSize: payload.PageSize
             );
+
+            res = res == null ? new PaginationResponseDTO<IotsDevice>() : res;
 
             return ResponseService<PaginationResponseDTO<IotDeviceItem>>.OK(
                 PaginationMapper<IotsDevice, IotDeviceItem>.MappingTo((res) => new IotDeviceItem
@@ -237,7 +239,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var device = unitOfWork.IotsDeviceRepository.GetById(id);
 
             if (device == null)
-                return ResponseService<IotDeviceDetailsDTO>.NotFound("The Iot Device cannot be found");
+                return ResponseService<IotDeviceDetailsDTO>.NotFound(ExceptionMessage.DEVICE_NOTFOUND);
 
             if (isAdminOrManager || device.CreatedBy == loginUserId)
             {

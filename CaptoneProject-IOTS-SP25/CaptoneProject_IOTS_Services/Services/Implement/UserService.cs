@@ -317,7 +317,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return ResponseService<UserResponseDTO>.OK(UserMapper.mapToUserResponse(user));
         }
 
-        //TODO GET LOGIN USER
         public int? GetLoginUserId()
         {
             int? loginUserId = httpAccessor.GetLoginUserId();

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using CaptoneProject_IOTS_API.Controllers.MyBaseController;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
+using static CaptoneProject_IOTS_BOs.Constant.ProductConst;
 
 namespace CaptoneProject_IOTS_API.Controllers.IotDeviceController
 {
@@ -47,9 +48,11 @@ namespace CaptoneProject_IOTS_API.Controllers.IotDeviceController
 
         [HttpPost("get-pagination")]
         public async Task<IActionResult> GetPaginationIotDevices([FromBody] PaginationRequest payload,
-            [FromQuery] int? storeFilterId, [FromQuery] int? categoryFilterId)
+            [FromQuery] int? storeFilterId, 
+            [FromQuery] int? categoryFilterId, 
+            [FromQuery] IotDeviceTypeEnum? deviceTypeFilter)
         {
-            var res = await iotDevicesService.GetPagination(storeFilterId, categoryFilterId, payload);
+            var res = await iotDevicesService.GetPagination(storeFilterId, categoryFilterId, deviceTypeFilter, payload);
 
             return GetActionResult(res);
         }
