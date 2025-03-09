@@ -33,6 +33,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly StoreRepository _storeRepository;
         private readonly StoreAttachmentRepository _storeAttachmentRepository;
         private readonly BusinessLicenseRepository businessLicenseRepository;
+        private readonly IGHTKService _ghtkService;
         public StoreService (MyHttpAccessor _myHttpAccessor,
             IUserRequestService _userRequestService,
             UserRequestRepository _userRequestRepository,
@@ -40,7 +41,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             UserRepository _userRepository,
             StoreRepository storeRepository,
             StoreAttachmentRepository storeAttachmentRepository,
-            BusinessLicenseRepository businessLicenseRepository)
+            BusinessLicenseRepository businessLicenseRepository,
+            IGHTKService ghtkService)
         {
             this._myHttpAccessor = _myHttpAccessor;
             this._userRequestService = _userRequestService;
@@ -50,6 +52,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             this._storeRepository = storeRepository;
             this._storeAttachmentRepository = storeAttachmentRepository;
             this.businessLicenseRepository = businessLicenseRepository;
+            this._ghtkService = ghtkService;
         }
 
         private async Task<GenericResponseDTO<StoreDetailsResponseDTO>> GetDetailsStoreById(int storeId)
@@ -153,6 +156,18 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 IsActive = 2 //Default is pending
             } : store;
 
+            var provinces = await _ghtkService.SyncProvincesAsync();
+            if (!provinces.Any(p => p.Id == payload.ProvinceId))
+                return ResponseService<StoreDetailsResponseDTO>.BadRequest("Invalid Province ID");
+
+            var districts = await _ghtkService.SyncDistrictsAsync(payload.ProvinceId);
+            if (!districts.Any(d => d.Id == payload.DistrictId))
+                return ResponseService<StoreDetailsResponseDTO>.BadRequest("Invalid District ID");
+
+            var wards = await _ghtkService.SyncWardsAsync(payload.DistrictId);
+            if (!wards.Any(w => w.Id == payload.WardId))
+                return ResponseService<StoreDetailsResponseDTO>.BadRequest("Invalid Ward ID");
+
             //Set data 
             store.Name = payload.Name;
             store.Description = payload.Description;
@@ -163,6 +178,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             store.ContactNumber = payload.ContactNumber;
             store.Summary = payload.Summary;
             store.Address = payload.Address;
+            store.WardId = payload.WardId;
+            store.DistrictId = payload.DistrictId;
+            store.ProvinceId = payload.ProvinceId;
             //
 
             if (store.Id > 0) //Update

@@ -22,6 +22,7 @@ using System.Web;
 using static CaptoneProject_IOTS_BOs.Constant.EntityTypeConst;
 using static CaptoneProject_IOTS_BOs.Constant.ProductConst;
 using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
+using static CaptoneProject_IOTS_BOs.DTO.StoreDTO.StoreDTO;
 
 namespace CaptoneProject_IOTS_Service.Services.Implement
 {
@@ -30,12 +31,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly UnitOfWork _unitOfWork;
         private readonly IUserServices userServices;
         private readonly IVNPayService vnpayServices;
+        private readonly IGHTKService _ghtkService;
 
-        public OrderService(IUserServices userServices, IVNPayService vnpayServices)
+        public OrderService(IUserServices userServices, IVNPayService vnpayServices, IGHTKService ghtkService)
         {
             _unitOfWork ??= new UnitOfWork();
             this.userServices = userServices;
             this.vnpayServices = vnpayServices;
+            this._ghtkService = ghtkService;
         }
 
         private string GetApplicationSerialNumberOrder(int userID)
@@ -78,6 +81,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             string encodedOrderInfo = vnpay.GetResponseData("vnp_OrderInfo");
 
             string address = "", contactPhone = "", notes = "";
+            int provinceId = 0, districtId = 0, wardId = 0;
+            string provinceName = "", districtName = "", wardName = "", fullAddress = "";
+
             if (!string.IsNullOrEmpty(encodedOrderInfo))
             {
                 try
@@ -90,6 +96,13 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     address = orderInfo?.Address ?? "";
                     contactPhone = orderInfo?.ContactNumber ?? "";
                     notes = orderInfo?.Notes ?? "";
+                    provinceId = orderInfo?.ProvinceId ?? 0;
+                    provinceName = orderInfo?.ProvinceName ?? "";
+                    districtId = orderInfo?.DistrictId ?? 0;
+                    districtName = orderInfo?.DistrictName ?? "";
+                    wardId = orderInfo?.WardId ?? 0;
+                    wardName = orderInfo?.WardName ?? "";
+                    fullAddress = orderInfo?.FullAddress ?? "";
                 }
                 catch (FormatException)
                 {
@@ -113,6 +126,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 OrderBy = loginUserId,
                 TotalPrice = Convert.ToInt64(vnpay.GetResponseData("vnp_Amount")) / 100,
                 Address = address,
+                ProvinceId = provinceId,
+                DistrictId = districtId,
+                WardId = wardId,
                 ContactNumber = contactPhone,
                 Notes = notes,
                 CreateDate = DateTime.Now,
@@ -146,18 +162,24 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 ApplicationSerialNumber = createTransactionPayment.ApplicationSerialNumber,
                 TotalPrice = createTransactionPayment.TotalPrice,
+                ProvinceId = createTransactionPayment.ProvinceId,
+                ProvinceName = provinceName,
+                DistrictId = createTransactionPayment.DistrictId,
+                DistrictName = districtName,
+                WardId = createTransactionPayment.WardId,
+                WardName = wardName,
                 Address = createTransactionPayment.Address,
                 ContactNumber = createTransactionPayment.ContactNumber,
                 Notes = createTransactionPayment.Notes,
                 CreateDate = createTransactionPayment.CreateDate,
                 OrderStatusId = createTransactionPayment.OrderStatusId
             };
-            /*await _unitOfWork.CartRepository.RemoveAsync(selectedItems);
+/*            await _unitOfWork.CartRepository.RemoveAsync(selectedItems);
             await _unitOfWork.CartRepository.SaveAsync();*/
             return new GenericResponseDTO<OrderReturnPaymentDTO>
             {
                 IsSuccess = true,
-                Message = "Đơn hàng đã được xác nhận thành công.",
+                Message = "Đơn hàng đã được thanh toán thành công.",
                 Data = orderReturnPaymentDTO
             };
         }
@@ -178,8 +200,23 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var contactPhone = payload.ContactNumber;
             var notes = payload.Notes;
 
-            // Lấy danh sách sản phẩm được chọn trong giỏ hàng
-            var selectedItems = await _unitOfWork.CartRepository
+                var provinces = await _ghtkService.SyncProvincesAsync();
+                var province = provinces.FirstOrDefault(p => p.Id == payload.ProvinceId);
+                if (province == null)
+                    return ResponseService<OrderReturnPaymentDTO>.BadRequest("Invalid Province ID");
+
+                var districts = await _ghtkService.SyncDistrictsAsync(payload.ProvinceId);
+                var district = districts.FirstOrDefault(d => d.Id == payload.DistrictId);
+                if (district == null)
+                    return ResponseService<OrderReturnPaymentDTO>.BadRequest("Invalid District ID");
+
+                var wards = await _ghtkService.SyncWardsAsync(payload.DistrictId);
+                var ward = wards.FirstOrDefault(w => w.Id == payload.WardId);
+                if (ward == null)
+                    return ResponseService<OrderReturnPaymentDTO>.BadRequest("Invalid Ward ID");
+
+                // Lấy danh sách sản phẩm được chọn trong giỏ hàng
+                var selectedItems = await _unitOfWork.CartRepository
                 .GetQueryable((int)loginUserId)
                 .Where(item => item.CreatedBy == loginUserId && item.IsSelected)
                 .Include(item => item.IosDeviceNavigation)
@@ -213,7 +250,17 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 {
                     Address = address,
                     ContactNumber = contactPhone,
-                    Notes = notes
+                    Notes = notes,
+                    ProvinceId = province.Id,
+                    ProvinceName = province.Name,
+
+                    DistrictId = district.Id,
+                    DistrictName = district.Name,
+
+                    WardId = ward.Id,
+                    WardName = ward.Name,
+
+                    FullAddress = $"{payload.Address}, {ward.Name}, {district.Name}, {province.Name}"
                 };
 
 

@@ -64,6 +64,9 @@ builder.Services.AddScoped<MembershipPackageRepository>();
 builder.Services.AddScoped<AccountMembershipPackageRepository>();
 builder.Services.AddScoped<TransactionRepository>();
 builder.Services.AddScoped<UnitOfWork>();
+builder.Services.AddScoped<LocationRepository>();
+builder.Services.AddScoped<DistrictRepository>();
+
 
 // Register Services
 builder.Services.AddHttpContextAccessor();
@@ -91,6 +94,11 @@ builder.Services.AddScoped<IComboService, ComboService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ILabService, LabService>();
 builder.Services.AddScoped<IOrderItemService, OrderItemService>();
+
+//GHTK sandbox
+builder.Services.AddHttpClient<IGHTKService, GHTKService>();
+builder.Services.AddScoped<IGHTKService, GHTKService>();
+
 builder.Services.AddScoped<IFileService>(provider =>
 {
     var bucket = configuration.GetConnectionString("Firebase-Storage-Bucket");

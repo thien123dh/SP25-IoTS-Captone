@@ -202,5 +202,10 @@ namespace CaptoneProject_IOTS_Repository.Base
         {
             await _context.SaveChangesAsync();
         }
+
+        public async Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _dbSet.AnyAsync(predicate);
+        }
     }
 }
