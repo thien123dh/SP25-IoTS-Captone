@@ -1,86 +1,34 @@
 ﻿using CaptoneProject_IOTS_BOs.DTO.AttachmentDTO;
 using CaptoneProject_IOTS_BOs.Models;
-using Microsoft.Identity.Client;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 using static CaptoneProject_IOTS_BOs.Constant.ProductConst;
-using static CaptoneProject_IOTS_BOs.DTO.MaterialDTO.IotDeviceItem;
 
 namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
 {
+    public class DeviceSpecificationDTO
+    {
+        //public int Id { set; get; }
+
+        public string Name { set; get; } = "";
+
+        [Required]
+        public List<DeviceSpecificationItemDTO>? DeviceSpecificationItemsList { set; get; }
+    }
+
+    public class DeviceSpecificationItemDTO
+    {
+        //public int Id { set; get; }
+
+        public string? SpecificationProperty { set; get; }
+
+        public string? SpecificationValue { set; get; }
+    }
+
     public class CreateUpdateIotDeviceDTO
     {
         public string Name { get; set; }
-
         public IotDeviceTypeEnum DeviceType { set; get; }
-
-        public int? IsHardwareInformation { set; get; } = 1;
-        public string? MCU_MPU { set; get; }
-
-        public string? Memory { set; get; }
-        public string? WirelessConnection { set; get; }
-
-        public string? Connectivity { get; set; }
-
-        public string? Sensor { set; get; }
-        //HARDWARE INFORMATION
-
-        //Network Connection
-        public int? IsNetworkConnection { set; get; } = 1;
-
-        public string? Protocol { set; get; }
-
-        public string? DataTransmissionStandard { set; get; }
-
-        public string? NetworkSecurity { set; get; }
-        //Network connection
-
-        //Software or operations
-        public int? IsSoftwareOrOperations { set; get; } = 1;
-
-        public string? Firmware { set; get; }
-
-        public int? FirmwareVersion { get; set; }
-
-        public string? EmbeddedEperatingSystem { set; get; }
-
-        public string? Cloudservice { set; get; }
-
-        public int FirmwareOTASupport { set; get; } = 1;
-        //Software or operations
-
-        //PowerSource
-        public int? IsPowerSource { set; get; } = 1;
-        public string? OperatingVoltage { set; get; }
-
-        public string? PowerConsumption { set; get; }
-
-        public string? PowerSource { get; set; }
-        //PowerSource
-
-        //Security
-        public int? IsSecurity { set; get; } = 1;
-        public string? DataEncryption { set; get; }
-        public string? DeviceAuthentication { set; get; }
-        //Security
-
-        //Performance
-        public string? ConnectionDelay { set; get; }
-
-        public string? ProcessingSpeed { set; get; }
-        //Performance
-
-        //Package
-        public string? ServiceLife { set; get; }
-
-        public string? Durability { set; get; }
-        //Package
+        public decimal Weight { set; get; }
         public string Summary { set; get; }
         public string Description { get; set; }
 
@@ -109,6 +57,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
         public int? SecondhandQualityPercent { set; get; } = 0;
 
         public List<AttachmentsModelDTO>? Attachments { set; get; }
+        public List<DeviceSpecificationDTO>? DeviceSpecificationsList { set; get; }
     }
     public class IotDeviceDetailsDTO
     {
@@ -117,68 +66,6 @@ namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
         public string Name { get; set; }
 
         public int DeviceType { set; get; } = 1;
-
-        public int? IsHardwareInformation { set; get; } = 1;
-        public string? MCU_MPU { set; get; }
-
-        public string? Memory { set; get; }
-        public string? WirelessConnection { set; get; }
-
-        public string? Connectivity { get; set; }
-
-        public string? Sensor { set; get; }
-        //HARDWARE INFORMATION
-
-        //Network Connection
-        public int? IsNetworkConnection { set; get; } = 1;
-
-        public string? Protocol { set; get; }
-
-        public string? DataTransmissionStandard { set; get; }
-
-        public string? NetworkSecurity { set; get; }
-        //Network connection
-
-        //Software or operations
-        public int? IsSoftwareOrOperations { set; get; } = 1;
-
-        public string? Firmware { set; get; }
-
-        public int? FirmwareVersion { get; set; }
-
-        public string? EmbeddedEperatingSystem { set; get; }
-
-        public string? Cloudservice { set; get; }
-
-        public int FirmwareOTASupport { set; get; } = 1;
-        //Software or operations
-
-        //PowerSource
-        public int? IsPowerSource { set; get; } = 1;
-        public string? OperatingVoltage { set; get; }
-
-        public string? PowerConsumption { set; get; }
-
-        public string? PowerSource { get; set; }
-        //PowerSource
-
-        //Security
-        public int? IsSecurity { set; get; } = 1;
-        public string? DataEncryption { set; get; }
-        public string? DeviceAuthentication { set; get; }
-        //Security
-
-        //Performance
-        public string? ConnectionDelay { set; get; }
-
-        public string? ProcessingSpeed { set; get; }
-        //Performance
-
-        //Package
-        public string? ServiceLife { set; get; }
-
-        public string? Durability { set; get; }
-        //Package
         public string Summary { set; get; }
         public string Description { get; set; }
 
@@ -213,6 +100,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
         public MaterialCategory? Category { set; get; }
         public Store? StoreNavigation { set; get; }
         public IEnumerable<AttachmentsModelDTO>? Attachments { set; get; }
+        public IEnumerable<DeviceSpecificationDTO>? DeviceSpecificationsList { set; get; }
         public decimal? SecondHandPrice { set; get; }
         public int? SecondhandQualityPercent { set; get; }
 

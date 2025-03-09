@@ -39,6 +39,47 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 .Replace("{DeviceType}", (deviceType == (int)IotDeviceTypeEnum.NEW ? "N" : "O"))
                 .Replace("{SerialNumber}", serialNumber);
         }
+
+        public async Task<bool> CreateOrUpdateDeviceSpecification(int deviceId, List<DeviceSpecificationDTO>? request)
+        {
+            var dbSpecList = unitOfWork.DeviceSpecificationRepository.GetDeviceSpecificationByDeviceId(deviceId);
+
+            if (dbSpecList != null)
+                await unitOfWork.DeviceSpecificationRepository.RemoveAsync(dbSpecList);
+
+            if (request != null)
+            {
+                List<DeviceSpecificationsItem> saveSpecItems = new List<DeviceSpecificationsItem>();
+                request.ForEach(item =>
+                {
+                    var saveSpec = new DeviceSpecification
+                    {
+                        CreatedDate = DateTime.Now,
+                        IotDeviceId = deviceId,
+                        Name = item.Name
+                    };
+
+                    saveSpec = unitOfWork.DeviceSpecificationRepository.Create(saveSpec);
+
+                    var specItemsList = item?.DeviceSpecificationItemsList?.Select(specItem => new DeviceSpecificationsItem
+                    {
+                        CreatedDate = DateTime.Now,
+                        SpecificationProperty = specItem?.SpecificationProperty,
+                        SpecificationValue = specItem?.SpecificationValue,
+                        DeviceSpecficationId = saveSpec.Id
+                    });
+
+                    if (specItemsList != null)
+                        saveSpecItems.AddRange(specItemsList);
+                });
+
+                if (saveSpecItems != null)
+                    await unitOfWork.DeviceSpecificationItemRepository.CreateAsync(saveSpecItems);
+            }
+
+            return true;
+        }
+
         public async Task<GenericResponseDTO<IotDeviceDetailsDTO>> CreateOrUpdateIotDevice(int? id, CreateUpdateIotDeviceDTO payload)
         {
             var loginUser = userServices.GetLoginUser();
@@ -92,9 +133,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 else
                     saveDevice = unitOfWork.IotsDeviceRepository.Create(saveDevice);
 
+                //Create or update attachments
                 var res = await attachmentsService.CreateOrUpdateAttachments(saveDevice.Id,
                     (int)EntityTypeEnum.IOT_DEVICE,
                     payload.Attachments);
+
+                await CreateOrUpdateDeviceSpecification(saveDevice.Id, payload.DeviceSpecificationsList);
 
                 return await GetIotDeviceById(saveDevice.Id);
             } catch (Exception e)
@@ -110,11 +154,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 var device = unitOfWork.IotsDeviceRepository.GetById(id);
                 
+                if (device == null)
+                    return ResponseService<IotDeviceDetailsDTO>.NotFound("Iot device cannot be found. Please try again");
+
                 var loginUserId = userServices.GetLoginUserId();
 
                 bool isEdit = loginUserId == null ? false : unitOfWork.StoreRepository
                                                                 .GetByUserId((int)loginUserId)?
-                                                                .Id == device.StoreId;
+                                                                .Id == device?.StoreId;
 
                 var res = IotDeviceMapper.MapToIotDeviceDetailsDTO(device);
                 
