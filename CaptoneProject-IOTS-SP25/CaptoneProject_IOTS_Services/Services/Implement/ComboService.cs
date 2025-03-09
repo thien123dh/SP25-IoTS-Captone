@@ -85,7 +85,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     IotDeviceId = item.IotDeviceId,
                     DeviceName = item.IotDeviceNavigation.Name,
                     DeviceSummary = item.IotDeviceNavigation.Summary,
-                    OriginalPrice = item.IotDeviceNavigation.Price
+                    OriginalPrice = item.IotDeviceNavigation.Price,
+                    ImageUrl = item.IotDeviceNavigation.ImageUrl
                 }).ToList();
 
             return res;
