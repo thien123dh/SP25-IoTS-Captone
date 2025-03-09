@@ -13,10 +13,12 @@ using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Org.BouncyCastle.Asn1.X9;
+using Org.BouncyCastle.Pqc.Crypto.Lms;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
 using static CaptoneProject_IOTS_BOs.Constant.EntityTypeConst;
@@ -97,12 +99,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     contactPhone = orderInfo?.ContactNumber ?? "";
                     notes = orderInfo?.Notes ?? "";
                     provinceId = orderInfo?.ProvinceId ?? 0;
-                    provinceName = orderInfo?.ProvinceName ?? "";
                     districtId = orderInfo?.DistrictId ?? 0;
-                    districtName = orderInfo?.DistrictName ?? "";
                     wardId = orderInfo?.WardId ?? 0;
-                    wardName = orderInfo?.WardName ?? "";
-                    fullAddress = orderInfo?.FullAddress ?? "";
                 }
                 catch (FormatException)
                 {
@@ -160,26 +158,39 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var orderReturnPaymentDTO = new OrderReturnPaymentDTO
             {
+                PaymentUrl = "The order has been successfully paid.",
                 ApplicationSerialNumber = createTransactionPayment.ApplicationSerialNumber,
                 TotalPrice = createTransactionPayment.TotalPrice,
                 ProvinceId = createTransactionPayment.ProvinceId,
-                ProvinceName = provinceName,
                 DistrictId = createTransactionPayment.DistrictId,
-                DistrictName = districtName,
                 WardId = createTransactionPayment.WardId,
-                WardName = wardName,
                 Address = createTransactionPayment.Address,
                 ContactNumber = createTransactionPayment.ContactNumber,
                 Notes = createTransactionPayment.Notes,
                 CreateDate = createTransactionPayment.CreateDate,
                 OrderStatusId = createTransactionPayment.OrderStatusId
             };
-/*            await _unitOfWork.CartRepository.RemoveAsync(selectedItems);
-            await _unitOfWork.CartRepository.SaveAsync();*/
+
+            // Lấy danh sách tỉnh
+            var provinces = await _ghtkService.SyncProvincesAsync();
+            var province = provinces.FirstOrDefault(p => p.Id == createTransactionPayment.ProvinceId);
+            orderReturnPaymentDTO.ProvinceName = province?.Name ?? "Not found";
+
+            // Lấy danh sách quận/huyện
+            var districts = await _ghtkService.SyncDistrictsAsync(createTransactionPayment.ProvinceId);
+            var district = districts.FirstOrDefault(d => d.Id == createTransactionPayment.DistrictId);
+            orderReturnPaymentDTO.DistrictName = district?.Name ?? "Not found";
+
+            // Lấy danh sách phường/xã
+            var wards = await _ghtkService.SyncWardsAsync(createTransactionPayment.DistrictId);
+            var ward = wards.FirstOrDefault(w => w.Id == createTransactionPayment.WardId);
+            orderReturnPaymentDTO.WardName = ward?.Name ?? "Not found";
+
+            await _unitOfWork.CartRepository.RemoveAsync(selectedItems);
+            await _unitOfWork.CartRepository.SaveAsync();
             return new GenericResponseDTO<OrderReturnPaymentDTO>
             {
                 IsSuccess = true,
-                Message = "Đơn hàng đã được thanh toán thành công.",
                 Data = orderReturnPaymentDTO
             };
         }
@@ -199,6 +210,20 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var address = payload.Address;
             var contactPhone = payload.ContactNumber;
             var notes = payload.Notes;
+                if (address.Length > 70)
+                {
+                    throw new ArgumentException("Address cannot exceed 70 characters.");
+                }
+
+                if (!Regex.IsMatch(contactPhone, @"^0\d{9}$"))
+                {
+                    throw new ArgumentException("Contact phone must be a 10-digit number starting with 0.");
+                }
+
+                if (notes.Length > 100)
+                {
+                    throw new ArgumentException("Notes cannot exceed 100 characters.");
+                }
 
                 var provinces = await _ghtkService.SyncProvincesAsync();
                 var province = provinces.FirstOrDefault(p => p.Id == payload.ProvinceId);
@@ -252,15 +277,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     ContactNumber = contactPhone,
                     Notes = notes,
                     ProvinceId = province.Id,
-                    ProvinceName = province.Name,
-
                     DistrictId = district.Id,
-                    DistrictName = district.Name,
-
                     WardId = ward.Id,
-                    WardName = ward.Name,
-
-                    FullAddress = $"{payload.Address}, {ward.Name}, {district.Name}, {province.Name}"
                 };
 
 
@@ -269,8 +287,27 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 string vnp_TmnCode = "2BF25S7Y";
                 string vnp_HashSecret = "UWEORVE5ULXN8YNCLM16TFK1FWPQ0SA9";
 
+                // Chuyển đổi orderInfo thành JSON
                 string orderInfoJson = JsonConvert.SerializeObject(orderInfo);
+                Console.WriteLine("OrderInfo JSON: " + orderInfoJson);
+
+                // Mã hóa Base64
                 string encryptedOrderInfo = Convert.ToBase64String(Encoding.UTF8.GetBytes(orderInfoJson));
+                Console.WriteLine("Encoded OrderInfo (Base64): " + encryptedOrderInfo);
+                if (orderInfoJson.Length > 255) // VNPay có thể giới hạn 255 ký tự
+                {
+                    Console.WriteLine("⚠️ OrderInfo quá dài, cần rút gọn!");
+                }
+                // Giải mã lại để kiểm tra
+                try
+                {
+                    string decodedOrderInfo = Encoding.UTF8.GetString(Convert.FromBase64String(encryptedOrderInfo));
+                    Console.WriteLine("Decoded OrderInfo: " + decodedOrderInfo);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error when decoding Base64: " + ex.Message);
+                }
 
                 if (string.IsNullOrEmpty(vnp_TmnCode) || string.IsNullOrEmpty(vnp_HashSecret))
                 {
@@ -278,15 +315,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 }
 
                 // Fix cứng số tiền theo loại thanh toán
-                var amounts = ((long)totalPrice * 100).ToString();
                 var vnp_TxnRef = $"{loginUserId}{DateTime.Now:HHmmss}";
-                var vnp_Amount = amounts;
+                long vnp_Amount = (long)(totalPrice * 100);
 
                 var vnpay = new VnPayLibrary();
                 vnpay.AddRequestData("vnp_Version", "2.1.0");
                 vnpay.AddRequestData("vnp_Command", "pay");
                 vnpay.AddRequestData("vnp_TmnCode", vnp_TmnCode);
-                vnpay.AddRequestData("vnp_Amount", vnp_Amount);
+                vnpay.AddRequestData("vnp_Amount", vnp_Amount.ToString());
                 TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
                 DateTime vietnamTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
                 vnpay.AddRequestData("vnp_CreateDate", vietnamTime.AddMinutes(-20).ToString("yyyyMMddHHmmss"));

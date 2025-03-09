@@ -26,8 +26,6 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderDTO
         public string DistrictName { set; get; }
         public int WardId { set; get; }
         public string WardName { set; get; }
-        public string FullAddress { set; get; }
-
         public string ContactNumber { set; get; } = "";
 
         public string Notes { set; get; }
