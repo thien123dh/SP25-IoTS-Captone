@@ -1,5 +1,7 @@
 ﻿using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.Constant;
+using CaptoneProject_IOTS_BOs.DTO.AddressDTO;
+using CaptoneProject_IOTS_BOs.DTO.OrderDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.StoreDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserDTO;
@@ -33,6 +35,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly StoreRepository _storeRepository;
         private readonly StoreAttachmentRepository _storeAttachmentRepository;
         private readonly BusinessLicenseRepository businessLicenseRepository;
+        private readonly IGHTKService _ghtkService;
         public StoreService (MyHttpAccessor _myHttpAccessor,
             IUserRequestService _userRequestService,
             UserRequestRepository _userRequestRepository,
@@ -40,7 +43,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             UserRepository _userRepository,
             StoreRepository storeRepository,
             StoreAttachmentRepository storeAttachmentRepository,
-            BusinessLicenseRepository businessLicenseRepository)
+            BusinessLicenseRepository businessLicenseRepository,
+            IGHTKService ghtkService)
         {
             this._myHttpAccessor = _myHttpAccessor;
             this._userRequestService = _userRequestService;
@@ -50,11 +54,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             this._storeRepository = storeRepository;
             this._storeAttachmentRepository = storeAttachmentRepository;
             this.businessLicenseRepository = businessLicenseRepository;
+            this._ghtkService = ghtkService;
         }
 
         private async Task<GenericResponseDTO<StoreDetailsResponseDTO>> GetDetailsStoreById(int storeId)
         {
-            Store store = _storeRepository.GetById(storeId);
+            var store = _storeRepository.GetById(storeId);
 
             if (store == null)
                 return new GenericResponseDTO<StoreDetailsResponseDTO>
@@ -64,20 +69,34 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     StatusCode = HttpStatusCode.NotFound
                 };
 
+            var res = StoreMapper.MapToStoreDetailsResponseDTO(store);
+
+            var provinces = await _ghtkService.SyncProvincesAsync();
+            var province = provinces.FirstOrDefault(p => p.Id == res.ProvinceId);
+            res.ProvinceName = province?.Name ?? "Not found";
+
+            var districts = await _ghtkService.SyncDistrictsAsync(res.ProvinceId);
+            var district = districts.FirstOrDefault(d => d.Id == res.DistrictId);
+            res.DistrictName = district?.Name ?? "Not found";
+
+            var wards = await _ghtkService.SyncWardsAsync(res.DistrictId);
+            var ward = wards.FirstOrDefault(w => w.Id == res.WardId);
+            res.WardName = ward?.Name ?? "Not found";
+
             return new GenericResponseDTO<StoreDetailsResponseDTO>
             {
                 IsSuccess = true,
                 Message = "Success",
                 StatusCode = HttpStatusCode.OK,
-                Data = StoreMapper.MapToStoreDetailsResponseDTO(store)
+                Data = res
             };
         }
 
         private async Task<ResponseDTO> CreateOrUpdateStoreAttachments(int storeId, List<StoreAttachmentRequestDTO>? payload)
         {
-            Store store = _storeRepository.GetById(storeId);
+            var store = _storeRepository.GetById(storeId);
 
-            List<StoreAttachment> dbList = store?.StoreAttachmentsNavigation?.ToList();
+            List<StoreAttachment>? dbList = store?.StoreAttachmentsNavigation?.ToList();
 
             int? loginUserId = _myHttpAccessor.GetLoginUserId();
 
@@ -153,6 +172,18 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 IsActive = 2 //Default is pending
             } : store;
 
+            var provinces = await _ghtkService.SyncProvincesAsync();
+            if (!provinces.Any(p => p.Id == payload.ProvinceId))
+                return ResponseService<StoreDetailsResponseDTO>.BadRequest("Invalid Province ID");
+
+            var districts = await _ghtkService.SyncDistrictsAsync(payload.ProvinceId);
+            if (!districts.Any(d => d.Id == payload.DistrictId))
+                return ResponseService<StoreDetailsResponseDTO>.BadRequest("Invalid District ID");
+
+            var wards = await _ghtkService.SyncWardsAsync(payload.DistrictId);
+            if (!wards.Any(w => w.Id == payload.WardId))
+                return ResponseService<StoreDetailsResponseDTO>.BadRequest("Invalid Ward ID");
+
             //Set data 
             store.Name = payload.Name;
             store.Description = payload.Description;
@@ -163,6 +194,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             store.ContactNumber = payload.ContactNumber;
             store.Summary = payload.Summary;
             store.Address = payload.Address;
+            store.WardId = payload.WardId;
+            store.DistrictId = payload.DistrictId;
+            store.ProvinceId = payload.ProvinceId;
             //
 
             if (store.Id > 0) //Update
@@ -277,7 +311,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 return ResponseService<UserResponseDTO>.BadRequest(e.Message);
             }
-
             return response;
         }
 
