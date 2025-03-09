@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static CaptoneProject_IOTS_BOs.Constant.ProductConst;
 
 namespace CaptoneProject_IOTS_Service.Services.Interface
 {
@@ -13,7 +14,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
     {
         public Task<GenericResponseDTO<IotDeviceDetailsDTO>> GetIotDeviceById(int id);
         public Task<GenericResponseDTO<IotDeviceDetailsDTO>> CreateOrUpdateIotDevice(int? id, CreateUpdateIotDeviceDTO payload);
-        public Task<GenericResponseDTO<PaginationResponseDTO<IotDeviceItem>>> GetPagination(int? filterStoreId, int? categoryFilterId, PaginationRequest payload);
+        public Task<GenericResponseDTO<PaginationResponseDTO<IotDeviceItem>>> GetPagination(int? filterStoreId, int? categoryFilterId, IotDeviceTypeEnum? deviceTypeFilter, PaginationRequest payload);
         public Task<GenericResponseDTO<IotDeviceDetailsDTO>> UpdateIotDeviceStatus(int id, int status);
     }
 }
