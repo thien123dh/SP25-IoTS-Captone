@@ -26,6 +26,19 @@ namespace CaptoneProject_IOTS_BOs.DTO.UserDTO
         public string Phone { get; set; }
 
         public string Address { get; set; }
+
+        public int ProvinceId { set; get; }
+
+        public string? ProvinceName { set; get; }
+
+        public int DistrictId { set; get; }
+
+        public string? DistrictName { set; get; }
+
+        public int WardId { set; get; }
+
+        public string? WardName { set; get; }
+
         public int? Gender { set; get; }
 
         public int? CreatedBy { get; set; }

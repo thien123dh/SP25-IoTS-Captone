@@ -1,4 +1,5 @@
-﻿using CaptoneProject_IOTS_BOs.Models;
+﻿using CaptoneProject_IOTS_BOs.DTO.AddressDTO;
+using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Service.Services.Implement;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using System;
@@ -15,27 +16,18 @@ namespace CaptoneProject_IOTS_Service.Mapper
         private readonly static IMapService<Store, StoreResponseDTO> storeResponseMapper = new MapService<Store, StoreResponseDTO>();
         public static StoreDetailsResponseDTO MapToStoreDetailsResponseDTO(Store store)
         {
-            return new StoreDetailsResponseDTO
+            var res = GenericMapper<Store, StoreDetailsResponseDTO>.MapTo(store);
+
+            res.StoreAttachments = store.StoreAttachmentsNavigation?.Select(sa => new StoreAttachmentResponseDTO
             {
-                Id = store.Id,
-                Name = store.Name,
-                Description = store.Description,
-                OwnerId = store.OwnerId,
-                ImageUrl = store.ImageUrl,
-                CreatedBy = store.CreatedBy,
-                CreatedDate = store.CreatedDate,
-                Summary = store.Summary,
-                ContactNumber = store.ContactNumber,
-                Address = store.Address,
-                StoreAttachments = store.StoreAttachmentsNavigation?.Select(sa => new StoreAttachmentResponseDTO
-                {
-                    Id = sa.Id,
-                    ImageUrl = sa.ImageUrl,
-                    CreatedDate = sa.CreatedDate,
-                    CreatedBy = sa.createdBy,
-                    StoreId = sa.StoreId
-                }).ToList()
-            };
+                Id = sa.Id,
+                ImageUrl = sa?.ImageUrl,
+                CreatedDate = sa?.CreatedDate,
+                CreatedBy = sa?.createdBy,
+                StoreId = sa.StoreId
+            }).ToList();
+
+            return res;
         }
 
         public static StoreResponseDTO MapToStoreResponse(Store source)
