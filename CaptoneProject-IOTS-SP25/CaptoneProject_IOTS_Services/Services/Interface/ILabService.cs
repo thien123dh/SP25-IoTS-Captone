@@ -22,7 +22,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         Task<GenericResponseDTO<List<LabVideoResponseDTO>>> GetLabVideoList(int labId);
 
         Task<GenericResponseDTO<List<LabVideoResponseDTO>>> CreateOrUpdateLabVideoList(int labId, List<CreateUpdateLabVideo> requestList);
-        Task<GenericResponseDTO<LabDetailsInformationResponseDTO>> ApproveOrRejectLab(int labId, RemarkDTO payload);
+        Task<GenericResponseDTO<LabDetailsInformationResponseDTO>> ApproveOrRejectLab(int labId, bool isApprove, RemarkDTO? payload = null);
         Task<GenericResponseDTO<LabDetailsInformationResponseDTO>> SubmitLabRequest(int labId);
 
         Task<bool> CheckPermissionToViewLabVideoList(int labId);

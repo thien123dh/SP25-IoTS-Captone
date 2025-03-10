@@ -45,7 +45,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var createdBy = labId == null ? loginUserId : lab?.CreatedBy;
             var createdDate = lab.CreatedDate;
-            var labStatus = lab.LabStatus;
+            var labStatus = lab.Status;
             var remark = lab.Remark;
             var rating = lab.Rating;
 
@@ -60,7 +60,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 lab.CreatedDate = createdDate;
                 lab.UpdatedDate = DateTime.Now;
                 lab.UpdatedBy = loginUserId;
-                lab.LabStatus = labStatus;
+                lab.Status = labStatus;
                 lab.Remark = remark;
                 lab.Rating = rating;
                 lab.ApplicationSerialNumber = GetApplicationSerialNumber((int)loginUserId, lab.SerialNumber);
@@ -102,7 +102,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var loginUserId = userServices.GetLoginUserId();
 
             //PERMISSION for anonymous or customer
-            if (await userServices.CheckLoginUserRole(RoleEnum.CUSTOMER) || loginUserId == null && lab.LabStatus != (int)LabStatusEnum.APPROVED)
+            if (await userServices.CheckLoginUserRole(RoleEnum.CUSTOMER) || loginUserId == null && lab.Status != (int)LabStatusEnum.APPROVED)
             {
                 throw new Exception(ExceptionMessage.LAB_NOTFOUND);
             }
@@ -111,8 +111,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 var res = GenericMapper<Lab, LabDetailsInformationResponseDTO>.MapTo(lab);
 
-                return res;
+                res.HasAbilityToViewPlaylist = await CheckPermissionToViewLabVideoList(res.Id);
 
+                return res;
             } catch
             {
                 throw new Exception("Error to get lab details information. Please try again");
@@ -132,9 +133,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     &&
                     (filterRequest.ComboId == null || filterRequest.ComboId == item.ComboId)
                     &&
-                    (loginUserId == item.CreatedBy || (loginUserId != item.CreatedBy && item.LabStatus != (int)LabStatusEnum.DRAFT))
+                    (loginUserId == item.CreatedBy || (loginUserId != item.CreatedBy && item.Status != (int)LabStatusEnum.DRAFT))
                     &&
-                    (filterRequest.LabStatus == null || (int)filterRequest.LabStatus == item.LabStatus)
+                    (filterRequest.LabStatus == null || (int)filterRequest.LabStatus == item.Status)
                 ),
                 orderBy: ob => ob.OrderByDescending(item => item.CreatedDate),
                 includeProperties: "ComboNavigation,ComboNavigation.StoreNavigation",
@@ -151,7 +152,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 CreatedDate = item?.CreatedDate,
                 Id = item.Id,
                 ImageUrl = item.ImageUrl,
-                LabStatus = item.LabStatus,
+                Status = item.Status,
                 Price = item.Price,
                 Rating = item.Rating,
                 StoreId = item.ComboNavigation.StoreId,
@@ -217,7 +218,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var lab = unitOfWork.LabRepository.GetById(labId);
 
-            
             if (isStore) //IF ROLE IS STORE
             {
                 if (lab == null)
@@ -241,7 +241,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         {
             var checkPermission = await CheckPermissionToViewLabVideoList(labId);
 
-            if (checkPermission)
+            if (!checkPermission)
                 return ResponseService<List<LabVideoResponseDTO>>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
 
             var labVideoList = unitOfWork.LabAttachmentRepository.GetByLabId(labId);
@@ -252,7 +252,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return ResponseService<List<LabVideoResponseDTO>>.OK(labVideoList?.Select(item => 
                 GenericMapper<LabAttachment, LabVideoResponseDTO>.MapTo(item)
             )?.ToList());
-
         }
 
         public async Task<GenericResponseDTO<List<LabVideoResponseDTO>>> CreateOrUpdateLabVideoList(int labId, List<CreateUpdateLabVideo> requestList)
@@ -307,9 +306,40 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
-        public Task<GenericResponseDTO<LabDetailsInformationResponseDTO>> ApproveOrRejectLab(int labId, RemarkDTO payload)
+        public async Task<GenericResponseDTO<LabDetailsInformationResponseDTO>> ApproveOrRejectLab(int labId, bool isApprove, RemarkDTO? payload = null)
         {
-            throw new NotImplementedException();
+            int? loginUserId = userServices.GetLoginUserId();
+
+            if (loginUserId == null)
+                return ResponseService<LabDetailsInformationResponseDTO>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
+
+            var lab = unitOfWork.LabRepository.GetById(labId);
+
+            if (lab == null)
+                return ResponseService<LabDetailsInformationResponseDTO>.NotFound(ExceptionMessage.LAB_NOTFOUND);
+
+            if (lab?.ComboNavigation?.CreatedBy != loginUserId)
+                return ResponseService<LabDetailsInformationResponseDTO>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
+
+            if (lab?.Status != (int)LabStatusEnum.PENDING_TO_APPROVE)
+                return ResponseService<LabDetailsInformationResponseDTO>.BadRequest("Playlist has been already approved or rejected. Please try again");
+
+            try
+            {
+                lab.Status = (isApprove) ? (int)LabStatusEnum.APPROVED : (int)LabStatusEnum.REJECTED;
+
+                lab.Remark = (!isApprove) ? payload?.Remark : lab.Remark;
+
+                lab = unitOfWork.LabRepository.Update(lab);
+            } catch
+            {
+                return ResponseService<LabDetailsInformationResponseDTO>.BadRequest("Cannot approve or reject the playlist. Please try again");
+
+            }
+
+            var res = await GetLabDetailsInformation(lab.Id);
+
+            return ResponseService<LabDetailsInformationResponseDTO>.OK(res);
         }
 
         public async Task<GenericResponseDTO<LabDetailsInformationResponseDTO>> SubmitLabRequest(int labId)
@@ -323,24 +353,22 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (lab.CreatedBy != loginUserId)
                 return ResponseService<LabDetailsInformationResponseDTO>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
 
-            if (lab.LabStatus != (int)LabStatusEnum.REJECTED && lab.LabStatus != (int)LabStatusEnum.DRAFT)
+            if (lab.Status != (int)LabStatusEnum.REJECTED && lab.Status != (int)LabStatusEnum.DRAFT)
                 return ResponseService<LabDetailsInformationResponseDTO>.BadRequest("Your request has already sent or approved. Please check again");
 
-            lab.LabStatus = (int)LabStatusEnum.PENDING_TO_APPROVE;
+            lab.Status = (int)LabStatusEnum.PENDING_TO_APPROVE;
 
             try
             {
                 lab = unitOfWork.LabRepository.Update(lab);
-
-
             } catch
             {
-
+                ResponseService<LabDetailsInformationResponseDTO>.BadRequest("Cannot save the Lab. Please try again");
             }
 
-            
+            var res = await GetLabDetailsInformation(lab.Id);
 
-            throw new NotImplementedException();
+            return ResponseService<LabDetailsInformationResponseDTO>.OK(res);
         }
     }
 }

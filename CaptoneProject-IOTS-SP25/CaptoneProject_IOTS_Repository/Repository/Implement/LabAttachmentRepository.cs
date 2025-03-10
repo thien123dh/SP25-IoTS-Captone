@@ -10,6 +10,7 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
         {
             return _dbSet
                 .Where(i => i.LabId == labId)
+                .OrderBy(i => i.OrderIndex)
                 .ToList();
         }
     }

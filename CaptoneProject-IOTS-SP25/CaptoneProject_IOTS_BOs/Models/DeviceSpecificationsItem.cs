@@ -21,7 +21,9 @@ namespace CaptoneProject_IOTS_BOs.Models
         [ForeignKey(nameof(DeviceSpecification))]
         public int DeviceSpecificationId { set; get; }
 
+        [ForeignKey(nameof(DeviceSpecificationId))]
         public virtual DeviceSpecification DeviceSpecification { set; get; }
+        
         public DateTime CreatedDate { set; get; }
     }
 }
