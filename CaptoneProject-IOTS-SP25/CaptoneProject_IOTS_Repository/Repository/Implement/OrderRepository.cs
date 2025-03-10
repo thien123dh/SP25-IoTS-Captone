@@ -27,5 +27,16 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
         {
             return _dbSet.AsQueryable();
         }
+        public async Task<List<Orders>> GetOrdersByStoreIdAsync(int storeId)
+        {
+            return await _dbSet
+                .Where(o => o.OrderItems.Any(oi => oi.SellerId == storeId))
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.IotsDevice) 
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Combo)  
+                .ToListAsync();
+        }
+
     }
 }
