@@ -249,10 +249,10 @@ public partial class IoTTraddingSystemContext : DbContext
                 .HasForeignKey(d => d.UpdatedBy)
                 .HasConstraintName("FK_IotsDevices_Users1");
 
-            //entity
-            //    .HasMany(d => d.DeviceSpecifications)
-            //    .WithOne(dS => dS.IotsDevice)
-            //    .HasForeignKey(dS => dS.IotDeviceId);
+            entity
+                .HasMany(d => d.DeviceSpecifications)
+                .WithOne(dS => dS.IotDevice)
+                .HasForeignKey(dS => dS.IotDeviceId);
         });
 
         modelBuilder.Entity<MaterialCategory>(entity =>

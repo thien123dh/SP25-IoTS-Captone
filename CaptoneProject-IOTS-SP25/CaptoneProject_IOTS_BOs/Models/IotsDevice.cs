@@ -88,6 +88,7 @@ public partial class IotsDevice
     public virtual User CreatedByNavigation { get; set; }
 
     public virtual User UpdatedByNavigation { get; set; }
+
     [JsonIgnore]
     public virtual IEnumerable<DeviceSpecification>? DeviceSpecifications { set; get; }
 }
