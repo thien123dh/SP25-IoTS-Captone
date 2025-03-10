@@ -51,5 +51,16 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
 
             return Ok(result);
         }
+
+        [HttpPost("get-order-by-store-id")]
+        public async Task<IActionResult> GetOrderByStoreId([FromQuery] int? OrderFilterId, [FromBody] PaginationRequest payload)
+        {
+            var result = await _orderService.getOrderByStoreId(null, payload);
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
     }
 }

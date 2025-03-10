@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace CaptoneProject_IOTS_BOs.Models
@@ -54,5 +55,9 @@ namespace CaptoneProject_IOTS_BOs.Models
 
         [Range(1, 15)]
         public int OrderStatusId { set; get; }
+
+        [JsonIgnore]
+
+        public virtual IEnumerable<OrderItem> OrderItems { set; get; }
     }
 }

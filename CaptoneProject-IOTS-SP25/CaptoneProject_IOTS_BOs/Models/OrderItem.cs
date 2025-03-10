@@ -18,14 +18,19 @@ namespace CaptoneProject_IOTS_BOs.Models
         [ForeignKey(nameof(Orders))]
         public int OrderId { set; get; }
 
+        public virtual Orders Order { set; get; }
+
         [ForeignKey(nameof(IotsDevice))]
         public int? IosDeviceId { set; get; }
+        public virtual IotsDevice IotsDevice { get; set; }
 
         [ForeignKey(nameof(Combo))]
         public int? ComboId { set; get; }
+        public virtual Combo Combo { get; set; }
 
         [ForeignKey(nameof(Lab))]
         public int? LabId { set; get; }
+        public virtual Lab Lab { get; set; }
 
         [ForeignKey(nameof(User))]
         public int SellerId { set; get; }
