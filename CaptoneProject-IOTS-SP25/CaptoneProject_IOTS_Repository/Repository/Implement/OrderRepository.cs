@@ -27,6 +27,12 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
         {
             return _dbSet.AsQueryable();
         }
+
+        public IQueryable<Orders> GetQueryable()
+        {
+            return _dbSet.AsQueryable();
+        }
+
         public async Task<List<Orders>> GetOrdersByStoreIdAsync(int storeId)
         {
             return await _dbSet

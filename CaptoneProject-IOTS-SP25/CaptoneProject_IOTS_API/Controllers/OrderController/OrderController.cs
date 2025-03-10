@@ -62,5 +62,16 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
 
             return Ok(result);
         }
+
+        [HttpPost("get-all-order-pagination")]
+        public async Task<IActionResult> GetAllOrdersPagination([FromQuery] int? OrderFilterId, [FromBody] PaginationRequest payload)
+        {
+            var result = await _orderService.GetAllOrdersPagination(null, payload);
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
     }
 }
