@@ -519,5 +519,59 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
 
         }
+
+        public async Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetAllOrdersPagination(int? filterOrderId, PaginationRequest payload)
+        {
+            try
+            {
+                /*var loginUser = userServices.GetLoginUser();*/
+
+                /*if (loginUser == null || !await userServices.CheckLoginUserRole(RoleEnum.ADMIN))
+                    return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.Unauthorize("You don't have permission to access");*/
+
+                var ordersQuery = _unitOfWork.OrderRepository.GetQueryable(); // Truy vấn cơ bản
+
+                // Lọc theo OrderId nếu có
+                if (filterOrderId.HasValue)
+                {
+                    ordersQuery = ordersQuery.Where(o => o.Id == filterOrderId);
+                }
+
+                int totalOrders = await ordersQuery.CountAsync();
+
+                var paginatedOrders = await ordersQuery
+                    .OrderByDescending(o => o.CreateDate)
+                    .Skip((payload.PageIndex - 1) * payload.PageSize)
+                    .Take(payload.PageSize)
+                    .ToListAsync();
+
+                var orderDTOs = paginatedOrders.Select(order => new OrderResponseDTO
+                {
+                    ApplicationSerialNumber = order.ApplicationSerialNumber,
+                    TotalPrice = order.TotalPrice,
+                    Address = order.Address,
+                    ContactNumber = order.ContactNumber,
+                    Notes = order.Notes,
+                    CreateDate = order.CreateDate,
+                    UpdatedDate = order.UpdatedDate,
+                    OrderStatusId = order.OrderStatusId
+                }).ToList();
+
+                var paginationResponse = new PaginationResponseDTO<OrderResponseDTO>
+                {
+                    Data = orderDTOs,
+                    TotalCount = totalOrders,
+                    PageIndex = payload.PageIndex,
+                    PageSize = payload.PageSize
+                };
+
+                return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.OK(paginationResponse);
+            }
+            catch (Exception ex)
+            {
+                return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.BadRequest("Cannot get orders. Please try again.");
+            }
+        }
+
     }
 }
