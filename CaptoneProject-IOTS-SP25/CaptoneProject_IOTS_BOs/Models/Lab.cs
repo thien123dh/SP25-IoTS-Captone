@@ -69,6 +69,6 @@ namespace CaptoneProject_IOTS_BOs.Models
         public decimal? Rating { set; get; } = 4;
 
         [Range(0, 10)]
-        public int LabStatus { set; get; } = (int)LabStatusEnum.DRAFT;
+        public int Status { set; get; } = (int)LabStatusEnum.DRAFT;
     }
 }

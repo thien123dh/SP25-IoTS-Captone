@@ -61,7 +61,8 @@ namespace CaptoneProject_IOTS_BOs.DTO.ProductDTO
 
         public decimal? Rating { set; get; } = 4;
 
-        public int LabStatus { set; get; }
+        public int Status { set; get; }
+        public bool HasAbilityToViewPlaylist { set; get; }
     }
 
     public class CreateUpdateLabInformationDTO
@@ -125,7 +126,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.ProductDTO
 
         public decimal? Rating { set; get; } = 4;
 
-        public int LabStatus { set; get; } = (int)LabStatusEnum.DRAFT;
+        public int Status { set; get; } = (int)LabStatusEnum.DRAFT;
     }
 
     public class LabVideoResponseDTO
