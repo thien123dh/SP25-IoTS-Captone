@@ -44,5 +44,11 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
                 .ToListAsync();
         }
 
+        public async Task<Orders> GetOrderByIdAsync(int orderId)
+        {
+            return await _dbSet
+                .Include(o => o.OrderItems) // Load OrderItems để tránh null
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+        }
     }
 }

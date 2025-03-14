@@ -12,6 +12,6 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         Task<List<Province>> SyncProvincesAsync();
         Task<List<District>> SyncDistrictsAsync(int provinceId);
         Task<List<Ward>> SyncWardsAsync(int districtId);
-
+        Task<bool> CreateShipmentAsync(int orderId);
     }
 }
