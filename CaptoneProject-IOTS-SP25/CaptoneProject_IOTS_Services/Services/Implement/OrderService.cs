@@ -516,8 +516,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 return ResponseService<PaginationResponseDTO<OrderResponseToStoreDTO>>.BadRequest("Cannot get orders. Please try again.");
             }
-
-
         }
 
         public async Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetAllOrdersPagination(int? filterOrderId, PaginationRequest payload)
@@ -573,5 +571,78 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
+        public async Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseToStoreDTO>>> getOrderByStoreIdHasStatusPending(int? filterOrderId, PaginationRequest payload)
+        {
+            try
+            {
+                var loginUser = userServices.GetLoginUser();
+
+                if (loginUser == null || !await userServices.CheckLoginUserRole(RoleEnum.STORE))
+                    return ResponseService<PaginationResponseDTO<OrderResponseToStoreDTO>>.Unauthorize("You don't have permission to access");
+
+                var storeId = loginUser.Id;
+
+                var orders = await _unitOfWork.OrderRepository.GetOrdersByStoreIdAsync(storeId);
+
+                if (orders == null || !orders.Any())
+                    return ResponseService<PaginationResponseDTO<OrderResponseToStoreDTO>>.NotFound("No orders found for this store.");
+
+                var filteredOrders = orders.Where(order =>
+                    (filterOrderId == null || order.Id == filterOrderId)
+                );
+
+                int totalOrders = filteredOrders.Count();
+
+                var paginatedOrders = filteredOrders
+                    .OrderByDescending(order => order.CreateDate)
+                    .Skip((payload.PageIndex - 1) * payload.PageSize)
+                    .Take(payload.PageSize)
+                    .ToList();
+
+                // Chuyển đổi danh sách Order thành OrderResponseToStoreDTO
+                var orderDTOs = paginatedOrders.Select(order => new OrderResponseToStoreDTO
+                {
+                    ApplicationSerialNumber = order.ApplicationSerialNumber,
+                    TotalPrice = order.TotalPrice,
+                    Address = order.Address,
+                    ContactNumber = order.ContactNumber,
+                    Notes = order.Notes,
+                    CreateDate = order.CreateDate,
+                    UpdatedDate = order.UpdatedDate,
+                    OrderStatusId = order.OrderStatusId,
+                    OrderDetails = order.OrderItems
+                        .Where(oi => oi.SellerId == storeId && oi.OrderItemStatus == 1)
+                        .Select(oi => new OrderIstemResponseToStoreDTO
+                        {
+                            Id = oi.Id,
+                            OrderId = oi.OrderId,
+                            IosDeviceId = oi.IosDeviceId,
+                            IosDeviceName = oi.IosDeviceId != null ? oi.IotsDevice.Name : null,
+                            ComboId = oi.ComboId,
+                            ComboName = oi.ComboId != null ? oi.Combo.Name : null,
+                            SellerId = oi.SellerId,
+                            ProductType = oi.ProductType,
+                            Quantity = oi.Quantity,
+                            Price = oi.Price,
+                            WarrantyEndDate = oi.WarrantyEndDate,
+                            OrderItemStatus = oi.OrderItemStatus
+                        }).ToList()
+                }).ToList();
+
+                var paginationResponse = new PaginationResponseDTO<OrderResponseToStoreDTO>
+                {
+                    Data = orderDTOs,
+                    TotalCount = totalOrders,
+                    PageIndex = payload.PageIndex,
+                    PageSize = payload.PageSize
+                };
+
+                return ResponseService<PaginationResponseDTO<OrderResponseToStoreDTO>>.OK(paginationResponse);
+            }
+            catch (Exception ex)
+            {
+                return ResponseService<PaginationResponseDTO<OrderResponseToStoreDTO>>.BadRequest("Cannot get orders. Please try again.");
+            }
+        }
     }
 }
