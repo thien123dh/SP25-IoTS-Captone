@@ -82,6 +82,8 @@ public partial class IotsDevice
     [Column("image_url")]
     public string? ImageUrl { set; get; }
 
+    public int WarrantyMonth { set; get; } = 0;
+
     public virtual Store StoreNavigation { get; set; }
     public virtual MaterialCategory Category { get; set; }
 

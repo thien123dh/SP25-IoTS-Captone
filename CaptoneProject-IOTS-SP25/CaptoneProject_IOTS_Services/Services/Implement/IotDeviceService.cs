@@ -181,6 +181,15 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
+        private IotDeviceItem BuildIotDeviceItem(IotsDevice source)
+        {
+            var res = GenericMapper<IotsDevice, IotDeviceItem>.MapTo(source);
+            res.CategoryName = source.Category.Label;
+            res.DeviceTypeLabel = (res.DeviceType == 1) ? "New" : "Second-hand";
+
+            return res;
+        }
+
         public async Task<GenericResponseDTO<PaginationResponseDTO<IotDeviceItem>>> GetPagination(int? filterStoreId, int? categoryFilterId, IotDeviceTypeEnum? deviceTypeFilter, PaginationRequest payload)
         {
             int? loginUserId = userServices.GetLoginUserId();
@@ -205,25 +214,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             res = res == null ? new PaginationResponseDTO<IotsDevice>() : res;
 
             return ResponseService<PaginationResponseDTO<IotDeviceItem>>.OK(
-                PaginationMapper<IotsDevice, IotDeviceItem>.MappingTo((res) => new IotDeviceItem
-                {
-                    Id = res.Id,
-                    DeviceType = res.DeviceType,
-                    DeviceTypeLabel = (res.DeviceType == 1) ? "New" : "Second-hand",
-                    CategoryId = res.CategoryId,
-                    CategoryName = res.Category.Label,
-                    ImageUrl = res.ImageUrl,
-                    Name = res.Name,
-                    Price = res.Price,
-                    Quantity = res.Quantity,
-                    SecondHandPrice = res.SecondHandPrice,
-                    SecondhandQualityPercent = res.SecondhandQualityPercent,
-                    StoreId = res.StoreId,
-                    StoreNavigationName = res.StoreNavigation.Name,
-                    StoreNavigationImageUrl = res.StoreNavigation.ImageUrl,
-                    Summary = res.Summary,
-                    IsActive = res.IsActive
-                }, res)
+                PaginationMapper<IotsDevice, IotDeviceItem>.MappingTo(BuildIotDeviceItem, res)
             );
         }
 
