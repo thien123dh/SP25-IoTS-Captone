@@ -1,5 +1,6 @@
 ﻿using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_Service.Services.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using static CaptoneProject_IOTS_BOs.Constant.ProductConst;
@@ -25,6 +26,18 @@ namespace CaptoneProject_IOTS_API.Controllers.FeedbackController
         )
         {
             var res = await ratingService.GetFeedbackPagination(productId, productType, payload);
+
+            return GetActionResult(res);
+        }
+
+        [HttpPost]
+        [Authorize]
+        [Route("report/get-pagination")]
+        public async Task<IActionResult> GetReportPagination(
+            [FromBody] PaginationRequest payload
+)
+        {
+            var res = await ratingService.GetReportPagination(payload);
 
             return GetActionResult(res);
         }

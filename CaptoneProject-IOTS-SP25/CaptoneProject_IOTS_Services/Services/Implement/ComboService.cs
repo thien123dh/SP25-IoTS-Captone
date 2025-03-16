@@ -51,13 +51,13 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 filter: item => (item.Name.Contains(request.SearchKeyword))
                     && ((isStore && item.StoreId == loginStoreId) || !isStore)
                     && ((isAnonymousOrCustomer && item.IsActive > 0) || !isAnonymousOrCustomer),
-                orderBy: ob => ob.OrderByDescending(item => item.Rating),
+                orderBy: ob => ob.OrderByDescending(item => item.Rating).OrderByDescending(item => item.CreatedDate),
                 includeProperties: "StoreNavigation",
                 pageIndex: request.PageIndex,
                 pageSize: request.PageSize
             );
 
-            var res = PaginationMapper<Combo, ComboItemDTO>.MappingTo(GenericMapper<Combo, ComboItemDTO>.MapTo, pagination);
+            var res = PaginationMapper<Combo, ComboItemDTO>.MapTo(GenericMapper<Combo, ComboItemDTO>.MapTo, pagination);
 
             return res;
         }

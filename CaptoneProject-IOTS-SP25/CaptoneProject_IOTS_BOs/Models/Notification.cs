@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 
 namespace CaptoneProject_IOTS_BOs.Models
 {
-    [Table("Notifications")]
     public partial class Notifications
     {
         [Key]
@@ -29,8 +28,7 @@ namespace CaptoneProject_IOTS_BOs.Models
         [Column("entity_type")]
         public int EntityType { set; get; }
 
-        [Column("created_date")]
-        public DateTime CreatedDate = DateTime.Now;
+        public DateTime? CreatedDate { set; get; } = DateTime.Now;
 
         [Column("receiver_id")]
         [ForeignKey(nameof(User))]
@@ -38,7 +36,9 @@ namespace CaptoneProject_IOTS_BOs.Models
 
         [Column("metadata")]
         [MaxLength(500)]
-        public string Metadata { set; get; }
+        public string? Metadata { set; get; }
+
+        public bool IsRead { set; get; } = false;
 
     }
 }

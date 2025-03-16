@@ -241,7 +241,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var subCartItems = unitOfWork.CartRepository.GetSubItemsListByUserId((int)loginUserId);
 
-            var res = PaginationMapper<CartItem, CartItemResponseDTO>.MappingTo((item) =>
+            var res = PaginationMapper<CartItem, CartItemResponseDTO>.MapTo((item) =>
             {
                 int? productId = (item.IosDeviceId == null) ? item.ComboId : item.IosDeviceId;
 
