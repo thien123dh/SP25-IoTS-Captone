@@ -56,6 +56,8 @@ namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
 
         public int? SecondhandQualityPercent { set; get; } = 0;
 
+        public int WarrantyMonth { set; get; } = 0;
+
         public List<AttachmentsModelDTO>? Attachments { set; get; }
         public List<DeviceSpecificationDTO>? DeviceSpecificationsList { set; get; }
     }
@@ -97,6 +99,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
 
         public int? IsActive { get; set; } = 1;
         public string? ImageUrl { set; get; }
+        public int WarrantyMonth { set; get; } = 0;
         public MaterialCategory? Category { set; get; }
         public Store? StoreNavigation { set; get; }
         public IEnumerable<AttachmentsModelDTO>? Attachments { set; get; }
@@ -126,5 +129,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
         public decimal? SecondHandPrice { set; get; }
         public int? SecondhandQualityPercent { set; get; }
         public decimal? Rating { set; get; }
+
+        public int WarrantyMonth { set; get; }
     }
 }

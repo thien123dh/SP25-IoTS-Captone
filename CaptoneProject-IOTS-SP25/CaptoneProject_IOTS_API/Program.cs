@@ -94,6 +94,7 @@ builder.Services.AddScoped<IComboService, ComboService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ILabService, LabService>();
 builder.Services.AddScoped<IOrderItemService, OrderItemService>();
+builder.Services.AddScoped<IRatingService, RatingService>();
 
 //GHTK sandbox
 builder.Services.AddHttpClient<IGHTKService, GHTKService>();

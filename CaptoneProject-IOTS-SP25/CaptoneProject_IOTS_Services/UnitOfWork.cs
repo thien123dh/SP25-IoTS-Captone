@@ -34,5 +34,7 @@ namespace CaptoneProject_IOTS_Service
         public virtual DistrictRepository DistrictRepository => new DistrictRepository();
         public virtual DeviceSpecificationRepository DeviceSpecificationRepository => new DeviceSpecificationRepository();
         public virtual DeviceSpecificationItemRepository DeviceSpecificationItemRepository => new DeviceSpecificationItemRepository();
+        public virtual FeedbackRepository FeedbackRepository => new FeedbackRepository();
+
     }
 }

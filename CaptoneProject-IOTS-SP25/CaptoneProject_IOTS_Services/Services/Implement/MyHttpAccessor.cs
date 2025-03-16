@@ -41,7 +41,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return userId;
         }
 
-        public User GetLoginUser()
+        public User? GetLoginUser()
         {
             int? userId = GetLoginUserId();
 
