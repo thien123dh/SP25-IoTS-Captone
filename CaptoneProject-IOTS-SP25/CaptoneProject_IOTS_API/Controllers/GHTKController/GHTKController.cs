@@ -1,4 +1,5 @@
-﻿using CaptoneProject_IOTS_Service.Services.Interface;
+﻿using CaptoneProject_IOTS_BOs.DTO.GHTKDTO;
+using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -36,5 +37,11 @@ namespace CaptoneProject_IOTS_API.Controllers.GHTKController
             return Ok(provinces);
         }
 
+        [HttpPost("calculate-fee")]
+        public async Task<IActionResult> CalculateShippingFee()
+        {
+            var result = await _ghtkService.CalculateShippingFeeAsync();
+            return Ok(result);
+        }
     }
 }

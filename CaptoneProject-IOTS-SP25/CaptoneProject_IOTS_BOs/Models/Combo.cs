@@ -50,6 +50,8 @@ namespace CaptoneProject_IOTS_BOs.Models
 
         public decimal Price { set; get; }
 
+        public int WarrantyMonth { set; get; } = 0;
+
         public DateTime CreatedDate { set; get; } = DateTime.Now;
 
         public DateTime UpdateDate { set; get; } = DateTime.Now;

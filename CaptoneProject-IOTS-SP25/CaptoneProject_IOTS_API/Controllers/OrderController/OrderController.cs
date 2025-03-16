@@ -63,6 +63,17 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
             return Ok(result);
         }
 
+        [HttpPost("get-order-by-store-id-has-status-order-pending")]
+        public async Task<IActionResult> GetOrderByStoreIdStatusOrderIsPending([FromQuery] int? OrderFilterId, [FromBody] PaginationRequest payload)
+        {
+            var result = await _orderService.getOrderByStoreIdHasStatusPending(null, payload);
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
         [HttpPost("get-all-order-pagination")]
         public async Task<IActionResult> GetAllOrdersPagination([FromQuery] int? OrderFilterId, [FromBody] PaginationRequest payload)
         {
