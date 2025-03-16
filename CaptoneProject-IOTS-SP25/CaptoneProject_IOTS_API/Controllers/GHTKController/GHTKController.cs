@@ -1,11 +1,10 @@
-﻿using CaptoneProject_IOTS_BOs.DTO.GHTKDTO;
-using CaptoneProject_IOTS_Service.Services.Interface;
+﻿using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CaptoneProject_IOTS_API.Controllers.GHTKController
 {
-    [Route("api/[controller]")]
+    [Route("api/ghtk")]
     [ApiController]
     public class GHTKController : ControllerBase
     {
@@ -16,32 +15,34 @@ namespace CaptoneProject_IOTS_API.Controllers.GHTKController
             _ghtkService = ghtkService;
         }
 
-        [HttpGet("provinces")]
-        public async Task<IActionResult> GetProvinces()
-        {
-            var provinces = await _ghtkService.SyncProvincesAsync();
-            return Ok(provinces);
-        }
 
-        [HttpGet("districts")]
-        public async Task<IActionResult> GetDistricts(int provinceId)
-        {
-            var provinces = await _ghtkService.SyncDistrictsAsync(provinceId);
-            return Ok(provinces);
-        }
-
-        [HttpGet("wards")]
-        public async Task<IActionResult> GetWards(int prodistrictId)
-        {
-            var provinces = await _ghtkService.SyncWardsAsync(prodistrictId);
-            return Ok(provinces);
-        }
 
         [HttpPost("calculate-fee")]
         public async Task<IActionResult> CalculateShippingFee()
         {
             var result = await _ghtkService.CalculateShippingFeeAsync();
             return Ok(result);
+        }
+
+        [HttpGet("{orderId}")]
+        public async Task<IActionResult> GetTrackingOrder(int orderId)
+        {
+            try
+            {
+                var trackingLabel = await _ghtkService.GetTrackingOrderAsync(orderId);
+
+                if (string.IsNullOrEmpty(trackingLabel))
+                {
+                    return NotFound($"Tracking label not found for Order ID: {orderId}");
+                }
+
+                return Ok(new { labelId = trackingLabel });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching tracking order {orderId}: {ex.Message}");
+                return StatusCode(500, "Internal server error while fetching tracking order.");
+            }
         }
     }
 }
