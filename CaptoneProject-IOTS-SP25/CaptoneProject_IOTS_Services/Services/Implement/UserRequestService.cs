@@ -1,6 +1,7 @@
 ﻿using Azure;
 using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.Constant;
+using CaptoneProject_IOTS_BOs.DTO.NotificationDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
@@ -19,6 +20,7 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using static CaptoneProject_IOTS_BOs.Constant.EntityTypeConst;
 using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
 using static CaptoneProject_IOTS_BOs.Constant.UserRequestConstant;
 using static System.Net.Mime.MediaTypeNames;
@@ -33,13 +35,15 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly IEmailService _emailService;
         private readonly IUserServices _userServices;
         private readonly IEnvironmentService environmentService;
+        private readonly INotificationService notificationService;
         public UserRequestService
         (
             UserRequestRepository userRequestRepository,
             IEmailService emailService,
             UserRepository userRepository,
             IUserServices _userServices,
-            IEnvironmentService environmentService
+            IEnvironmentService environmentService,
+            INotificationService notificationService
         )
         {
             this.userRequestRepository = userRequestRepository;
@@ -47,6 +51,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             this.userRepository = userRepository;
             this._userServices = _userServices;
             this.environmentService = environmentService;
+            this.notificationService = notificationService;
         }
 
         private string GenerateOTP()
@@ -156,7 +161,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             return ResponseService<Object>
                 .OK(PaginationMapper<UserRequest, UserRequestResponseDTO>
-                    .MappingTo(UserRequestMapper.MappingToUserRequestResponseDTO, paginationData));
+                    .MapTo(UserRequestMapper.MappingToUserRequestResponseDTO, paginationData));
             
         }
 
@@ -243,6 +248,35 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 userRequest.Status = isApprove > 0 ? (int)UserRequestStatusEnum.APPROVED : (int)UserRequestStatusEnum.REJECTED;
                 userRequest.Remark = remark;
                 userRequest = userRequestRepository.Update(userRequest);
+
+                var noti = new NotificationRequestDTO();
+
+                if (isApprove > 0)
+                {
+                    noti = new NotificationRequestDTO {
+                        Title = "Your user request has been approve. Welcome to Iot Trading Website",
+                        Content = "Your user request has been approve. Welcome to Iot Trading Website",
+                        EntityId = userRequest.Id,
+                        EntityType = (int)EntityTypeEnum.USER_REQUEST
+                    };
+                }
+                else
+                {
+                    noti = new NotificationRequestDTO
+                    {
+                        Title = "Your user request has been rejected. Please check the reason",
+                        Content = "Your user request has been rejected. Please check the reason",
+                        EntityId = userRequest.Id,
+                        EntityType = (int)EntityTypeEnum.USER_REQUEST
+                    };
+                }
+
+                var save = new List<NotificationRequestDTO>()
+                    {
+                        noti
+                    };
+
+                _ = notificationService.CreateUserNotification(save);
             }
             catch (Exception ex)
             {

@@ -256,7 +256,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             );
 
             return ResponseService<Object>
-                .OK(PaginationMapper<User, UserResponseDTO>.MappingTo(UserMapper.mapToUserResponse, source: response));
+                .OK(PaginationMapper<User, UserResponseDTO>.MapTo(UserMapper.mapToUserResponse, source: response));
         }
         
         //set id = 0 to create new

@@ -214,7 +214,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             res = res == null ? new PaginationResponseDTO<IotsDevice>() : res;
 
             return ResponseService<PaginationResponseDTO<IotDeviceItem>>.OK(
-                PaginationMapper<IotsDevice, IotDeviceItem>.MappingTo(BuildIotDeviceItem, res)
+                PaginationMapper<IotsDevice, IotDeviceItem>.MapTo(BuildIotDeviceItem, res)
             );
         }
 
