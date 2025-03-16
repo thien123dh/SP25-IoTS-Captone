@@ -143,7 +143,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 pageSize: paginationRequest.PageSize
             );
 
-            var res = PaginationMapper<Lab, LabItemDTO>.MappingTo(item => new LabItemDTO
+            var res = PaginationMapper<Lab, LabItemDTO>.MapTo(item => new LabItemDTO
             {
                 ApplicationSerialNumber = item.ApplicationSerialNumber,
                 ComboId = item.ComboId,

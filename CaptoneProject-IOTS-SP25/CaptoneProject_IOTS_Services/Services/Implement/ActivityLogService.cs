@@ -139,7 +139,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 IsSuccess = true,
                 Message = "Success",
                 StatusCode = System.Net.HttpStatusCode.OK,
-                Data = PaginationMapper<ActivityLog, ActivityLogResponseDTO>.MappingTo(ActivityLogMapper.mappingToActivityLogResponseDTO, pagination)
+                Data = PaginationMapper<ActivityLog, ActivityLogResponseDTO>.MapTo(ActivityLogMapper.mappingToActivityLogResponseDTO, pagination)
             };
         }
     }

@@ -36,7 +36,7 @@ public partial class IoTTraddingSystemContext : DbContext
     public virtual DbSet<BlogFeedback> BlogFeedbacks { get; set; }
 
     public virtual DbSet<BlogsCategory> BlogsCategories { get; set; }
-    
+
     public virtual DbSet<DeviceSpecification> DeviceSpecifications { set; get; }
 
     public virtual DbSet<DeviceSpecificationsItem> DeviceSpecificationsItems { set; get; }
@@ -69,9 +69,11 @@ public partial class IoTTraddingSystemContext : DbContext
 
     public virtual DbSet<Wallet> Wallets { set; get; }
 
-//    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-//#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-//        => optionsBuilder.UseSqlServer("Server=iotsystem-db.c7yqwgmomb93.ap-southeast-2.rds.amazonaws.com;Uid=admin;Pwd=Iottradingsystem;Database=IoT_Tradding_System; TrustServerCertificate=True");
+    public virtual DbSet<Report> Reports { set; get; }
+
+    //    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    //#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+    //        => optionsBuilder.UseSqlServer("Server=iotsystem-db.c7yqwgmomb93.ap-southeast-2.rds.amazonaws.com;Uid=admin;Pwd=Iottradingsystem;Database=IoT_Tradding_System; TrustServerCertificate=True");
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
@@ -103,50 +105,62 @@ public partial class IoTTraddingSystemContext : DbContext
                 .HasColumnName("title");
         });
 
+        modelBuilder.Entity<Report>(entity =>
+        {
+            entity.ToTable(nameof(Report));
+
+            entity.HasOne(item => item.OrderItem);
+        });
+
+        modelBuilder.Entity<Notifications>(entity =>
+        {
+            entity.ToTable(nameof(Notifications));
+        });
+
         modelBuilder.Entity<Blog>(entity =>
         {
-            entity.ToTable("Blog");
+        entity.ToTable("Blog");
 
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.BlogContent)
-                .HasMaxLength(1000)
-                .HasColumnName("blog_content");
-            entity.Property(e => e.CategoryId).HasColumnName("category_id");
-            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
-            entity.Property(e => e.CreatedDate)
-                .HasColumnType("datetime")
-                .HasColumnName("created_date");
-            entity.Property(e => e.IsActive).HasColumnName("is_active");
-            entity.Property(e => e.MetaData)
-                .HasMaxLength(500)
-                .HasColumnName("meta_data");
-            entity.Property(e => e.Title)
-                .HasMaxLength(500)
-                .HasColumnName("title");
-            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
-            entity.Property(e => e.UpdatedDate)
-                .HasColumnType("datetime")
-                .HasColumnName("updated_date");
+        entity.Property(e => e.Id).HasColumnName("id");
+        entity.Property(e => e.BlogContent)
+            .HasMaxLength(1000)
+            .HasColumnName("blog_content");
+        entity.Property(e => e.CategoryId).HasColumnName("category_id");
+        entity.Property(e => e.CreatedBy).HasColumnName("created_by");
+        entity.Property(e => e.CreatedDate)
+            .HasColumnType("datetime")
+            .HasColumnName("created_date");
+        entity.Property(e => e.IsActive).HasColumnName("is_active");
+        entity.Property(e => e.MetaData)
+            .HasMaxLength(500)
+            .HasColumnName("meta_data");
+        entity.Property(e => e.Title)
+            .HasMaxLength(500)
+            .HasColumnName("title");
+        entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
+        entity.Property(e => e.UpdatedDate)
+            .HasColumnType("datetime")
+            .HasColumnName("updated_date");
 
-            entity.HasOne(d => d.Category).WithMany(p => p.Blogs)
-                .HasForeignKey(d => d.CategoryId)
-                .HasConstraintName("FK_Blog_BlogsCategory");
+        entity.HasOne(d => d.Category).WithMany(p => p.Blogs)
+            .HasForeignKey(d => d.CategoryId)
+            .HasConstraintName("FK_Blog_BlogsCategory");
 
-            entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.BlogCreatedByNavigations)
-                .HasForeignKey(d => d.CreatedBy)
-                .HasConstraintName("FK_Blog_Users");
+        entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.BlogCreatedByNavigations)
+            .HasForeignKey(d => d.CreatedBy)
+            .HasConstraintName("FK_Blog_Users");
 
-            entity.HasOne(d => d.UpdatedByNavigation).WithMany(p => p.BlogUpdatedByNavigations)
-                .HasForeignKey(d => d.UpdatedBy)
-                .HasConstraintName("FK_Blog_Users1");
-        });
+        entity.HasOne(d => d.UpdatedByNavigation).WithMany(p => p.BlogUpdatedByNavigations)
+            .HasForeignKey(d => d.UpdatedBy)
+            .HasConstraintName("FK_Blog_Users1");
+    });
 
         modelBuilder.Entity<Feedback>(entity =>
         {
             entity.ToTable(nameof(Feedback));
 
             entity.HasOne(f => f.OrderItem);
-                
+
         });
 
         {
@@ -470,7 +484,7 @@ public partial class IoTTraddingSystemContext : DbContext
             });
 
             OnModelCreatingPartial(modelBuilder);
-        } 
+        }
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

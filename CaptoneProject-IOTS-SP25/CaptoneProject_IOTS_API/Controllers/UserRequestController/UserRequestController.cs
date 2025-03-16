@@ -95,7 +95,7 @@ namespace CaptoneProject_IOTS_API.Controllers.UserRequestController
 
             if (response.IsSuccess)
             {
-                await activityLogService.CreateUserHistoryTrackingActivityLog("Approved User Request", response?.Data?.userRequestInfo.Email, "Approved");
+                _ = activityLogService.CreateUserHistoryTrackingActivityLog("Approved User Request", response?.Data?.userRequestInfo.Email, "Approved");
             }
 
             return GetActionResult(response);
@@ -109,7 +109,7 @@ namespace CaptoneProject_IOTS_API.Controllers.UserRequestController
 
             if (response.IsSuccess)
             {
-                await activityLogService.CreateUserHistoryTrackingActivityLog("Rejected User Request", response?.Data?.userRequestInfo.Email, "Rejected");
+                _ = activityLogService.CreateUserHistoryTrackingActivityLog("Rejected User Request", response?.Data?.userRequestInfo.Email, "Rejected");
             }
 
             return GetActionResult(response);

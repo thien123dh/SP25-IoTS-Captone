@@ -1,14 +1,18 @@
 ﻿using CaptoneProject_IOTS_BOs;
+using CaptoneProject_IOTS_BOs.DTO.NotificationDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.StoreDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
 using CaptoneProject_IOTS_Service.Business;
 using CaptoneProject_IOTS_Service.Services.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OData;
 using System.Net;
+using System.Reflection;
+using static CaptoneProject_IOTS_BOs.Constant.EntityTypeConst;
 using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
 using static CaptoneProject_IOTS_BOs.Constant.UserRequestConstant;
 using static CaptoneProject_IOTS_BOs.DTO.StoreDTO.StoreDTO;
@@ -22,6 +26,7 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         private readonly IStoreService _storeService;
         private readonly IUserRequestService _userRequestService;
         private readonly IActivityLogService activityLogService;
+        private readonly INotificationService notificationService;
         private IActionResult GetActionResult(ResponseDTO response)
         {
             if (response.StatusCode == HttpStatusCode.Unauthorized)
@@ -41,11 +46,13 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         }
         public StoreController(IStoreService _storeService,
             IUserRequestService userRequestService,
-            IActivityLogService activityLogService)
+            IActivityLogService activityLogService,
+            INotificationService notificationService)
         {
             this._storeService = _storeService;
             this._userRequestService = userRequestService;
             this.activityLogService = activityLogService;
+            this.notificationService = notificationService;
         }
 
         [HttpPost("register-store-user")]
@@ -67,9 +74,26 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         }
 
         [HttpPost("submit-pending-to-approve-store-request/{requestId}")]
+        [Authorize]
         public async Task<IActionResult> SubmitPendingToApproveUserRequest(int requestId)
         {
             var res = await _userRequestService.UpdateUserRequestStatus(requestId, UserRequestStatusEnum.PENDING_TO_APPROVE);
+
+            if (res.IsSuccess)
+            {
+                var email = res?.Data?.userDetails?.Email;
+
+                _ = notificationService.CreateStaffManagerAdminNotification(
+                    new NotificationRequestDTO
+                    {
+                        Title = "{UserEmail} submit a store request account for you to approve".Replace("{UserEmail}", email),
+                        Content = "{UserEmail} submit a store request account for you to approve".Replace("{UserEmail}", email),
+                        EntityId = requestId,
+                        EntityType = (int)EntityTypeEnum.USER_REQUEST
+                    },
+                    RoleEnum.STAFF
+                ).ConfigureAwait(false);
+            }
 
             return GetActionResult(res);
         }
@@ -80,10 +104,10 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         {
             var response = await _storeService.CreateOrUpdateStoreByLoginUser(userId, payload);
 
-            if (response.IsSuccess)
-            {
-                activityLogService.CreateUserHistoryTrackingActivityLog("Update Store", response.Data.Name, "Update");
-            }
+            //if (response.IsSuccess)
+            //{
+            //    activityLogService.CreateUserHistoryTrackingActivityLog("Update Store", response.Data.Name, "Update");
+            //}
 
             return GetActionResult(response);
         }
