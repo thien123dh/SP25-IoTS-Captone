@@ -9,6 +9,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderDTO
 {
     public class OrderResponseToStoreDTO
     {
+        public int Id { set; get; }
         public string ApplicationSerialNumber { set; get; }
 
         public decimal TotalPrice { set; get; } = 0;

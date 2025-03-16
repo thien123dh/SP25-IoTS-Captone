@@ -526,6 +526,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 // Chuyển đổi danh sách Order thành OrderResponseToStoreDTO
                 var orderDTOs = paginatedOrders.Select(order => new OrderResponseToStoreDTO
                 {
+                    Id = order.Id,
                     ApplicationSerialNumber = order.ApplicationSerialNumber,
                     TotalPrice = order.TotalPrice,
                     Address = order.Address,
