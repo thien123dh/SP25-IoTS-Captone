@@ -6,7 +6,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace CaptoneProject_IOTS_BOs.DTO.AddressDTO
+namespace CaptoneProject_IOTS_BOs.DTO.GHTKDTO
 {
     public class GHTKProvinceResponse
     {

@@ -1,4 +1,6 @@
-﻿using CaptoneProject_IOTS_BOs.DTO.AddressDTO;
+﻿using CaptoneProject_IOTS_BOs;
+using CaptoneProject_IOTS_BOs.DTO.AddressDTO;
+using CaptoneProject_IOTS_BOs.DTO.GHTKDTO;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.Extensions.Configuration;
@@ -8,8 +10,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Reflection.Metadata;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace CaptoneProject_IOTS_Service.Services.Implement
 {
@@ -26,13 +31,58 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             this._unitOfWork ??= unitOfWork;
         }
 
+        public async Task<ResponseDTO> CalculateShippingFeeAsync()
+        {
+            try
+            {
+                var token = _configuration["GHTK:Token"];
+                var baseUrl = "https://services-staging.ghtklab.com";
+
+                // Mã hóa URL để tránh lỗi ký tự đặc biệt
+                var pickProvince = HttpUtility.UrlEncode("Thành Phố Hồ Chí Minh");
+                var pickDistrict = HttpUtility.UrlEncode("Thành Phố Thủ Đức");
+                var province = HttpUtility.UrlEncode("Thành Phố Hồ Chí Minh");
+                var district = HttpUtility.UrlEncode("Quận 1");
+                var address = HttpUtility.UrlEncode("Phường Bến Nghé");
+                var weight = 1000;
+                var value = 3000000;
+                var deliverOption = "xteam";
+
+                // Đưa tất cả tham số vào URL
+                var url = $"{baseUrl}/services/shipment/fee?" +
+                          $"pick_province={pickProvince}&pick_district={pickDistrict}&" +
+                          $"province={province}&district={district}&address={address}&" +
+                          $"weight={weight}&value={value}&deliver_option={deliverOption}";
+
+                // Thêm Token vào Header
+                if (!_httpClient.DefaultRequestHeaders.Contains("Token"))
+                {
+                    _httpClient.DefaultRequestHeaders.Add("Token", token);
+                }
+
+                // Gửi request
+                var response = await _httpClient.GetAsync(url);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                Console.WriteLine($"Status Code: {response.StatusCode}");
+                Console.WriteLine($"Response Body: {responseContent}");
+
+                return JsonConvert.DeserializeObject<ResponseDTO>(responseContent);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception in CalculateShippingFeeAsync: {ex.Message}");
+                return new ResponseDTO { IsSuccess = false, Message = "Lỗi khi tính phí vận chuyển" };
+            }
+        }
+
         public async Task<bool> CreateShipmentAsync(int orderId)
         {
             try
             {
                 var token = _configuration["GHTK:Token"];
                 var baseUrl = "https://services-staging.ghtklab.com";
-                var url = $"{baseUrl}/services/shipment/order/?ver=1.5";
+                var url = $"{baseUrl}/services/shipment/order/";
 
                 // Lấy order từ database
                 var order = await _unitOfWork.OrderRepository.GetOrderByIdAsync(orderId);
@@ -43,28 +93,54 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 {
                     products = order.OrderItems.Select(item => new
                     {
-                        name = item.ProductType,
+                        name = $"SP{item.ProductType}{DateTime.Now}",
                         weight = 0.5,
                         quantity = item.Quantity,
-                        price = item.Price
+                        price = (int)item.Price,
+                        product_code = $"SP{item.Id}{DateTime.Now}"
                     }).ToList(),
                     order = new
                     {
-                        id = order.Id,
-                        pick_address_id = 12345,
-                        name = order.ApplicationSerialNumber,
-                        address = order.Address,
-                        tel = order.ContactNumber,
-                        note = order.Notes,
-                        is_freeship = 1,
-                        value = order.TotalPrice
+                        id = $"{order.ApplicationSerialNumber}{DateTime.Now}",
+                        pick_name = "Don Noi Thanh",
+                        pick_address = order.Address,
+                        pick_province = "TP Hồ Chí Minh",
+                        pick_district = "Thành Phố Thủ Đức",
+                        pick_ward = "Phường Long Bình",
+                        pick_tel = $"0364463482",
+                        name = "GHTK - HCM - Noi Thanh",
+                        address = "123 nguyễn chí thanh",
+                        province = "TP. Hồ Chí Minh",
+                        district = "Quận 1",
+                        ward = "Phường Bến Nghé",
+                        tel = "0935402099",
+                        hamlet = "Khác",
+                        is_freeship = 0,
+                        pick_money = 0,
+                        note = $"{order.Notes}",
+                        value = (int)order.TotalPrice,
                     }
                 };
 
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                var response = await _httpClient.PostAsJsonAsync(url, requestData);
+                // Serialize JSON bằng Newtonsoft.Json
+                var jsonPayload = Newtonsoft.Json.JsonConvert.SerializeObject(requestData,
+                    Newtonsoft.Json.Formatting.Indented);
 
+                Console.WriteLine($"Request Payload:\n{jsonPayload}");
+
+                // Kiểm tra xem header đã tồn tại chưa
+                if (!_httpClient.DefaultRequestHeaders.Contains("Token"))
+                {
+                    _httpClient.DefaultRequestHeaders.Add("Token", token);
+                }
+
+                // Tạo nội dung request với application/json
+                var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+                // Gửi request
+                var response = await _httpClient.PostAsync(url, content);
                 var responseContent = await response.Content.ReadAsStringAsync();
+
                 Console.WriteLine($"GHTK API Response: {responseContent}");
 
                 if (response.IsSuccessStatusCode)
@@ -73,19 +149,22 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     foreach (var item in order.OrderItems)
                     {
                         item.OrderItemStatus = 2;
+                        await _unitOfWork.OrderDetailRepository.SaveAsync();
                     }
-                    await _unitOfWork.OrderDetailRepository.SaveAsync();
-
                     return true;
+                }
+                else
+                {
+                    Console.WriteLine($"GHTK API Error: {response.StatusCode} - {responseContent}");
                 }
             }
             catch (Exception ex)
             {
-                // Log lỗi nếu cần
+                Console.WriteLine($"Exception: {ex.Message}");
             }
             return false;
-        
         }
+
 
         public async Task<List<District>> SyncDistrictsAsync(int provinceId)
         {

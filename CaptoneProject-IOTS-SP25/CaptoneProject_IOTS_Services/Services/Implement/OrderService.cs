@@ -155,6 +155,28 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     OrderItemStatus = (int)OrderItemStatusEnum.PENDING
                 };
                 _unitOfWork.OrderDetailRepository.Create(orderDetail);
+
+                if (item.IosDeviceNavigation != null)
+                {
+                    var device = await _unitOfWork.IotsDeviceRepository.GetByIdAsync(item.IosDeviceNavigation.Id);
+                    if (device != null)
+                    {
+                        device.Quantity -= item.Quantity;
+                        if (device.Quantity < 0) device.Quantity = 0; // Đảm bảo không bị âm
+                        _unitOfWork.IotsDeviceRepository.Update(device);
+                    }
+                }
+
+                if (item.ComboNavigation != null)
+                {
+                    var combo = await _unitOfWork.ComboRepository.GetByIdAsync(item.ComboNavigation.Id);
+                    if (combo != null)
+                    {
+                        combo.Quantity -= item.Quantity;
+                        if (combo.Quantity < 0) combo.Quantity = 0;
+                        _unitOfWork.ComboRepository.Update(combo);
+                    }
+                }
             }
 
             var orderReturnPaymentDTO = new OrderReturnPaymentDTO
@@ -172,17 +194,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 OrderStatusId = createTransactionPayment.OrderStatusId
             };
 
-            // Lấy danh sách tỉnh
             var provinces = await _ghtkService.SyncProvincesAsync();
             var province = provinces.FirstOrDefault(p => p.Id == createTransactionPayment.ProvinceId);
             orderReturnPaymentDTO.ProvinceName = province?.Name ?? "Not found";
 
-            // Lấy danh sách quận/huyện
             var districts = await _ghtkService.SyncDistrictsAsync(createTransactionPayment.ProvinceId);
             var district = districts.FirstOrDefault(d => d.Id == createTransactionPayment.DistrictId);
             orderReturnPaymentDTO.DistrictName = district?.Name ?? "Not found";
 
-            // Lấy danh sách phường/xã
             var wards = await _ghtkService.SyncWardsAsync(createTransactionPayment.DistrictId);
             var ward = wards.FirstOrDefault(w => w.Id == createTransactionPayment.WardId);
             orderReturnPaymentDTO.WardName = ward?.Name ?? "Not found";
@@ -195,7 +214,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 Data = orderReturnPaymentDTO
             };
         }
-         
+
 
         public async Task<GenericResponseDTO<OrderReturnPaymentDTO>> CreateOrder(int? id, OrderRequestDTO payload, string returnUrl)
         {
@@ -203,14 +222,15 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 var loginUser = userServices.GetLoginUser();
 
-            if (loginUser == null || !await userServices.CheckLoginUserRole(RoleEnum.CUSTOMER))
-                return ResponseService<OrderReturnPaymentDTO>.Unauthorize("You don't have permission to access");
+                if (loginUser == null || !await userServices.CheckLoginUserRole(RoleEnum.CUSTOMER))
+                    return ResponseService<OrderReturnPaymentDTO>.Unauthorize("You don't have permission to access");
 
-            var loginUserId = loginUser.Id;
+                var loginUserId = loginUser.Id;
 
-            var address = payload.Address;
-            var contactPhone = payload.ContactNumber;
-            var notes = payload.Notes;
+                var address = payload.Address;
+                var contactPhone = payload.ContactNumber;
+                var notes = payload.Notes;
+
                 if (address.Length > 70)
                 {
                     throw new ArgumentException("Address cannot exceed 70 characters.");
@@ -241,37 +261,68 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 if (ward == null)
                     return ResponseService<OrderReturnPaymentDTO>.BadRequest("Invalid Ward ID");
 
-                // Lấy danh sách sản phẩm được chọn trong giỏ hàng
+                // Get the list of selected products in the cart
                 var selectedItems = await _unitOfWork.CartRepository
-                .GetQueryable((int)loginUserId)
-                .Where(item => item.CreatedBy == loginUserId && item.IsSelected)
-                .Include(item => item.IosDeviceNavigation)
-                .Include(item => item.ComboNavigation)
-                .ToListAsync();
+                    .GetQueryable((int)loginUserId)
+                    .Where(item => item.CreatedBy == loginUserId && item.IsSelected)
+                    .Include(item => item.IosDeviceNavigation)
+                    .Include(item => item.ComboNavigation)
+                    .ToListAsync();
 
-            if (selectedItems == null || !selectedItems.Any())
-            {
-                return new GenericResponseDTO<OrderReturnPaymentDTO>
+                if (selectedItems == null || !selectedItems.Any())
                 {
-                    IsSuccess = false,
-                    Message = "Giỏ hàng trống hoặc không có sản phẩm nào được chọn.",
-                    Data = null
-                };
-            }
+                    return new GenericResponseDTO<OrderReturnPaymentDTO>
+                    {
+                        IsSuccess = false,
+                        Message = "The cart is empty or no products have been selected.",
+                        Data = null
+                    };
+                }
 
-            var totalPrice = selectedItems.Sum(item =>
-                (((item.IosDeviceNavigation?.Price ?? 0m) * item.Quantity) + ((item.ComboNavigation?.Price ?? 0m) * item.Quantity))
-            );
+                var totalPrice = selectedItems.Sum(item =>
+                    (((item.IosDeviceNavigation?.Price ?? 0m) * item.Quantity) + ((item.ComboNavigation?.Price ?? 0m) * item.Quantity))
+                );
 
-            if (totalPrice <= 0)
-            {
-                return new GenericResponseDTO<OrderReturnPaymentDTO>
+                if (totalPrice <= 0)
                 {
-                    IsSuccess = false,
-                    Message = "Giá trị đơn hàng không hợp lệ.",
-                    Data = null
-                };
-            }
+                    return new GenericResponseDTO<OrderReturnPaymentDTO>
+                    {
+                        IsSuccess = false,
+                        Message = "Invalid order value.",
+                        Data = null
+                    };
+                }
+
+                foreach (var item in selectedItems)
+                {
+                    if (item.IosDeviceNavigation != null)
+                    {
+                        var device = await _unitOfWork.IotsDeviceRepository.GetByIdAsync(item.IosDeviceNavigation.Id);
+                        if (device == null || device.Quantity < item.Quantity)
+                        {
+                            return new GenericResponseDTO<OrderReturnPaymentDTO>
+                            {
+                                IsSuccess = false,
+                                Message = $"Product {device?.Name ?? "Unknown"} is out of stock.",
+                                Data = null
+                            };
+                        }
+                    }
+                    if (item.ComboNavigation != null)
+                    {
+                        var combo = await _unitOfWork.ComboRepository.GetByIdAsync(item.ComboNavigation.Id);
+                        if (combo == null || combo.Quantity < item.Quantity)
+                        {
+                            return new GenericResponseDTO<OrderReturnPaymentDTO>
+                            {
+                                IsSuccess = false,
+                                Message = $"Combo {combo?.Name ?? "Unknown"} is out of stock.",
+                                Data = null
+                            };
+                        }
+                    }
+                }
+
                 var orderInfo = new OrderInfo
                 {
                     Address = address,
@@ -282,24 +333,23 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     WardId = ward.Id,
                 };
 
-
                 string vnp_ReturnUrl = !string.IsNullOrEmpty(returnUrl) ? returnUrl : "https://localhost:44346/checkout-process-order";
                 string vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
                 string vnp_TmnCode = "2BF25S7Y";
                 string vnp_HashSecret = "UWEORVE5ULXN8YNCLM16TFK1FWPQ0SA9";
 
-                // Chuyển đổi orderInfo thành JSON
+                // Convert orderInfo to JSON
                 string orderInfoJson = JsonConvert.SerializeObject(orderInfo);
                 Console.WriteLine("OrderInfo JSON: " + orderInfoJson);
 
-                // Mã hóa Base64
+                // Encode to Base64
                 string encryptedOrderInfo = Convert.ToBase64String(Encoding.UTF8.GetBytes(orderInfoJson));
                 Console.WriteLine("Encoded OrderInfo (Base64): " + encryptedOrderInfo);
-                if (orderInfoJson.Length > 255) // VNPay có thể giới hạn 255 ký tự
+                if (orderInfoJson.Length > 255) // VNPay may have a 255-character limit
                 {
-                    Console.WriteLine("⚠️ OrderInfo quá dài, cần rút gọn!");
+                    Console.WriteLine("OrderInfo is too long, needs to be shortened!");
                 }
-                // Giải mã lại để kiểm tra
+                // Decode back to verify
                 try
                 {
                     string decodedOrderInfo = Encoding.UTF8.GetString(Convert.FromBase64String(encryptedOrderInfo));
@@ -315,7 +365,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     throw new Exception("Merchant code or secret key is missing.");
                 }
 
-                // Fix cứng số tiền theo loại thanh toán
+                // Generate transaction reference number
                 var vnp_TxnRef = $"{loginUserId}{DateTime.Now:HHmmss}";
                 long vnp_Amount = (long)(totalPrice * 100);
 
@@ -336,11 +386,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 vnpay.AddRequestData("vnp_TxnRef", vnp_TxnRef);
                 vnpay.AddRequestData("vnp_ExpireDate", vietnamTime.AddMinutes(5).ToString("yyyyMMddHHmmss"));
                 string paymentUrl = vnpay.CreateRequestUrl(vnp_Url, vnp_HashSecret);
+
                 return new GenericResponseDTO<OrderReturnPaymentDTO>
                 {
                     IsSuccess = true,
-                    Message = "Tạo đơn hàng thành công, vui lòng thanh toán.",
-                    Data = new OrderReturnPaymentDTO { PaymentUrl = paymentUrl } 
+                    Message = "Order created successfully, please proceed with payment.",
+                    Data = new OrderReturnPaymentDTO { PaymentUrl = paymentUrl }
                 };
             }
             catch (Exception ex)
