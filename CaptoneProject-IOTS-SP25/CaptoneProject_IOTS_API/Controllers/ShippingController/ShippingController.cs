@@ -4,6 +4,8 @@ using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Net.Http;
 
 namespace CaptoneProject_IOTS_API.Controllers.ShippingController
 {
@@ -12,10 +14,12 @@ namespace CaptoneProject_IOTS_API.Controllers.ShippingController
     public class ShippingController : ControllerBase
     {
         private readonly IGHTKService _shippingService;
+        private readonly HttpClient _httpClient;
 
-        public ShippingController(IGHTKService shippingService)
+        public ShippingController(IGHTKService shippingService, HttpClient httpClient)
         {
             _shippingService = shippingService;
+            _httpClient = httpClient;
         }
 
         [HttpPost("create/{orderId}")]
@@ -32,21 +36,17 @@ namespace CaptoneProject_IOTS_API.Controllers.ShippingController
 
 
         [HttpPost("get-fee")]
-        public async Task<IActionResult> GetFee([FromBody] ShippingFeeRequest request)
+        public async Task<IActionResult> GetShippingFeeAsync([FromBody] ShippingFeeRequest requestModel)
         {
-            if (request == null)
-            {
-                return BadRequest("Invalid request data.");
-            }
+            if (requestModel == null)
+                return BadRequest("Invalid request model");
 
-            var responseContent = await _shippingService.GetShippingFeeAsync(request);
+            var shippingFees = await _shippingService.GetShippingFeeAsync(requestModel);
 
-            if (string.IsNullOrWhiteSpace(responseContent))
-            {
-                return BadRequest("Không lấy được phí vận chuyển.");
-            }
+            if (shippingFees == null || !shippingFees.Any())
+                return NotFound("No shipping cost data available");
 
-            return Ok(responseContent);
+            return Ok(shippingFees);
         }
     }
 }

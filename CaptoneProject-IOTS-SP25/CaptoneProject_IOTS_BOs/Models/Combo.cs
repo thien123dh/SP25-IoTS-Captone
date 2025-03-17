@@ -48,6 +48,9 @@ namespace CaptoneProject_IOTS_BOs.Models
         [MaxLength(1000)]
         public string? ImageUrl { set; get; }
 
+        [Precision(10, 1)]
+        public decimal Weight { set; get; } = 0;
+
         public decimal Price { set; get; }
 
         public DateTime CreatedDate { set; get; } = DateTime.Now;
