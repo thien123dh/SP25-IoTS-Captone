@@ -18,7 +18,8 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderDTO
         public string ApplicationSerialNumber { set; get; }
 
         public decimal TotalPrice { set; get; } = 0;
-
+        public int AddressId { set; get; }
+        public string AddressName { set; get; }
         public string Address { set; get; } = "";
         public int ProvinceId { set; get; }
         public string ProvinceName { set; get; }

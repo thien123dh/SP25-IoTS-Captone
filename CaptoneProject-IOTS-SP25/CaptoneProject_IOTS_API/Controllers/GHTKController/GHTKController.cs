@@ -15,15 +15,6 @@ namespace CaptoneProject_IOTS_API.Controllers.GHTKController
             _ghtkService = ghtkService;
         }
 
-
-
-        [HttpPost("calculate-fee")]
-        public async Task<IActionResult> CalculateShippingFee()
-        {
-            var result = await _ghtkService.CalculateShippingFeeAsync();
-            return Ok(result);
-        }
-
         [HttpGet("{orderId}")]
         public async Task<IActionResult> GetTrackingOrder(int orderId)
         {

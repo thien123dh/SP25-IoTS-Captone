@@ -3,7 +3,7 @@ using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CaptoneProject_IOTS_API.Controllers.GHTKController
+namespace CaptoneProject_IOTS_API.Controllers.LocationController
 {
     [Route("api/location")]
     [ApiController]
@@ -37,11 +37,11 @@ namespace CaptoneProject_IOTS_API.Controllers.GHTKController
             return Ok(provinces);
         }
 
-        [HttpPost("calculate-fee")]
-        public async Task<IActionResult> CalculateShippingFee()
+        [HttpGet("address")]
+        public async Task<IActionResult> GetAddress(int prowardId)
         {
-            var result = await _ghtkService.CalculateShippingFeeAsync();
-            return Ok(result);
+            var provinces = await _ghtkService.SyncAddressAsync(prowardId);
+            return Ok(provinces);
         }
     }
 }

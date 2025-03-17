@@ -24,7 +24,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderDTO
         public int ProvinceId { set; get; }
         public int DistrictId { set; get; }
         public int WardId { set; get; }
-
+        public int AddressId { set; get; }
 
     }
 }
