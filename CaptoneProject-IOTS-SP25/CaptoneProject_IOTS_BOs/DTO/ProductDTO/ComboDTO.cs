@@ -85,6 +85,8 @@ namespace CaptoneProject_IOTS_BOs.DTO.ProductDTO
 
         public decimal Price { set; get; }
 
+        public decimal? Weight { set; get; }
+
         public DateTime CreatedDate { set; get; }
 
         public DateTime UpdateDate { set; get; }
@@ -133,6 +135,8 @@ namespace CaptoneProject_IOTS_BOs.DTO.ProductDTO
         [Required]
         [PositiveDecimalAttribute(ErrorMessage = "Price cannot be negative")]
         public decimal Price { set; get; }
+
+        public decimal Weight { set; get; } = 0;
         [Required]
         public List<CreateUpdateDeviceComboDTO> DeviceComboList { set; get; }
         [Required]

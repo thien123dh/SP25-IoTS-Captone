@@ -50,6 +50,7 @@ namespace CaptoneProject_IOTS_BOs.Models
 
         public decimal Price { set; get; }
 
+        public decimal? Weight { set; get; } = 0;
         public int WarrantyMonth { set; get; } = 0;
 
         public DateTime CreatedDate { set; get; } = DateTime.Now;

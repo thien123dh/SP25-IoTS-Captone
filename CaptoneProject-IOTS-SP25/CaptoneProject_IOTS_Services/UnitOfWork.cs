@@ -32,6 +32,7 @@ namespace CaptoneProject_IOTS_Service
         public virtual LabAttachmentRepository LabAttachmentRepository => new LabAttachmentRepository();
         public virtual LocationRepository LocationRepository => new LocationRepository();
         public virtual DistrictRepository DistrictRepository => new DistrictRepository();
+        public virtual WardRepository WardRepository => new WardRepository();
         public virtual DeviceSpecificationRepository DeviceSpecificationRepository => new DeviceSpecificationRepository();
         public virtual DeviceSpecificationItemRepository DeviceSpecificationItemRepository => new DeviceSpecificationItemRepository();
         public virtual FeedbackRepository FeedbackRepository => new FeedbackRepository();

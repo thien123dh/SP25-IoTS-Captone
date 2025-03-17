@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace CaptoneProject_IOTS_BOs.DTO.AddressDTO
 {
-    public class Ward
+    public class Address
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public int ProvinceId { get; set; }
+        public int WardId { get; set; }
     }
 
-    public class ApiWard
+    public class ApiAddress
     {
         public int Id { get; set; }
         public string name { get; set; }
