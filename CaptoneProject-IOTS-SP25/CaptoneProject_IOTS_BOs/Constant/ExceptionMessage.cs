@@ -39,6 +39,7 @@ namespace CaptoneProject_IOTS_BOs.Constant
         public static string MATERIAL_GROUP_CATEGORY_NOTFOUND = "Cannot find material group category";
 
         public static string MATERIAL_NOTFOUND = "Cannot find material";
+        public static string DEVICE_UPDATE_SUCCESS = "Upate successfully ";
 
         public static string LAB_NOTFOUND = "The playlist cannot be found. Please try again";
         public static string DEVICE_NOTFOUND = "Iot Device cannot be found. Please try again";

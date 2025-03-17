@@ -234,14 +234,16 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (loginUserId == null)
                 return ResponseService<IotDeviceDetailsDTO>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
 
-            var isAdminOrManager = await userServices.CheckLoginUserRole(RoleEnum.MANAGER) || await userServices.CheckLoginUserRole(RoleEnum.ADMIN);
+            var isAdmin = await userServices.CheckLoginUserRole(RoleEnum.ADMIN);
+            var isManager = await userServices.CheckLoginUserRole(RoleEnum.MANAGER);
+            var isStore = await userServices.CheckLoginUserRole(RoleEnum.STORE);
 
             var device = unitOfWork.IotsDeviceRepository.GetById(id);
 
             if (device == null)
                 return ResponseService<IotDeviceDetailsDTO>.NotFound(ExceptionMessage.DEVICE_NOTFOUND);
 
-            if (isAdminOrManager || device.CreatedBy == loginUserId)
+            if (isAdmin || isManager || isStore || device.CreatedBy == loginUserId)
             {
                 try
                 {
@@ -256,7 +258,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 }
             }
             
-            return ResponseService<IotDeviceDetailsDTO>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
+            return ResponseService<IotDeviceDetailsDTO>.Unauthorize(ExceptionMessage.DEVICE_UPDATE_SUCCESS);
         }
     }
 }

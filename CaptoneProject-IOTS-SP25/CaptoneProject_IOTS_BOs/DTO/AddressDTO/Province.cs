@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,8 +15,13 @@ namespace CaptoneProject_IOTS_BOs.DTO.AddressDTO
 
     public class ApiProvince
     {
-        public int code { get; set; }
-        public string name { get; set; }
-        public List<ApiDistrict> districts { get; set; }
+        [JsonProperty("id")]
+        public int Id { get; set; }
+
+        [JsonProperty("name")]
+        public string Name { get; set; }
+
+        [JsonProperty("parent_id")]
+        public int? ParentId { get; set; } 
     }
 }

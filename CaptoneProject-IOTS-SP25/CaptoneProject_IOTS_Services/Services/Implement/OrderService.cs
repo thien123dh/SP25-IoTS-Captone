@@ -84,7 +84,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             string encodedOrderInfo = vnpay.GetResponseData("vnp_OrderInfo");
 
             string address = "", contactPhone = "", notes = "";
-            int provinceId = 0, districtId = 0, wardId = 0;
+            int provinceId = 0, districtId = 0, wardId = 0, addressId = 0; 
             string provinceName = "", districtName = "", wardName = "", fullAddress = "";
 
             if (!string.IsNullOrEmpty(encodedOrderInfo))
@@ -97,6 +97,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     var orderInfo = JsonConvert.DeserializeObject<OrderInfo>(jsonString);
 
                     address = orderInfo?.Address ?? "";
+                    addressId = orderInfo?.AddressId ?? 0;
                     contactPhone = orderInfo?.ContactNumber ?? "";
                     notes = orderInfo?.Notes ?? "";
                     provinceId = orderInfo?.ProvinceId ?? 0;
@@ -128,6 +129,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 ProvinceId = provinceId,
                 DistrictId = districtId,
                 WardId = wardId,
+                AddressId = addressId,
                 ContactNumber = contactPhone,
                 Notes = notes,
                 CreateDate = DateTime.Now,
@@ -187,6 +189,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 ProvinceId = createTransactionPayment.ProvinceId,
                 DistrictId = createTransactionPayment.DistrictId,
                 WardId = createTransactionPayment.WardId,
+                AddressId = createTransactionPayment.AddressId,
                 Address = createTransactionPayment.Address,
                 ContactNumber = createTransactionPayment.ContactNumber,
                 Notes = createTransactionPayment.Notes,
@@ -205,6 +208,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var wards = await _ghtkService.SyncWardsAsync(createTransactionPayment.DistrictId);
             var ward = wards.FirstOrDefault(w => w.Id == createTransactionPayment.WardId);
             orderReturnPaymentDTO.WardName = ward?.Name ?? "Not found";
+
+            var list_address = await _ghtkService.SyncAddressAsync(createTransactionPayment.WardId);
+            var addressName = list_address.FirstOrDefault(w => w.Id == createTransactionPayment.AddressId);
+            orderReturnPaymentDTO.AddressName = addressName?.Name ?? "Not found";
 
             await _unitOfWork.CartRepository.RemoveAsync(selectedItems);
             await _unitOfWork.CartRepository.SaveAsync();
@@ -230,7 +237,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 var address = payload.Address;
                 var contactPhone = payload.ContactNumber;
                 var notes = payload.Notes;
-
                 if (address.Length > 70)
                 {
                     throw new ArgumentException("Address cannot exceed 70 characters.");
@@ -260,6 +266,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 var ward = wards.FirstOrDefault(w => w.Id == payload.WardId);
                 if (ward == null)
                     return ResponseService<OrderReturnPaymentDTO>.BadRequest("Invalid Ward ID");
+
+                var addresses = await _ghtkService.SyncAddressAsync(payload.WardId);
+                var addressid = addresses.FirstOrDefault(w => w.Id == payload.AddressId);
+                if (addressid == null)
+                    return ResponseService<OrderReturnPaymentDTO>.BadRequest("Invalid Address ID");
 
                 // Get the list of selected products in the cart
                 var selectedItems = await _unitOfWork.CartRepository
@@ -331,6 +342,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     ProvinceId = province.Id,
                     DistrictId = district.Id,
                     WardId = ward.Id,
+                    AddressId = addressid.Id
                 };
 
                 string vnp_ReturnUrl = !string.IsNullOrEmpty(returnUrl) ? returnUrl : "https://localhost:44346/checkout-process-order";

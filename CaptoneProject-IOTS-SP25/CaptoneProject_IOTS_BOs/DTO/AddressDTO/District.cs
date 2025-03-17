@@ -15,8 +15,8 @@ namespace CaptoneProject_IOTS_BOs.DTO.AddressDTO
 
     public class ApiDistrict
     {
-        public int code { get; set; }
+        public int id { get; set; }
         public string name { get; set; }
-        public List<ApiWard> wards { get; set; }
+        public int? parent_id { get; set; }
     }
 }
