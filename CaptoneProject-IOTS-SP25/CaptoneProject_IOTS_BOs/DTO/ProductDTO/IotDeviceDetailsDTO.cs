@@ -55,7 +55,6 @@ namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
         public decimal? SecondHandPrice { set; get; } = 0;
 
         public int? SecondhandQualityPercent { set; get; } = 0;
-
         public int WarrantyMonth { set; get; } = 0;
 
         public List<AttachmentsModelDTO>? Attachments { set; get; }
@@ -71,6 +70,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
         public string Summary { set; get; }
         public string Description { get; set; }
 
+        public decimal? Weight { set; get; }
         public int? CategoryId { get; set; }
 
         public string Manufacturer { get; set; }
