@@ -1,5 +1,6 @@
 ﻿using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.Constant;
+using CaptoneProject_IOTS_BOs.DTO.GHTKDTO;
 using CaptoneProject_IOTS_BOs.DTO.MaterialCategotyDTO;
 using CaptoneProject_IOTS_BOs.DTO.MaterialDTO;
 using CaptoneProject_IOTS_BOs.DTO.OrderDTO;
@@ -377,9 +378,37 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     throw new Exception("Merchant code or secret key is missing.");
                 }
 
+                //Get FeeShip + Total Amount 1 order
+                // Gọi API lấy phí ship
+                var shippingFees = await _ghtkService.GetShippingFeeAsync(new ShippingFeeRequest
+                {
+                    ProvinceId = payload.ProvinceId,
+                    DistrictId = payload.DistrictId,
+                    WardId = payload.WardId,
+                    AddressId = payload.AddressId,
+                    Address = payload.Address,
+                    deliver_option = "none"
+                });
+
+                // Lấy tổng phí ship
+                var totalShippingFee = shippingFees.FirstOrDefault(f => f.ShopOwnerId == 99)?.Fee ?? 0m;
+
+                var finalTotalPrice = totalPrice + totalShippingFee;
+
+
                 // Generate transaction reference number
                 var vnp_TxnRef = $"{loginUserId}{DateTime.Now:HHmmss}";
-                long vnp_Amount = (long)(totalPrice * 100);
+
+                long vnp_Amount = (long)(finalTotalPrice * 100);
+                if (finalTotalPrice <= 0)
+                {
+                    return new GenericResponseDTO<OrderReturnPaymentDTO>
+                    {
+                        IsSuccess = false,
+                        Message = "Invalid order value.",
+                        Data = null
+                    };
+                }
 
                 var vnpay = new VnPayLibrary();
                 vnpay.AddRequestData("vnp_Version", "2.1.0");
