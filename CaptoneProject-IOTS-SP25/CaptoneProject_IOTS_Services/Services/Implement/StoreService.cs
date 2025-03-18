@@ -1,6 +1,7 @@
 ﻿using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.AddressDTO;
+using CaptoneProject_IOTS_BOs.DTO.GHTKDTO;
 using CaptoneProject_IOTS_BOs.DTO.OrderDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.StoreDTO;
@@ -83,13 +84,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var ward = wards.FirstOrDefault(w => w.Id == res.WardId);
             res.WardName = ward?.Name ?? "Not found";
 
-            return new GenericResponseDTO<StoreDetailsResponseDTO>
-            {
-                IsSuccess = true,
-                Message = "Success",
-                StatusCode = HttpStatusCode.OK,
-                Data = res
-            };
+            var list_addressCustomer = await _ghtkService.SyncAddressAsync(res.WardId);
+            var addressNameCustomer = list_addressCustomer.FirstOrDefault(w => w.Id == res.AddressId);
+            res.AddressName = addressNameCustomer?.Name ?? "Not Found";
+
+            return ResponseService<StoreDetailsResponseDTO>.OK(res);
         }
 
         private async Task<ResponseDTO> CreateOrUpdateStoreAttachments(int storeId, List<StoreAttachmentRequestDTO>? payload)
@@ -165,7 +164,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (user == null)
                 return ResponseService<StoreDetailsResponseDTO>.NotFound(ExceptionMessage.USER_DOESNT_EXIST);
 
-            Store store = _storeRepository.GetByUserId(user.Id);
+            Store? store = _storeRepository.GetByUserId(user.Id);
 
             store = store == null ? new Store
             {
@@ -184,6 +183,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (!wards.Any(w => w.Id == payload.WardId))
                 return ResponseService<StoreDetailsResponseDTO>.BadRequest("Invalid Ward ID");
 
+            var list_addressCustomer = await _ghtkService.SyncAddressAsync(payload.WardId);
+            var addressNameCustomer = list_addressCustomer.FirstOrDefault(w => w.Id == payload.AddressId);
+            if (addressNameCustomer == null)
+                return ResponseService<StoreDetailsResponseDTO>.BadRequest("Invalid Ward Address ID");
+
             //Set data 
             store.Name = payload.Name;
             store.Description = payload.Description;
@@ -197,6 +201,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             store.WardId = payload.WardId;
             store.DistrictId = payload.DistrictId;
             store.ProvinceId = payload.ProvinceId;
+            store.AddressId = payload.AddressId;
             //
 
             if (store.Id > 0) //Update
