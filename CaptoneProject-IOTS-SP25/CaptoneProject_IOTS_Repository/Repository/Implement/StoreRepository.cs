@@ -23,5 +23,10 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
             return _dbSet.Include(s => s.StoreAttachmentsNavigation)
                 .FirstOrDefault(s => s.OwnerId == userId);
         }
+
+        public IQueryable<Store> GetQueryable()
+        {
+            return _dbSet.AsQueryable();
+        }
     }
 }

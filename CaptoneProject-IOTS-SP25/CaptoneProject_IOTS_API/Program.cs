@@ -101,6 +101,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddHttpClient<IGHTKService, GHTKService>();
 builder.Services.AddScoped<IGHTKService, GHTKService>();
 
+builder.Services.AddTransient<IGHTKService, GHTKService>();
 builder.Services.AddScoped<IFileService>(provider =>
 {
     var bucket = configuration.GetConnectionString("Firebase-Storage-Bucket");

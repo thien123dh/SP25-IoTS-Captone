@@ -16,7 +16,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         Task<List<Ward>> SyncWardsAsync(int districtId);
         Task<List<Address>> SyncAddressAsync(int wardId);
         Task<bool> CreateShipmentAsync(int orderId);
-        Task<string> GetShippingFeeAsync(ShippingFeeRequest requestModel);
+        Task<List<ShippingFeeResponse>> GetShippingFeeAsync(ShippingFeeRequest requestModel);
         Task<byte[]> PrintLabelAsync(string trackingOrder);
         Task<string> GetTrackingOrderAsync(int orderId);
     }
