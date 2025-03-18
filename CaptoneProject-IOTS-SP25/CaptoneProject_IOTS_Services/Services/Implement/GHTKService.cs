@@ -109,7 +109,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 foreach (var shopGroup in groupedShops)
                 {
                     var shopOwner = shopGroup.ShopOwner;
-                    var totalWeight = shopGroup.TotalWeight;
+                    var totalWeight = shopGroup.TotalWeight * 1000;
                     var totalPrice = (int)shopGroup.TotalPrice;
                     var shopAddress = await _unitOfWork.StoreRepository
                         .GetQueryable()
@@ -135,11 +135,15 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     var addressStore = addressesStore.FirstOrDefault(w => w.Id == shopAddress.AddressId);
                     var addressNameStore = addressStore?.Name ?? "Not found";
 
+                    var fullAddressStore = $"{shopAddress.Address ?? ""}, {addressNameStore ?? ""}".Trim();
+
                     var queryParams = $"?address={(requestModel.Address)}" +
                                       $"&province={Uri.EscapeDataString(ProvinceNameCustomer)}" +
                                       $"&district={Uri.EscapeDataString(DistrictNameCustomer)}" +
+                                      $"&address={Uri.EscapeDataString(AddressNameCustomer)}" +
                                       $"&pick_province={Uri.EscapeDataString(ProvinceNameStore)}" +
                                       $"&pick_district={Uri.EscapeDataString(districtNameStore)}" +
+                                      $"&pick_address={Uri.EscapeDataString(fullAddressStore)}" +
                                       $"&weight={totalWeight}" +
                                       $"&value={totalPrice}" +
                                       $"&deliver_option={requestModel.deliver_option}";
@@ -189,99 +193,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 return new List<ShippingFeeResponse> { new ShippingFeeResponse { Message = "System error" } };
             }
-        } 
+        }
 
-
-            /*public async Task<bool> CreateShipmentAsync(int orderId)
-            {
-                try
-                {
-                    var token = _configuration["GHTK:Token"];
-                    var baseUrl = "https://services-staging.ghtklab.com";
-                    var url = $"{baseUrl}/services/shipment/order/";
-
-                    // Lấy order từ database
-                    var order = await _unitOfWork.OrderRepository.GetOrderByIdAsync(orderId);
-                    if (order == null)
-                        return false;
-
-                    var requestData = new
-                    {
-                        products = order.OrderItems.Select(item => new
-                        {
-                            name = $"SP{item.ProductType}{DateTime.Now}",
-                            weight = 0.5,
-                            quantity = item.Quantity,
-                            price = (int)item.Price,
-                            product_code = $"SP{item.Id}{DateTime.Now}"
-                        }).ToList(),
-                        order = new
-                        {
-                            id = $"{order.ApplicationSerialNumber}{DateTime.Now}",
-                            pick_name = "Don Noi Thanh",
-                            pick_address = order.Address,
-                            pick_province = "TP Hồ Chí Minh",
-                            pick_district = "Thành Phố Thủ Đức",
-                            pick_ward = "Phường Long Bình",
-                            pick_tel = $"0364463482",
-                            name = "GHTK - HCM - Noi Thanh",
-                            address = "123 nguyễn chí thanh",
-                            province = "TP. Hồ Chí Minh",
-                            district = "Quận 1",
-                            ward = "Phường Bến Nghé",
-                            tel = "0935402099",
-                            hamlet = "Khác",
-                            is_freeship = 0,
-                            pick_money = 0,
-                            note = $"{order.Notes}",
-                            value = (int)order.TotalPrice,
-                        }
-                    };
-
-                    // Serialize JSON bằng Newtonsoft.Json
-                    var jsonPayload = Newtonsoft.Json.JsonConvert.SerializeObject(requestData,
-                        Newtonsoft.Json.Formatting.Indented);
-
-                    Console.WriteLine($"Request Payload:\n{jsonPayload}");
-
-                    // Kiểm tra xem header đã tồn tại chưa
-                    if (!_httpClient.DefaultRequestHeaders.Contains("Token"))
-                    {
-                        _httpClient.DefaultRequestHeaders.Add("Token", token);
-                    }
-
-                    // Tạo nội dung request với application/json
-                    var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-
-                    // Gửi request
-                    var response = await _httpClient.PostAsync(url, content);
-                    var responseContent = await response.Content.ReadAsStringAsync();
-
-                    Console.WriteLine($"GHTK API Response: {responseContent}");
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        // Cập nhật trạng thái OrderItem thành 2
-                        foreach (var item in order.OrderItems)
-                        {
-                            item.OrderItemStatus = 2;
-                            await _unitOfWork.OrderDetailRepository.SaveAsync();
-                        }
-                        return true;
-                    }
-                    else
-                    {
-                        Console.WriteLine($"GHTK API Error: {response.StatusCode} - {responseContent}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Exception: {ex.Message}");
-                }
-                return false;
-            }*/
-
-            public async Task<bool> CreateShipmentAsync(int orderId)
+        public async Task<List<ShipmentResponse>> CreateShipmentAsync(ShippingRequest requestModel)
         {
             try
             {
@@ -289,112 +203,175 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 var baseUrl = "https://services-staging.ghtklab.com";
                 var url = $"{baseUrl}/services/shipment/order/";
 
-                var order = await _unitOfWork.OrderRepository.GetOrderByIdAsync(orderId);
-
-                var provinceCusId = order.ProvinceId;
-                var districtCusId = order.DistrictId;
-                var wardCusId = order.WardId;
-
-                var provinceNameCustomer = await GetProvinceNameAsync(provinceCusId);
-                var districtNameCustomer = await GetDistrictNameAsync(districtCusId, provinceCusId);
-                var wardNameCustomer = await GetWardNameAsync(wardCusId,districtCusId);
-
-
-                if (order == null)
-                    return false;
-
                 var loginUser = _userServices.GetLoginUser();
-                if (loginUser == null || !await _userServices.CheckLoginUserRole(RoleEnum.STORE))
+                if (loginUser == null || !await _userServices.CheckLoginUserRole(RoleEnum.CUSTOMER))
+                    return new List<ShipmentResponse> { new ShipmentResponse { Message = "You don't have permission to access" } };
+
+                var loginUserId = loginUser.Id;
+
+                // Lấy danh sách sản phẩm trong giỏ hàng theo từng store
+                var selectedItems = await _unitOfWork.CartRepository
+                    .GetQueryable((int)loginUserId)
+                    .Where(item => item.CreatedBy == loginUserId && item.IsSelected)
+                    .Include(item => item.IosDeviceNavigation)
+                    .Include(item => item.ComboNavigation)
+                    .ToListAsync();
+
+                if (selectedItems == null || !selectedItems.Any())
                 {
-                    throw new UnauthorizedAccessException("You don't have permission to create shipment for this order.");
+                    return new List<ShipmentResponse> { new ShipmentResponse { Message = "The cart is empty or no products have been selected." } };
                 }
 
-                var storeId = loginUser.Id;
+                ////////////////////////////////////////////////// Information Customer////////////////////////////////////////////////////////////////////////////
 
-                // Retrieve store information from database (assuming it's in the Store table)
-                var store = await _unitOfWork.StoreRepository.GetByIdAsync(storeId);
-                if (store == null)
-                    throw new Exception("Store not found.");
+                var provincesCustomer = await SyncProvincesAsync();
+                var provinceCustomer = provincesCustomer.FirstOrDefault(p => p.Id == requestModel.ProvinceId);
+                if (provinceCustomer == null)
+                    return new List<ShipmentResponse> { new ShipmentResponse { Message = "Invalid Province ID" } };
+                var ProvinceNameCustomer = provinceCustomer?.Name ?? "Not found";
 
-                // Fetch province, district, and ward names using their IDs from the store
-                var provinceId = store.ProvinceId;
-                var districtId = store.DistrictId;
-                var wardId = store.WardId;
+                var districtsCustomer = await SyncDistrictsAsync(requestModel.ProvinceId);
+                var districtCustomer = districtsCustomer.FirstOrDefault(d => d.Id == requestModel.DistrictId);
+                if (districtCustomer == null)
+                    return new List<ShipmentResponse> { new ShipmentResponse { Message = "Invalid Province ID" } };
+                var DistrictNameCustomer = districtCustomer?.Name ?? "Not found";
 
-                var provinceNameStore = await GetProvinceNameAsync(provinceId);
-                var districtNameStore = await GetDistrictNameAsync(districtId, provinceId);
-                var wardNameStore = await GetWardNameAsync(wardId, districtId);
+                var wardsCustomer = await SyncWardsAsync(requestModel.DistrictId);
+                var wardCustomer = wardsCustomer.FirstOrDefault(w => w.Id == requestModel.WardId);
+                if (wardCustomer == null)
+                    return new List<ShipmentResponse> { new ShipmentResponse { Message = "Invalid Province ID" } };
+                var WardNameCustomer = wardCustomer?.Name ?? "Not found";
 
-                // Chỉ lấy OrderItems thuộc store của người dùng
-                var storeOrderItems = order.OrderItems.Where(item => item.SellerId == storeId).ToList();
-                if (storeOrderItems.Count == 0)
-                    return false;
+                var list_addressCustomer = await SyncAddressAsync(requestModel.WardId);
+                var addressNameCustomer = list_addressCustomer.FirstOrDefault(w => w.Id == requestModel.AddressId);
+                if (addressNameCustomer == null)
+                    return new List<ShipmentResponse> { new ShipmentResponse { Message = "Invalid Province ID" } };
+                var AddressNameCustomer = addressNameCustomer?.Name ?? "Not found";
 
-                var requestData = new
+
+                var groupedShops = selectedItems.GroupBy(item => item.SellerId)
+                    .Select(group => new
+                    {
+                        ShopOwner = group.Key,
+                        TotalWeight = group.Sum(item =>
+                        ((item.IosDeviceNavigation?.Weight ?? item.ComboNavigation?.Weight) ?? 0) * item.Quantity),
+                        TotalPrice = group.Sum(item =>
+                        (((item.IosDeviceNavigation?.Price ?? item.ComboNavigation?.Price) ?? 0) * item.Quantity)
+                    ),
+                        Items = group.ToList()
+                    })
+                    .ToList();
+
+                List<ShipmentResponse> shipments = new List<ShipmentResponse>();
+
+                foreach (var shopGroup in groupedShops)
                 {
-                    products = storeOrderItems.Select(item => new
+                    var shopOwner = shopGroup.ShopOwner;
+                    var totalWeight = shopGroup.TotalWeight * 1000;
+                    var totalPrice = (int)shopGroup.TotalPrice;
+
+                    var shopAddress = await _unitOfWork.StoreRepository
+                        .GetQueryable()
+                        .Where(s => s.Id == shopOwner)
+                        .Select(s => new { s.Address, s.ProvinceId, s.DistrictId, s.AddressId, s.WardId, s.Name, s.ContactNumber })
+                        .FirstOrDefaultAsync();
+
+                    if (shopAddress == null) continue;
+
+                    var provincesStore = await SyncProvincesAsync();
+                    var provinceStore = provincesStore.FirstOrDefault(p => p.Id == shopAddress.ProvinceId);
+                    var ProvinceNameStore = provinceStore?.Name ?? "Not found";
+
+                    var districtsStore = await SyncDistrictsAsync(shopAddress.ProvinceId);
+                    var districtStore = districtsStore.FirstOrDefault(d => d.Id == shopAddress.DistrictId);
+                    var districtNameStore = districtStore?.Name ?? "Not found";
+
+                    var wardsStore = await SyncWardsAsync(shopAddress.DistrictId);
+                    var wardStore = wardsStore.FirstOrDefault(w => w.Id == shopAddress.WardId);
+                    var wardnameStore = wardStore?.Name ?? "Not found";
+
+                    var addressesStore = await SyncAddressAsync(shopAddress.WardId);
+                    var addressStore = addressesStore.FirstOrDefault(w => w.Id == shopAddress.AddressId);
+                    var addressNameStore = addressStore?.Name ?? "Not found";
+
+                    var requestData = new
                     {
-                        name = $"SP{item.ProductType}{DateTime.Now}",
-                        weight = 0.5,
-                        quantity = item.Quantity,
-                        price = (int)item.Price,
-                        product_code = $"SP{item.Id}{DateTime.Now}"
-                    }).ToList(),
-                    order = new
+                        products = shopGroup.Items.Select(item => new
+                        {
+                            name = $"SP{item.IosDeviceNavigation?.Name ?? item.ComboNavigation?.Name}",
+                            weight = $"{((item.IosDeviceNavigation?.Weight ?? item.ComboNavigation?.Weight) ?? 0)}",
+                            quantity = $"{item.Quantity}",
+                            price = $"{(int)(item.IosDeviceNavigation?.Price ?? item.ComboNavigation?.Price)}",
+                            product_code = $"SP{item.Id}"
+                        }).ToList(),
+                        order = new
+                        {
+                            id = $"{Guid.NewGuid()}",
+                            pick_name = $"{shopAddress.Name}",
+                            pick_address = $"{addressNameStore}",
+                            pick_province = $"{ProvinceNameStore}",
+                            pick_district = $"{districtNameStore}",
+                            pick_ward = $"{wardnameStore}",
+                            pick_tel = $"{shopAddress.ContactNumber}",
+
+                            name = $"{loginUser.Fullname}",
+                            address = $"{AddressNameCustomer}",
+                            province = $"{ProvinceNameCustomer}",
+                            district = $"{DistrictNameCustomer}",
+                            ward = $"{WardNameCustomer}",
+                            street = $"{requestModel.Address}",
+                            tel = $"{loginUser.Phone}",
+                            email = $"{loginUser.Email}",
+                            hamlet = "Khác",
+
+                            is_freeship = 0,
+                            pick_money = 0,
+                            note = $"{requestModel.note}",
+                            value = (int)totalPrice
+                        }
+                    };
+
+                    var jsonPayload = Newtonsoft.Json.JsonConvert.SerializeObject(requestData, Newtonsoft.Json.Formatting.Indented);
+
+                    Console.WriteLine($"Request Payload:\n{jsonPayload}");
+
+                    if (!_httpClient.DefaultRequestHeaders.Contains("Token"))
                     {
-                        id = $"{order.ApplicationSerialNumber}{DateTime.Now}",
-                        order_id = $"{orderId}",
-                        pick_name = "Don Noi Thanh",
-                        pick_address = order.Address,
-                        pick_province = $"{provinceNameStore}",
-                        pick_district = $"{districtNameStore}",
-                        pick_ward = $"{wardNameStore}",
-                        pick_tel = $"{store.ContactNumber}",
-                        name = $"{order.ApplicationSerialNumber}",
-                        address = $"{store.Address}",
-                        province = $"{provinceNameCustomer}",
-                        district = $"{districtNameCustomer}",
-                        ward = $"{wardNameCustomer}",
-                        tel = $"{order.ContactNumber}",
-                        hamlet = "Khác",
-                        is_freeship = 0,
-                        pick_money = 0,
-                        note = $"{order.Notes}",
-                        value = (int)order.TotalPrice,
+                        _httpClient.DefaultRequestHeaders.Add("Token", token);
                     }
-                };
 
-                // Serialize and send request to GHTK API
-                var jsonPayload = Newtonsoft.Json.JsonConvert.SerializeObject(requestData, Newtonsoft.Json.Formatting.Indented);
-                var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+                    var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+                    var response = await _httpClient.PostAsync(url, content);
+                    var responseContent = await response.Content.ReadAsStringAsync();
 
-                var response = await _httpClient.PostAsync(url, content);
-                var responseContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"GHTK API Response: {responseContent}");
 
-                Console.WriteLine($"GHTK API Response: {responseContent}");
-
-                if (response.IsSuccessStatusCode)
-                {
-                    // Cập nhật trạng thái OrderItem thành 2
-                    foreach (var item in order.OrderItems)
+                    if (response.IsSuccessStatusCode)
                     {
-                        item.OrderItemStatus = 2;
-                        await _unitOfWork.OrderDetailRepository.SaveAsync();
+                        shipments.Add(new ShipmentResponse
+                        {
+                            ShopOwnerId = shopOwner,
+                            Message = "Shipment created successfully"
+                        });
                     }
-                    return true;
+                    else
+                    {
+                        shipments.Add(new ShipmentResponse
+                        {
+                            ShopOwnerId = shopOwner,
+                            Message = $"Error: {response.StatusCode} - {responseContent}"
+                        });
+                    }
                 }
-                else
-                {
-                    Console.WriteLine($"GHTK API Error: {response.StatusCode} - {responseContent}");
-                }
+
+                return shipments;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Exception: {ex.Message}");
+                return new List<ShipmentResponse> { new ShipmentResponse { Message = "System error" } };
             }
-            return false;
         }
-
 
         public async Task<string> GetTrackingOrderAsync(int orderId)
         {

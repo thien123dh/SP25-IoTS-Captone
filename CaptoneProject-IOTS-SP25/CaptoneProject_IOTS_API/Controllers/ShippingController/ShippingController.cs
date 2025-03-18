@@ -22,19 +22,6 @@ namespace CaptoneProject_IOTS_API.Controllers.ShippingController
             _httpClient = httpClient;
         }
 
-        [HttpPost("create/{orderId}")]
-        public async Task<IActionResult> CreateShipment(int orderId)
-        {
-
-            var success = await _shippingService.CreateShipmentAsync(orderId);
-            if (success)
-            {
-                return Ok(new { message = "Đơn hàng đã được gửi tới GHTK thành công." });
-            }
-            return BadRequest(new { message = "Không thể gửi đơn hàng tới GHTK." });
-        }
-
-
         [HttpPost("get-fee")]
         public async Task<IActionResult> GetShippingFeeAsync([FromBody] ShippingFeeRequest requestModel)
         {
