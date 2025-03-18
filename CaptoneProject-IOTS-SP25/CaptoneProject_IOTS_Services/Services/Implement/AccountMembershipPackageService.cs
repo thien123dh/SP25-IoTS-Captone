@@ -60,7 +60,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             return ResponseService<object>.OK(
                 unitOfWork.MembershipPackageRepository.GetAll().Where(
-                    item => (packageFor == null) || item.PackageFor == packageFor
+                    item => ((packageFor == null) || item.PackageFor == packageFor)
+                        && 
+                        item.IsActive > 0
                 ).ToList()
             );
         }

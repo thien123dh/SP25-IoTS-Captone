@@ -39,6 +39,17 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             this._userRepository = _userRepository;
             this.trainerBusinessLicensesRepository = trainerBusinessLicensesRepository;
         }
+        public async Task<ResponseDTO> CheckValidBusinessLicenseRequest(TrainerBusinessLicensesDTO payload, int? excludeId = null)
+        {
+            var checkExistBusinessNumber = trainerBusinessLicensesRepository.Search(
+                item => item.BusinessLicences.CompareTo(payload.BusinessLicences) == 0 && item.Id != excludeId
+            ).Any();
+
+            if (checkExistBusinessNumber)
+                return ResponseService<object>.BadRequest("Your business license is already used. Please try again");
+
+            return ResponseService<object>.OK(null);
+        }
 
         public async Task<GenericResponseDTO<TrainerBusinessLicense>> CreateOrUpdateTrainerBusinessLicences(TrainerBusinessLicensesDTO payload)
         {
@@ -61,11 +72,15 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             businessLicense.BackIdentification = payload.BackIdentification;
             businessLicense.FrontIdentification = payload.FrontIdentification;
             businessLicense.BusinessLicences = payload.BusinessLicences;
-            //businessLicense.LiscenseNumber = payload.LiscenseNumber;
             businessLicense.TrainerId = trainer.Id;
             businessLicense.IssueDate = payload.IssueDate;
             businessLicense.ExpiredDate = payload.ExpiredDate;
             businessLicense.IssueBy = payload.IssueBy;
+
+            var checkExist = await CheckValidBusinessLicenseRequest(payload, businessLicense.Id);
+
+            if (!checkExist.IsSuccess)
+                return ResponseService<TrainerBusinessLicense>.BadRequest(checkExist.Message);
 
             try
             {
