@@ -109,7 +109,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 {
                     var shopOwner = shopGroup.ShopOwner;
                     var totalWeight = shopGroup.TotalWeight;
-                    var totalPrice = shopGroup.TotalPrice;
+                    var totalPrice = (int)shopGroup.TotalPrice;
                     var shopAddress = await _unitOfWork.StoreRepository
                         .GetQueryable()
                         .Where(s => s.Id == shopOwner)
@@ -134,7 +134,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     var addressStore = addressesStore.FirstOrDefault(w => w.Id == shopAddress.AddressId);
                     var addressNameStore = addressStore?.Name ?? "Not found";
 
-                    var queryParams = $"?address={Uri.EscapeDataString(requestModel.Address)}" +
+                    var queryParams = $"?address={(requestModel.Address)}" +
                                       $"&province={Uri.EscapeDataString(ProvinceNameCustomer)}" +
                                       $"&district={Uri.EscapeDataString(DistrictNameCustomer)}" +
                                       $"&pick_province={Uri.EscapeDataString(ProvinceNameStore)}" +
