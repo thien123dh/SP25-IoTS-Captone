@@ -66,6 +66,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         CreatedDate = DateTime.Now,
                         SpecificationProperty = specItem?.SpecificationProperty,
                         SpecificationValue = specItem?.SpecificationValue,
+                        DeviceSpecificationId = saveSpec.Id
                     });
 
                     if (specItemsList != null)
