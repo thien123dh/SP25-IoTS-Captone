@@ -62,6 +62,26 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             };
 
         }
+
+        public async Task<ResponseDTO> CheckUserContactInformation(ContactInformationDTO contactInfo, int? excludeUserId = null)
+        {
+            var checkExistEmail = unitOfWork.UserRepository.Search(
+                item => item.Email == contactInfo.Email && item.Id != excludeUserId
+            ).Any();
+
+            if (checkExistEmail)
+                return ResponseService<object>.BadRequest("Your email is already used. Please try another email");
+
+            var checkExistPhone = unitOfWork.UserRepository.Search(
+                item => item.Phone == contactInfo.Phone && item.Id != excludeUserId
+            ).Any();
+
+            if (checkExistPhone)
+                return ResponseService<object>.BadRequest("Your mobile phone is already used. Please try another mobile phone");
+
+            return ResponseService<object>.OK(null);
+        }
+
         public async Task<GenericResponseDTO<UserResponseDTO>> GetUserLoginInfo()
         {
             int? loginUserId = GetLoginUserId();
@@ -264,11 +284,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         {
             User user = await unitOfWork.UserRepository.GetUserByEmail(payload.Email);
 
-            if (user != null)
-            {
-                return ResponseService<UserResponseDTO>.BadRequest(ExceptionMessage.USER_EXIST_EXCEPTION);
-            }
-
             int? loginUserId = GetLoginUserId();
 
             user = user == null ? new User() : user;
@@ -284,8 +299,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             user.UpdatedBy = loginUserId;
             user.UpdatedDate = DateTime.Now;
             user.Gender = (int)payload.Gender;
-            //Set Data
 
+            //Set Data
+            var checkExist = await CheckUserContactInformation(payload, user.Id);
+
+            if (!checkExist.IsSuccess)
+                return ResponseService<UserResponseDTO>.BadRequest(checkExist.Message);
             try
             {
                 if (user.Id > 0) //Update

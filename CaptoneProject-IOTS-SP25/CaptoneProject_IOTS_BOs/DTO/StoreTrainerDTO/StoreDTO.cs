@@ -27,6 +27,8 @@ namespace CaptoneProject_IOTS_BOs.DTO.StoreDTO
         public class StoreRequestDTO
         {
             public string Name { get; set; }
+            [RegularExpression(@"^(?:\+84|0)(3[2-9]|5[2689]|7[0-9]|8[1-9]|9[0-9])[0-9]{7}$",
+        ErrorMessage = "Invalid contact number")]
             public string? ContactNumber { set; get; }
             public string? Address { set; get; }
             public string? Summary { set; get; }
