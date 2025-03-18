@@ -63,7 +63,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 }
 
                 ////////////////////////////////////////////////// Information Customer////////////////////////////////////////////////////////////////////////////
-
                 var provincesCustomer = await SyncProvincesAsync();
                 var provinceCustomer = provincesCustomer.FirstOrDefault(p => p.Id == requestModel.ProvinceId);
                 if (provinceCustomer == null)

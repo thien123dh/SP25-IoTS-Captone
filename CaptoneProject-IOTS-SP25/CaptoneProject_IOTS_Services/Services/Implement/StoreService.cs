@@ -37,6 +37,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly StoreAttachmentRepository _storeAttachmentRepository;
         private readonly BusinessLicenseRepository businessLicenseRepository;
         private readonly IGHTKService _ghtkService;
+        private readonly UnitOfWork unitOfWork;
+
         public StoreService (MyHttpAccessor _myHttpAccessor,
             IUserRequestService _userRequestService,
             UserRequestRepository _userRequestRepository,
@@ -45,6 +47,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             StoreRepository storeRepository,
             StoreAttachmentRepository storeAttachmentRepository,
             BusinessLicenseRepository businessLicenseRepository,
+            UnitOfWork unitOfWork,
             IGHTKService ghtkService)
         {
             this._myHttpAccessor = _myHttpAccessor;
@@ -56,6 +59,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             this._storeAttachmentRepository = storeAttachmentRepository;
             this.businessLicenseRepository = businessLicenseRepository;
             this._ghtkService = ghtkService;
+            this.unitOfWork = unitOfWork;
         }
 
         private async Task<GenericResponseDTO<StoreDetailsResponseDTO>> GetDetailsStoreById(int storeId)
@@ -149,6 +153,18 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return await GetStoreDetailsByUserId(userId);
         }
 
+        public async Task<ResponseDTO> CheckStoreExistByContactInformation(StoreRequestDTO payload, int? excludeStoreId)
+        {
+            var isExistContactNumber = unitOfWork.StoreRepository.Search(
+                item => item.ContactNumber == payload.ContactNumber && item.Id != excludeStoreId)
+                .Any();
+
+            if (isExistContactNumber)
+                return ResponseService<object>.BadRequest("Your contact number is already used. Please try another number");
+
+            return ResponseService<object>.OK(null);
+        }
+
         public async Task<GenericResponseDTO<StoreDetailsResponseDTO>> CreateOrUpdateStoreByLoginUser(int userId, StoreRequestDTO payload)
         {
             int? loginUserId = _userService.GetLoginUserId();
@@ -165,6 +181,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 return ResponseService<StoreDetailsResponseDTO>.NotFound(ExceptionMessage.USER_DOESNT_EXIST);
 
             Store? store = _storeRepository.GetByUserId(user.Id);
+
+            var checkExist = await CheckStoreExistByContactInformation(payload, store?.Id);
+
+            if (!checkExist.IsSuccess)
+                return ResponseService<StoreDetailsResponseDTO>.BadRequest(checkExist.Message);
 
             store = store == null ? new Store
             {
@@ -321,7 +342,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         public async Task<GenericResponseDTO<StoreDetailsResponseDTO>> GetStoreDetailsByUserId(int userId)
         {
-            Store store = _storeRepository.GetByUserId(userId);
+            Store? store = _storeRepository.GetByUserId(userId);
 
             if (store == null)
                 return new GenericResponseDTO<StoreDetailsResponseDTO> {
@@ -341,7 +362,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     &&
                     s.Owner.IsActive == 1
                 ),
-                orderBy: null,
                 includeProperties: "Owner",
                 pageIndex: paginationRequest.PageIndex,
                 pageSize: paginationRequest.PageSize
@@ -354,6 +374,18 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 StatusCode = HttpStatusCode.OK,
                 Data = PaginationMapper<Store, StoreResponseDTO>.MapTo(StoreMapper.MapToStoreResponse, res)
             };
+        }
+
+        public async Task<ResponseDTO> CheckValidBusinessLicenseRequest(StoreBusinessLicensesDTO payload, int? exludeId = null)
+        {
+            var checkExistBusinessNumber = businessLicenseRepository.Search(
+                item => item.LiscenseNumber.CompareTo(payload.LiscenseNumber) == 0 && item.Id != exludeId
+            ).Any();
+
+            if (checkExistBusinessNumber)
+                return ResponseService<object>.BadRequest("Your business license is already used. Please try again");
+
+            return ResponseService<object>.OK(null);
         }
 
         public async Task<GenericResponseDTO<BusinessLicenses>> CreateOrUpdateBusinessLicences(StoreBusinessLicensesDTO payload)
@@ -382,6 +414,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             businessLicense.IssueDate = payload.IssueDate;
             businessLicense.ExpiredDate = payload.ExpiredDate;
             businessLicense.IssueBy = payload.IssueBy;
+
+            var checkedExist = await CheckValidBusinessLicenseRequest(payload, businessLicense.Id);
+
+            if (!checkedExist.IsSuccess)
+                return ResponseService<BusinessLicenses>.BadRequest(checkedExist.Message);
 
             try
             {
