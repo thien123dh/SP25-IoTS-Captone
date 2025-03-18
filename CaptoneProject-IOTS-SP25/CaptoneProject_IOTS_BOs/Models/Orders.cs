@@ -28,6 +28,9 @@ namespace CaptoneProject_IOTS_BOs.Models
         [MaxLength(500)]
         public string? TxnRef { set; get; }
 
+        [Precision(18, 1)]
+        public decimal? ShippingFee { set; get; }
+
         [MaxLength(500)]
         public string Address { set; get; } = "";
         public int ProvinceId { set; get; }

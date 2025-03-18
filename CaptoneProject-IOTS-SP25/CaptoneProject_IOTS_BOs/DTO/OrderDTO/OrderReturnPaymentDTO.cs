@@ -37,4 +37,11 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderDTO
 
         public int OrderStatusId { set; get; }
     }
+
+    public class OrderReturnPaymentVNPayDTO
+    {
+        public string PaymentUrl { get; set; }
+
+    }
+
 }

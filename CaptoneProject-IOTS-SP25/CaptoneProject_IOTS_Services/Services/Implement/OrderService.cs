@@ -36,13 +36,15 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly IUserServices userServices;
         private readonly IVNPayService vnpayServices;
         private readonly IGHTKService _ghtkService;
+        private readonly IEmailService _emailServices;
 
-        public OrderService(IUserServices userServices, IVNPayService vnpayServices, IGHTKService ghtkService)
+        public OrderService(IUserServices userServices, IVNPayService vnpayServices, IGHTKService ghtkService, IEmailService emailServices)
         {
             _unitOfWork ??= new UnitOfWork();
             this.userServices = userServices;
             this.vnpayServices = vnpayServices;
             this._ghtkService = ghtkService;
+            this._emailServices = emailServices;
         }
 
         private string GetApplicationSerialNumberOrder(int userID)
@@ -67,6 +69,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 .Where(item => item.CreatedBy == loginUserId && item.IsSelected)
                 .Include(item => item.IosDeviceNavigation)
                 .Include(item => item.ComboNavigation)
+                .Include(item => item.LabNavigation)
                 .ToListAsync();
 
             string vnpayData = dto.urlResponse.Split("?")[1];
@@ -86,7 +89,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             string address = "", contactPhone = "", notes = "";
             int provinceId = 0, districtId = 0, wardId = 0, addressId = 0; 
-            string provinceName = "", districtName = "", wardName = "", fullAddress = "";
+            string provinceName = "", districtName = "", wardName = "", fullAddress = "", deliver_option = "";
 
             if (!string.IsNullOrEmpty(encodedOrderInfo))
             {
@@ -104,6 +107,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     provinceId = orderInfo?.ProvinceId ?? 0;
                     districtId = orderInfo?.DistrictId ?? 0;
                     wardId = orderInfo?.WardId ?? 0;
+                    deliver_option = orderInfo?.deliver_option ?? "";
                 }
                 catch (FormatException)
                 {
@@ -116,16 +120,40 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 return new GenericResponseDTO<OrderReturnPaymentDTO>
                 {
                     IsSuccess = false,
-                    Message = "Thanh toán thất bại.",
+                    Message = "Payment Fails.",
                     Data = null
                 };
             }
+
+            var shippingFees = await _ghtkService.GetShippingFeeAsync(new ShippingFeeRequest
+            {
+                ProvinceId = provinceId,
+                DistrictId = districtId,
+                WardId = wardId,
+                AddressId = addressId,
+                Address = address,
+                deliver_option = deliver_option
+            });
+
+            var createShipping = await _ghtkService.CreateShipmentAsync(new ShippingRequest
+            {
+                ProvinceId = provinceId,
+                DistrictId = districtId,
+                WardId = wardId,
+                AddressId = addressId,
+                Address = address,
+                note = notes
+                });
+
+            var totalShippingFee = shippingFees.FirstOrDefault(f => f.ShopOwnerId == 99)?.Fee ?? 0m;
+
+            decimal totalAmount = (Convert.ToInt64(vnpay.GetResponseData("vnp_Amount")) / 100) - totalShippingFee;
 
             var createTransactionPayment = new Orders
             {
                 ApplicationSerialNumber = GetApplicationSerialNumberOrder(loginUserId),
                 OrderBy = loginUserId,
-                TotalPrice = Convert.ToInt64(vnpay.GetResponseData("vnp_Amount")) / 100,
+                TotalPrice = totalAmount,
                 Address = address,
                 ProvinceId = provinceId,
                 DistrictId = districtId,
@@ -136,6 +164,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 CreateDate = DateTime.Now,
                 CreatedBy = loginUserId,
                 UpdatedBy = loginUserId,
+                ShippingFee = totalShippingFee,
                 OrderStatusId = (int)OrderStatusEnum.SUCCESS_TO_ORDER
             };
             _unitOfWork.OrderRepository.Create(createTransactionPayment);
@@ -214,6 +243,28 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var addressName = list_address.FirstOrDefault(w => w.Id == createTransactionPayment.AddressId);
             orderReturnPaymentDTO.AddressName = addressName?.Name ?? "Not found";
 
+            var productBillList = selectedItems.Select(item => new ProductBillDTO
+            {
+                Name = item.IosDeviceNavigation?.Name ?? item.ComboNavigation?.Name ?? item.LabNavigation?.Title ?? "Product",
+                Quantity = item.Quantity,
+                Price = item.IosDeviceNavigation?.Price ?? item.ComboNavigation?.Price ?? item.LabNavigation?.Price ?? 0m,
+            }).ToList();
+
+
+            await _emailServices.SendInvoiceEmailAsync(
+                loginUser.Email,
+                createTransactionPayment.ApplicationSerialNumber,
+                "IoT Materials Trading Platform",
+                $"FPT University",
+                "IoTs.admin@iots.com",
+                loginUser.Fullname,
+                province.ToString(),
+                district.ToString(),
+                addressName.ToString(),
+                productBillList,
+                createTransactionPayment.TotalPrice
+            );
+
             await _unitOfWork.CartRepository.RemoveAsync(selectedItems);
             await _unitOfWork.CartRepository.SaveAsync();
             return new GenericResponseDTO<OrderReturnPaymentDTO>
@@ -224,14 +275,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         }
 
 
-        public async Task<GenericResponseDTO<OrderReturnPaymentDTO>> CreateOrder(int? id, OrderRequestDTO payload, string returnUrl)
+        public async Task<GenericResponseDTO<OrderReturnPaymentVNPayDTO>> CreateOrder(int? id, OrderRequestDTO payload, string returnUrl)
         {
             try
             {
                 var loginUser = userServices.GetLoginUser();
 
                 if (loginUser == null || !await userServices.CheckLoginUserRole(RoleEnum.CUSTOMER))
-                    return ResponseService<OrderReturnPaymentDTO>.Unauthorize("You don't have permission to access");
+                    return ResponseService<OrderReturnPaymentVNPayDTO>.Unauthorize("You don't have permission to access");
 
                 var loginUserId = loginUser.Id;
 
@@ -256,22 +307,22 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 var provinces = await _ghtkService.SyncProvincesAsync();
                 var province = provinces.FirstOrDefault(p => p.Id == payload.ProvinceId);
                 if (province == null)
-                    return ResponseService<OrderReturnPaymentDTO>.BadRequest("Invalid Province ID");
+                    return ResponseService<OrderReturnPaymentVNPayDTO>.BadRequest("Invalid Province ID");
 
                 var districts = await _ghtkService.SyncDistrictsAsync(payload.ProvinceId);
                 var district = districts.FirstOrDefault(d => d.Id == payload.DistrictId);
                 if (district == null)
-                    return ResponseService<OrderReturnPaymentDTO>.BadRequest("Invalid District ID");
+                    return ResponseService<OrderReturnPaymentVNPayDTO>.BadRequest("Invalid District ID");
 
                 var wards = await _ghtkService.SyncWardsAsync(payload.DistrictId);
                 var ward = wards.FirstOrDefault(w => w.Id == payload.WardId);
                 if (ward == null)
-                    return ResponseService<OrderReturnPaymentDTO>.BadRequest("Invalid Ward ID");
+                    return ResponseService<OrderReturnPaymentVNPayDTO>.BadRequest("Invalid Ward ID");
 
                 var addresses = await _ghtkService.SyncAddressAsync(payload.WardId);
                 var addressid = addresses.FirstOrDefault(w => w.Id == payload.AddressId);
                 if (addressid == null)
-                    return ResponseService<OrderReturnPaymentDTO>.BadRequest("Invalid Address ID");
+                    return ResponseService<OrderReturnPaymentVNPayDTO>.BadRequest("Invalid Address ID");
 
                 // Get the list of selected products in the cart
                 var selectedItems = await _unitOfWork.CartRepository
@@ -283,7 +334,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 if (selectedItems == null || !selectedItems.Any())
                 {
-                    return new GenericResponseDTO<OrderReturnPaymentDTO>
+                    return new GenericResponseDTO<OrderReturnPaymentVNPayDTO>
                     {
                         IsSuccess = false,
                         Message = "The cart is empty or no products have been selected.",
@@ -297,7 +348,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 if (totalPrice <= 0)
                 {
-                    return new GenericResponseDTO<OrderReturnPaymentDTO>
+                    return new GenericResponseDTO<OrderReturnPaymentVNPayDTO>
                     {
                         IsSuccess = false,
                         Message = "Invalid order value.",
@@ -312,7 +363,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         var device = await _unitOfWork.IotsDeviceRepository.GetByIdAsync(item.IosDeviceNavigation.Id);
                         if (device == null || device.Quantity < item.Quantity)
                         {
-                            return new GenericResponseDTO<OrderReturnPaymentDTO>
+                            return new GenericResponseDTO<OrderReturnPaymentVNPayDTO>
                             {
                                 IsSuccess = false,
                                 Message = $"Product {device?.Name ?? "Unknown"} is out of stock.",
@@ -325,7 +376,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         var combo = await _unitOfWork.ComboRepository.GetByIdAsync(item.ComboNavigation.Id);
                         if (combo == null || combo.Quantity < item.Quantity)
                         {
-                            return new GenericResponseDTO<OrderReturnPaymentDTO>
+                            return new GenericResponseDTO<OrderReturnPaymentVNPayDTO>
                             {
                                 IsSuccess = false,
                                 Message = $"Combo {combo?.Name ?? "Unknown"} is out of stock.",
@@ -335,6 +386,20 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     }
                 }
 
+                var shippingFees = await _ghtkService.GetShippingFeeAsync(new ShippingFeeRequest
+                {
+                    ProvinceId = payload.ProvinceId,
+                    DistrictId = payload.DistrictId,
+                    WardId = payload.WardId,
+                    AddressId = payload.AddressId,
+                    Address = payload.Address,
+                    deliver_option = payload.deliver_option
+                });
+
+                var totalShippingFee = shippingFees.FirstOrDefault(f => f.ShopOwnerId == 99)?.Fee ?? 0m;
+
+                var finalTotalPrice = totalPrice + totalShippingFee;
+
                 var orderInfo = new OrderInfo
                 {
                     Address = address,
@@ -343,7 +408,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     ProvinceId = province.Id,
                     DistrictId = district.Id,
                     WardId = ward.Id,
-                    AddressId = addressid.Id
+                    AddressId = addressid.Id,
+                    deliver_option = payload.deliver_option
                 };
 
                 string vnp_ReturnUrl = !string.IsNullOrEmpty(returnUrl) ? returnUrl : "https://localhost:44346/checkout-process-order";
@@ -378,31 +444,13 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     throw new Exception("Merchant code or secret key is missing.");
                 }
 
-                //Get FeeShip + Total Amount 1 order
-                // Gọi API lấy phí ship
-                var shippingFees = await _ghtkService.GetShippingFeeAsync(new ShippingFeeRequest
-                {
-                    ProvinceId = payload.ProvinceId,
-                    DistrictId = payload.DistrictId,
-                    WardId = payload.WardId,
-                    AddressId = payload.AddressId,
-                    Address = payload.Address,
-                    deliver_option = "none"
-                });
-
-                // Lấy tổng phí ship
-                var totalShippingFee = shippingFees.FirstOrDefault(f => f.ShopOwnerId == 99)?.Fee ?? 0m;
-
-                var finalTotalPrice = totalPrice + totalShippingFee;
-
-
                 // Generate transaction reference number
                 var vnp_TxnRef = $"{loginUserId}{DateTime.Now:HHmmss}";
 
                 long vnp_Amount = (long)(finalTotalPrice * 100);
                 if (finalTotalPrice <= 0)
                 {
-                    return new GenericResponseDTO<OrderReturnPaymentDTO>
+                    return new GenericResponseDTO<OrderReturnPaymentVNPayDTO>
                     {
                         IsSuccess = false,
                         Message = "Invalid order value.",
@@ -428,11 +476,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 vnpay.AddRequestData("vnp_ExpireDate", vietnamTime.AddMinutes(5).ToString("yyyyMMddHHmmss"));
                 string paymentUrl = vnpay.CreateRequestUrl(vnp_Url, vnp_HashSecret);
 
-                return new GenericResponseDTO<OrderReturnPaymentDTO>
+                return new GenericResponseDTO<OrderReturnPaymentVNPayDTO>
                 {
                     IsSuccess = true,
                     Message = "Order created successfully, please proceed with payment.",
-                    Data = new OrderReturnPaymentDTO { PaymentUrl = paymentUrl }
+                    Data = new OrderReturnPaymentVNPayDTO
+                    { 
+                        PaymentUrl = paymentUrl
+                    }
                 };
             }
             catch (Exception ex)

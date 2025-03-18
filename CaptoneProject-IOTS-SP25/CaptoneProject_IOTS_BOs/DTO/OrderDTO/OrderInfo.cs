@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -17,5 +18,8 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderDTO
         public int WardId { set; get; }
         public int AddressId { set; get; }
 
+        [Required]
+        [RegularExpression("^(xteam|none)$", ErrorMessage = "deliver_option chỉ được phép là 'xteam' hoặc 'none'")]
+        public string deliver_option { get; set; }
     }
 }
