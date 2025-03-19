@@ -250,6 +250,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 Price = item.IosDeviceNavigation?.Price ?? item.ComboNavigation?.Price ?? item.LabNavigation?.Price ?? 0m,
             }).ToList();
 
+            string provinceNameCustomer = province.Name;
+            string districtNameCustomer = district.Name;
+            string wardNameCustomer = ward.Name;
+            string addressNameCustomer = addressName.Name;
+
 
             await _emailServices.SendInvoiceEmailAsync(
                 loginUser.Email,
@@ -258,9 +263,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 $"FPT University",
                 "IoTs.admin@iots.com",
                 loginUser.Fullname,
-                province.ToString(),
-                district.ToString(),
-                addressName.ToString(),
+                provinceNameCustomer,
+                districtNameCustomer,
+                wardNameCustomer,
+                addressNameCustomer,
                 productBillList,
                 createTransactionPayment.TotalPrice
             );

@@ -323,7 +323,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                             email = $"{loginUser.Email}",
                             hamlet = "Khác",
 
-                            is_freeship = 0,
+                            is_freeship = 1,
                             pick_money = 0,
                             note = $"{requestModel.note}",
                             value = (int)totalPrice
