@@ -107,6 +107,10 @@ builder.Services.AddScoped<IFileService>(provider =>
     var bucket = configuration.GetConnectionString("Firebase-Storage-Bucket");
     return new FileService(bucket);
 });
+builder.Services.AddScoped<IBlobService>(provider =>
+{
+    return new BlobService();
+});
 builder.Services.AddScoped<IEnvironmentService>(provider =>
 {
     return new EnvironmentService(frontendDomain);

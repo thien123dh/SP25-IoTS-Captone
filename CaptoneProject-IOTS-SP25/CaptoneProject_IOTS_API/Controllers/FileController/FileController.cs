@@ -11,12 +11,15 @@ namespace CaptoneProject_IOTS_API.Controllers.FileController
     [ApiController]
     public class FileController : ControllerBase
     {
-        IFileService fileService;
+        private readonly IFileService fileService;
+        private readonly IBlobService blobService;
         public FileController (
-            IFileService fileService
+            IFileService fileService,
+            IBlobService _blobService
         )
         {
             this.fileService = fileService;
+            this.blobService = _blobService;
         }
         private IActionResult GetActionResult(ResponseDTO response)
         {
@@ -42,6 +45,12 @@ namespace CaptoneProject_IOTS_API.Controllers.FileController
         )
         {
             return GetActionResult(await fileService.UploadFile(file));
+        }
+
+        [HttpPost("upload-videos")]
+        public async Task<IActionResult> UploadVideo(IFormFile file)
+        {
+            return GetActionResult(await blobService.UploadVideoAsync(file));
         }
     }
 }
