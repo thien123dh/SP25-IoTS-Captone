@@ -582,18 +582,22 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     CreateDate = order.CreateDate,
                     UpdatedDate = order.UpdatedDate,
                     OrderStatusId = order.OrderStatusId,
-                    OrderDetails = orderDetails
+                    OrderDetailsGrouped = orderDetails
                     .Where(od => od.OrderId == order.Id)
-                    .Select(od => new OrderItemResponeUserDTO
+                    .GroupBy(od => od.Seller.Fullname)
+                    .Select(group => new SellerOrderDetailsDTO
                     {
-                        NameShop = od.Seller.Fullname,
-                        NameProduct = od.IotsDevice.Name ?? od.Combo.Name ?? od.Lab.Title,
-                        ProductType = od.ProductType,
-                        ImageUrl = od.IotsDevice.ImageUrl ?? od.Combo.ImageUrl ?? od.Lab.ImageUrl,
-                        Quantity = od.Quantity,
-                        Price = od.Price,
-                        OrderItemStatus = od.OrderItemStatus,
-                        WarrantyEndDate = od.WarrantyEndDate
+                        SellerName = group.Key,
+                        Items = group.Select(od => new OrderItemResponeUserDTO
+                        {
+                            NameProduct = od.IotsDevice.Name ?? od.Combo.Name ?? od.Lab.Title,
+                            ProductType = od.ProductType,
+                            ImageUrl = od.IotsDevice.ImageUrl ?? od.Combo.ImageUrl ?? od.Lab.ImageUrl,
+                            Quantity = od.Quantity,
+                            Price = od.Price,
+                            OrderItemStatus = od.OrderItemStatus,
+                            WarrantyEndDate = od.WarrantyEndDate
+                        }).ToList()
                     }).ToList()
                 });
 
@@ -838,18 +842,22 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     CreateDate = order.CreateDate,
                     UpdatedDate = order.UpdatedDate,
                     OrderStatusId = order.OrderStatusId,
-                    OrderDetails = orderDetails
+                    OrderDetailsGrouped = orderDetails
                     .Where(od => od.OrderId == order.Id)
-                    .Select(od => new OrderItemResponeUserDTO
+                    .GroupBy(od => od.Seller.Fullname)
+                    .Select(group => new SellerOrderDetailsDTO
                     {
-                        NameShop = od.Seller.Fullname,
-                        NameProduct = od.IotsDevice.Name ?? od.Combo.Name ?? od.Lab.Title,
-                        ProductType = od.ProductType,
-                        ImageUrl = od.IotsDevice.ImageUrl ?? od.Combo.ImageUrl ?? od.Lab.ImageUrl,
-                        Quantity = od.Quantity,
-                        Price = od.Price,
-                        OrderItemStatus = od.OrderItemStatus,
-                        WarrantyEndDate = od.WarrantyEndDate
+                        SellerName = group.Key,
+                        Items = group.Select(od => new OrderItemResponeUserDTO
+                        {
+                            NameProduct = od.IotsDevice.Name ?? od.Combo.Name ?? od.Lab.Title,
+                            ProductType = od.ProductType,
+                            ImageUrl = od.IotsDevice.ImageUrl ?? od.Combo.ImageUrl ?? od.Lab.ImageUrl,
+                            Quantity = od.Quantity,
+                            Price = od.Price,
+                            OrderItemStatus = od.OrderItemStatus,
+                            WarrantyEndDate = od.WarrantyEndDate
+                        }).ToList()
                     }).ToList()
                 };
                 return ResponseService<OrderResponseDTO>.OK(orderDTOs);
