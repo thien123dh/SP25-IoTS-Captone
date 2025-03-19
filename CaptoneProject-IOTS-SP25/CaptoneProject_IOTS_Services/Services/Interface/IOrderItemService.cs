@@ -12,8 +12,6 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
 {
     public interface IOrderItemService
     {
-        public Task<GenericResponseDTO<List<OrderItemResponeDTO>>> getOrderDetailsByOrderId(int id);
-
         public Task<GenericResponseDTO<List<OrderItemResponeDTO>>> getOrderDetailsByStoreId();
     }
 }

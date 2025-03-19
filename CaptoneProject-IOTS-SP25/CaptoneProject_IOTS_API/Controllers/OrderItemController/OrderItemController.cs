@@ -15,17 +15,6 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderItemController
             _orderItemService = orderItemService;
         }
 
-        [HttpGet("get-order-details-by-order-id")]
-        public async Task<IActionResult> GetOrderDetailsByOrderId([FromQuery] int orderId)
-        {
-            var result = await _orderItemService.getOrderDetailsByOrderId(orderId);
-
-            if (!result.IsSuccess)
-                return BadRequest(result);
-
-            return Ok(result);
-        }
-
         [HttpGet("get-order-details-by-store-id")]
         public async Task<IActionResult> GetOrderDetailsByStoreId()
         {
