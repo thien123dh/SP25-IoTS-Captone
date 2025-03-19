@@ -1,4 +1,6 @@
-﻿using CaptoneProject_IOTS_BOs.DTO.OrderDTO;
+﻿using Azure;
+using CaptoneProject_IOTS_BOs;
+using CaptoneProject_IOTS_BOs.DTO.OrderDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.VNPayDTO;
 using CaptoneProject_IOTS_Service.Services.Interface;
@@ -50,6 +52,17 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
                 return BadRequest(result);
 
             return Ok(result);
+        }
+
+        [HttpGet("{orderId}")]
+        public async Task<IActionResult> GetOrderDetails(int orderId)
+        {
+            var response = await _orderService.GetOrdersDetailsByOrderId(orderId);
+
+            if (response.IsSuccess)
+                return Ok(response);
+
+            return BadRequest(response);
         }
 
         [HttpPost("get-order-by-store-id")]
