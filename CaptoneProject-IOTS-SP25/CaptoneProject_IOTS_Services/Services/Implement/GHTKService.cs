@@ -167,18 +167,28 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         shippingFees.Add(new ShippingFeeResponse { ShopOwnerId = shopOwner, Message = "No shipping cost data available" });
                         continue;
                     }
+
+                    shippingFees.Add(new ShippingFeeResponse
+                    {
+                        ShopOwnerId = shopOwner,
+                        Fee = feeData.Fee.Fee,
+                        InsuranceFee = feeData.Fee.InsuranceFee,
+                        ShipFeeOnly = feeData.Fee.ShipFeeOnly,
+                        Message = $"Shipping Fee from Store {shopAddress.Name}"
+                    });
                 }
                 var totalFee = shippingFees.Sum(fee => fee.Fee);
 
-                shippingFees.Add(new ShippingFeeResponse
-                {
-                    ShopOwnerId = -1,
-                    Fee = totalFee,
-                    Message = "Total Shipping Fee"
-                });
-
-                return shippingFees;
-            }
+                return new List<ShippingFeeResponse>
+                        {
+                            new ShippingFeeResponse
+                            {
+                            ShopOwnerId = -1,
+                            Fee = shippingFees.Sum(fee => fee.Fee), // Tính tổng phí vận chuyển
+                            Message = "Total Shipping Fee"
+                            }
+                        };
+                    }
             catch (Exception ex)
             {
                 return new List<ShippingFeeResponse> { new ShippingFeeResponse { Message = "System error" } };
