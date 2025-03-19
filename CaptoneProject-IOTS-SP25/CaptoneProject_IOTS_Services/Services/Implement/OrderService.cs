@@ -402,7 +402,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     deliver_option = payload.deliver_option
                 });
 
-                var totalShippingFee = shippingFees.FirstOrDefault(f => f.ShopOwnerId == 99)?.Fee ?? 0m;
+                var totalShippingFee = shippingFees.FirstOrDefault(f => f.ShopOwnerId == -1)?.Fee ?? 0m;
 
                 var finalTotalPrice = totalPrice + totalShippingFee;
 
