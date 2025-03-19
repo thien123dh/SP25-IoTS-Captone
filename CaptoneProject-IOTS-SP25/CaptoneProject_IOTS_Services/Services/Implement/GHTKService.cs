@@ -112,7 +112,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     var totalPrice = (int)shopGroup.TotalPrice;
                     var shopAddress = await _unitOfWork.StoreRepository
                         .GetQueryable()
-                        .Where(s => s.Id == shopOwner)
+                        .Where(s => s.OwnerId == shopOwner)
                         .Select(s => new { s.Address, s.ProvinceId, s.DistrictId, s.AddressId, s.WardId, s.Name })
                         .FirstOrDefaultAsync();
 
