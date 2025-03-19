@@ -1,4 +1,5 @@
-﻿using CaptoneProject_IOTS_BOs;
+﻿using Azure.Storage.Blobs;
+using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.DTO.FileDTO;
 using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
@@ -18,10 +19,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 {
     public class FileService : IFileService
     {
-        //private readonly string apiKey = "AIzaSyBO-x8861B68lP0x2B6S3wJGdvN_JHl0Bs";
         private readonly string bucket;
-        //private readonly string authEmail = "iottradingsystem@gmail.com";
-        //private readonly string authPassword = "iottradingsystem";
         public FileService(string bucket)
         {
             this.bucket = bucket;
