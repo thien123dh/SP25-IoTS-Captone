@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderDTO
 {
     public class OrderResponseDTO
     {
+        public int OrderId { get; set; }
         public string ApplicationSerialNumber { set; get; }
 
         public decimal TotalPrice { set; get; } = 0;
@@ -23,5 +25,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderDTO
         public DateTime UpdatedDate { set; get; }
 
         public int OrderStatusId { set; get; }
+
+        public List<SellerOrderDetailsDTO> OrderDetailsGrouped { get; set; }
     }
 }

@@ -551,10 +551,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 if (orders == null || !orders.Any())
                     return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.NotFound("No orders found for this user.");
 
+                // Áp dụng cả 2 bộ lọc (thời gian + ID)
                 var filteredOrders = orders.Where(order =>
+                    (!payload.StartFilterDate.HasValue || order.CreateDate >= payload.StartFilterDate.Value) &&
+                    (!payload.EndFilterDate.HasValue || order.CreateDate <= payload.EndFilterDate.Value) &&
                     (filterOrderId == null || order.Id == filterOrderId)
                 );
-
 
                 int totalOrders = filteredOrders.Count();
 
@@ -564,9 +566,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     .Take(payload.PageSize)
                     .ToList();
 
+                // Lấy danh sách OrderDetails dựa trên danh sách Order ID
+                var orderIds = paginatedOrders.Select(o => o.Id).ToList();
+                var orderDetails = await _unitOfWork.OrderDetailRepository.GetByOrderIdsAsync(orderIds);
+
                 // Chuyển đổi danh sách Order thành OrderResponseDTO
                 var orderDTOs = paginatedOrders.Select(order => new OrderResponseDTO
                 {
+                    OrderId = order.Id,
                     ApplicationSerialNumber = order.ApplicationSerialNumber,
                     TotalPrice = order.TotalPrice,
                     Address = order.Address,
@@ -574,8 +581,25 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     Notes = order.Notes,
                     CreateDate = order.CreateDate,
                     UpdatedDate = order.UpdatedDate,
-                    OrderStatusId = order.OrderStatusId
-                }).ToList();
+                    OrderStatusId = order.OrderStatusId,
+                    OrderDetailsGrouped = orderDetails
+                    .Where(od => od.OrderId == order.Id)
+                    .GroupBy(od => od.Seller.Fullname)
+                    .Select(group => new SellerOrderDetailsDTO
+                    {
+                        SellerName = group.Key,
+                        Items = group.Select(od => new OrderItemResponeUserDTO
+                        {
+                            NameProduct = od.IotsDevice.Name ?? od.Combo.Name ?? od.Lab.Title,
+                            ProductType = od.ProductType,
+                            ImageUrl = od.IotsDevice.ImageUrl ?? od.Combo.ImageUrl ?? od.Lab.ImageUrl,
+                            Quantity = od.Quantity,
+                            Price = od.Price,
+                            OrderItemStatus = od.OrderItemStatus,
+                            WarrantyEndDate = od.WarrantyEndDate
+                        }).ToList()
+                    }).ToList()
+                });
 
                 var paginationResponse = new PaginationResponseDTO<OrderResponseDTO>
                 {
@@ -792,6 +816,55 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             catch (Exception ex)
             {
                 return ResponseService<PaginationResponseDTO<OrderResponseToStoreDTO>>.BadRequest("Cannot get orders. Please try again.");
+            }
+        }
+
+        public async Task<GenericResponseDTO<OrderResponseDTO>> GetOrdersDetailsByOrderId(int orderId)
+        {
+            try
+            {
+                var order = await _unitOfWork.OrderRepository.GetByIdAsync(orderId);
+
+                if (order == null)
+                    return ResponseService<OrderResponseDTO>.NotFound("No orders found for this user.");
+
+                var orderDetails = await _unitOfWork.OrderDetailRepository.GetByOrderIdsAsync(new List<int> { order.Id });
+
+                // Chuyển đổi danh sách Order thành OrderResponseDTO
+                var orderDTOs = new OrderResponseDTO
+                {
+                    OrderId = order.Id,
+                    ApplicationSerialNumber = order.ApplicationSerialNumber,
+                    TotalPrice = order.TotalPrice,
+                    Address = order.Address,
+                    ContactNumber = order.ContactNumber,
+                    Notes = order.Notes,
+                    CreateDate = order.CreateDate,
+                    UpdatedDate = order.UpdatedDate,
+                    OrderStatusId = order.OrderStatusId,
+                    OrderDetailsGrouped = orderDetails
+                    .Where(od => od.OrderId == order.Id)
+                    .GroupBy(od => od.Seller.Fullname)
+                    .Select(group => new SellerOrderDetailsDTO
+                    {
+                        SellerName = group.Key,
+                        Items = group.Select(od => new OrderItemResponeUserDTO
+                        {
+                            NameProduct = od.IotsDevice.Name ?? od.Combo.Name ?? od.Lab.Title,
+                            ProductType = od.ProductType,
+                            ImageUrl = od.IotsDevice.ImageUrl ?? od.Combo.ImageUrl ?? od.Lab.ImageUrl,
+                            Quantity = od.Quantity,
+                            Price = od.Price,
+                            OrderItemStatus = od.OrderItemStatus,
+                            WarrantyEndDate = od.WarrantyEndDate
+                        }).ToList()
+                    }).ToList()
+                };
+                return ResponseService<OrderResponseDTO>.OK(orderDTOs);
+            }
+            catch (Exception ex)
+            {
+                return ResponseService<OrderResponseDTO>.BadRequest("Cannot get orders. Please try again.");
             }
         }
     }
