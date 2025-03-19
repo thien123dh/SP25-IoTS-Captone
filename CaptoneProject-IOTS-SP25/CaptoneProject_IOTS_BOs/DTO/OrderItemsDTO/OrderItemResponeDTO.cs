@@ -26,8 +26,6 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO
 
     public class OrderItemResponeUserDTO
     {
-        public string NameShop { set; get; }
-
         public string NameProduct { get; set; }
 
         public string? ImageUrl { set; get; }
@@ -41,5 +39,11 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO
         public DateTime? WarrantyEndDate { set; get; } = null;
 
         public int OrderItemStatus { set; get; } = 1;
+    }
+
+    public class SellerOrderDetailsDTO
+    {
+        public string SellerName { get; set; }
+        public List<OrderItemResponeUserDTO> Items { get; set; }
     }
 }

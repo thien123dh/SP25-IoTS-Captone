@@ -26,6 +26,6 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderDTO
 
         public int OrderStatusId { set; get; }
 
-        public List<OrderItemResponeUserDTO> OrderDetails { get; set; } = new List<OrderItemResponeUserDTO>();
+        public List<SellerOrderDetailsDTO> OrderDetailsGrouped { get; set; }
     }
 }
