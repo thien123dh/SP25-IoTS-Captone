@@ -398,7 +398,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var store = _storeRepository.GetByUserId((int)loginUserId);
 
             if (store == null)
-                return ResponseService<BusinessLicenses>.NotFound("Store cannot be found");
+                return ResponseService<BusinessLicenses>.NotFound(ExceptionMessage.STORE_NOTFOUND);
 
             int storeId = store.Id;
 
