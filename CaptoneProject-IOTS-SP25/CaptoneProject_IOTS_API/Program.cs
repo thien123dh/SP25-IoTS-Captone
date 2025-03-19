@@ -41,6 +41,9 @@ var frontendDomain = builder.Configuration["FrontendDomain:Domain"];
 
 var configuration = builder.Configuration;
 
+var accountStorage = configuration.GetConnectionString("AccountStorage");
+var blobKey = configuration.GetConnectionString("BlobKey");
+
 // Configure DbContext with SQL Server
 builder.Services.AddDbContext<IoTTraddingSystemContext>(options =>
     options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
@@ -109,7 +112,7 @@ builder.Services.AddScoped<IFileService>(provider =>
 });
 builder.Services.AddScoped<IBlobService>(provider =>
 {
-    return new BlobService();
+    return new BlobService(accountStorage, blobKey);
 });
 builder.Services.AddScoped<IEnvironmentService>(provider =>
 {

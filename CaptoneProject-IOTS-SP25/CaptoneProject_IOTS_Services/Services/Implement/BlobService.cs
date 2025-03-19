@@ -18,15 +18,15 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
     public class BlobService : IBlobService
     {
         private readonly BlobContainerClient fileContainer;
-        private readonly string accountStorage = "iottradingsystemstorage";
-        private readonly string key = "TArKZqfxiK+9lUFyIry6+yfh2PjryjW2r0v0lYEgYqikZGjFsIkrNw8jEoYNjByGJJ0zFPkkYZ50+AStgEIMtQ==";
-
+        private readonly string accountStorage;
+        private readonly string key;
         public BlobService(
-            //string accountStorage, string key
+            string accountStorage, 
+            string key
         )
         {
-            //this.accountStorage = accountStorage;
-            //this.key = key;
+            this.accountStorage = accountStorage;
+            this.key = key;
 
             var credential = new StorageSharedKeyCredential(this.accountStorage, key);
             var blobUri = $"https://{this.accountStorage}.blob.core.windows.net";
