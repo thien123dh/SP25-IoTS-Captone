@@ -15,8 +15,6 @@ namespace CaptoneProject_IOTS_BOs.DTO.UserDTO
         public string? Email { get; set; }
 
         [Required]
-        [RegularExpression(@"^(?:\+84|0)(3[2-9]|5[2689]|7[0-9]|8[1-9]|9[0-9])[0-9]{7}$",
-        ErrorMessage = "Invalid contact number")]
         public string? Phone { get; set; }
     }
     public class CreateUserDTO : ContactInformationDTO

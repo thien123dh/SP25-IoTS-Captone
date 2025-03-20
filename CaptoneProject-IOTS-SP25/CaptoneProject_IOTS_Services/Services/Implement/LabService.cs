@@ -64,6 +64,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 lab.Remark = remark;
                 lab.Rating = rating;
                 lab.ApplicationSerialNumber = GetApplicationSerialNumber((int)loginUserId, lab.SerialNumber);
+
+                var checkedExist = unitOfWork.LabRepository
+                    .Search(item => item.ApplicationSerialNumber == lab.ApplicationSerialNumber)
+                    .Any();
+
+                if (checkedExist)
+                    return ResponseService<LabDetailsInformationResponseDTO>.BadRequest("Duplicated Serial Number. Please try again");
+
                 if (lab.Id > 0) //Update
                     lab = unitOfWork.LabRepository.Update(lab);
                 else //Create
@@ -268,7 +276,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var labVideoList = unitOfWork.LabAttachmentRepository.GetByLabId(labId);
 
-            var removeList = labVideoList.Where(item => requestList.Count(i => i.Id == item.Id) > 0).ToList();
+            var removeList = labVideoList.Where(item => !requestList.Where(i => i.Id == item.Id).Any()).ToList();
 
             try
             {
@@ -278,7 +286,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 var saveVideoList = requestList.Select(
                     item => new LabAttachment
-                        {
+                    {
                             Id = item.Id,
                             LabId = item.LabId,
                             CreatedDate = DateTime.Now,
@@ -287,7 +295,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                             UpdatedDate = DateTime.Now,
                             VideoUrl = item.VideoUrl,
                             OrderIndex = ++count
-                        }
+                    }
                 ).ToList();
 
                 var createList = saveVideoList?.Where(i => i.Id <= 0);

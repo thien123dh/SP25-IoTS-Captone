@@ -30,7 +30,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
     {
         private readonly MyHttpAccessor _myHttpAccessor;
         private readonly IUserRequestService _userRequestService;
-        private readonly UserRequestRepository _userRequestRepository;
         private readonly IUserServices _userService;
         private readonly UserRepository _userRepository;
         private readonly StoreRepository _storeRepository;
@@ -41,7 +40,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         public StoreService (MyHttpAccessor _myHttpAccessor,
             IUserRequestService _userRequestService,
-            UserRequestRepository _userRequestRepository,
             IUserServices _userService,
             UserRepository _userRepository,
             StoreRepository storeRepository,
@@ -53,7 +51,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             this._myHttpAccessor = _myHttpAccessor;
             this._userRequestService = _userRequestService;
             this._userService = _userService;
-            this._userRequestRepository = _userRequestRepository;
             this._userRepository = _userRepository;
             this._storeRepository = storeRepository;
             this._storeAttachmentRepository = storeAttachmentRepository;
