@@ -64,6 +64,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 lab.Remark = remark;
                 lab.Rating = rating;
                 lab.ApplicationSerialNumber = GetApplicationSerialNumber((int)loginUserId, lab.SerialNumber);
+
+                var checkedExist = unitOfWork.LabRepository
+                    .Search(item => item.ApplicationSerialNumber == lab.ApplicationSerialNumber)
+                    .Any();
+
+                if (checkedExist)
+                    return ResponseService<LabDetailsInformationResponseDTO>.BadRequest("Duplicated Serial Number. Please try again");
+
                 if (lab.Id > 0) //Update
                     lab = unitOfWork.LabRepository.Update(lab);
                 else //Create
