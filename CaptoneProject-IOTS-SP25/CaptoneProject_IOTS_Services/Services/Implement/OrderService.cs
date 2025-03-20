@@ -402,7 +402,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     deliver_option = payload.deliver_option
                 });
 
-                var totalShippingFee = shippingFees.FirstOrDefault(f => f.ShopOwnerId == 99)?.Fee ?? 0m;
+                var totalShippingFee = shippingFees.FirstOrDefault(f => f.ShopOwnerId == -1)?.Fee ?? 0m;
 
                 var finalTotalPrice = totalPrice + totalShippingFee;
 
@@ -584,12 +584,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     OrderStatusId = order.OrderStatusId,
                     OrderDetailsGrouped = orderDetails
                     .Where(od => od.OrderId == order.Id)
-                    .GroupBy(od => od.Seller.Fullname)
+                    .GroupBy(od => od.Seller.Stores.FirstOrDefault()?.Id)
                     .Select(group => new SellerOrderDetailsDTO
                     {
-                        SellerName = group.Key,
+                        ShopOwnerId = group.FirstOrDefault()?.Seller.Stores.FirstOrDefault()?.OwnerId ?? 0,
+                        ShopOwnerName = group.FirstOrDefault()?.Seller.Stores.FirstOrDefault()?.Name ?? "Unknown",
                         Items = group.Select(od => new OrderItemResponeUserDTO
                         {
+                            NameShop = od.Seller.Fullname,
                             NameProduct = od.IotsDevice.Name ?? od.Combo.Name ?? od.Lab.Title,
                             ProductType = od.ProductType,
                             ImageUrl = od.IotsDevice.ImageUrl ?? od.Combo.ImageUrl ?? od.Lab.ImageUrl,
@@ -844,10 +846,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     OrderStatusId = order.OrderStatusId,
                     OrderDetailsGrouped = orderDetails
                     .Where(od => od.OrderId == order.Id)
-                    .GroupBy(od => od.Seller.Fullname)
+                    .GroupBy(od => od.Seller.Stores.FirstOrDefault()?.Id)
                     .Select(group => new SellerOrderDetailsDTO
                     {
-                        SellerName = group.Key,
+                        ShopOwnerId = group.FirstOrDefault()?.Seller.Stores.FirstOrDefault()?.OwnerId ?? 0,
+                        ShopOwnerName = group.FirstOrDefault()?.Seller.Stores.FirstOrDefault()?.Name ?? "Unknown",
                         Items = group.Select(od => new OrderItemResponeUserDTO
                         {
                             NameProduct = od.IotsDevice.Name ?? od.Combo.Name ?? od.Lab.Title,

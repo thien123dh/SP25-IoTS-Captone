@@ -37,6 +37,7 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
             return await _dbSet
                 .Where(o => orderIds.Contains(o.OrderId))
                 .Include(o => o.Seller)
+                .ThenInclude(n => n.Stores)
                 .Include(o => o.IotsDevice)
                 .Include(o => o.Combo)
                 .Include(o => o.Lab)

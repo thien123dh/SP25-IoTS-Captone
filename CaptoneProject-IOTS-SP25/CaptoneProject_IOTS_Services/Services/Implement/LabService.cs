@@ -276,7 +276,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var labVideoList = unitOfWork.LabAttachmentRepository.GetByLabId(labId);
 
-            var removeList = labVideoList.Where(item => requestList.Count(i => i.Id == item.Id) > 0).ToList();
+            var removeList = labVideoList.Where(item => !requestList.Where(i => i.Id == item.Id).Any()).ToList();
 
             try
             {
@@ -286,7 +286,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 var saveVideoList = requestList.Select(
                     item => new LabAttachment
-                        {
+                    {
                             Id = item.Id,
                             LabId = item.LabId,
                             CreatedDate = DateTime.Now,
@@ -295,7 +295,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                             UpdatedDate = DateTime.Now,
                             VideoUrl = item.VideoUrl,
                             OrderIndex = ++count
-                        }
+                    }
                 ).ToList();
 
                 var createList = saveVideoList?.Where(i => i.Id <= 0);

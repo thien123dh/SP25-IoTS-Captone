@@ -26,6 +26,8 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO
 
     public class OrderItemResponeUserDTO
     {
+        public string NameShop { set; get; }
+
         public string NameProduct { get; set; }
 
         public string? ImageUrl { set; get; }
@@ -43,7 +45,8 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO
 
     public class SellerOrderDetailsDTO
     {
-        public string SellerName { get; set; }
+        public string ShopOwnerName { get; set; }
+        public int ShopOwnerId { set; get; }
         public List<OrderItemResponeUserDTO> Items { get; set; }
     }
 }
