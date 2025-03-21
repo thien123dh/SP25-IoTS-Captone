@@ -12,6 +12,6 @@ namespace CaptoneProject_IOTS_BOs.DTO.GHTKDTO
         public string Message { get; set; } // Thông báo kết quả
         public bool IsSuccess { get; set; } // Trạng thái thành công hay thất bại
         public string OrderId { get; set; } // Mã đơn hàng GHTK (nếu có)
-        public int? TrackingId { get; set; }
+        public string TrackingId { get; set; }
     }
 }

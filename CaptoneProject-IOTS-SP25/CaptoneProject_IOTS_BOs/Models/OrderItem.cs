@@ -43,7 +43,7 @@ namespace CaptoneProject_IOTS_BOs.Models
         [Required]
         public int ProductType { set; get; }
 
-        public int? TrackingId { set; get; }
+        public string? TrackingId { set; get; }
 
         [Required]
         public int Quantity { set; get; } = 0;

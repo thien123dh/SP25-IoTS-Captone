@@ -145,7 +145,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 note = notes
                 });
 
-            var totalShippingFee = shippingFees.FirstOrDefault(f => f.ShopOwnerId == 99)?.Fee ?? 0m;
+            var totalShippingFee = shippingFees.FirstOrDefault(f => f.ShopOwnerId == -1)?.Fee ?? 0m;
 
             decimal totalAmount = (Convert.ToInt64(vnpay.GetResponseData("vnp_Amount")) / 100) - totalShippingFee;
 
@@ -591,6 +591,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     {
                         ShopOwnerId = group.FirstOrDefault()?.Seller.Stores.FirstOrDefault()?.OwnerId ?? 0,
                         ShopOwnerName = group.FirstOrDefault()?.Seller.Stores.FirstOrDefault()?.Name ?? "Unknown",
+                        TrackingId = group.FirstOrDefault()?.TrackingId,
                         Items = group.Select(od => new OrderItemResponeUserDTO
                         {
                             NameShop = od.Seller.Fullname,
