@@ -11,6 +11,7 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
 {
     public class ComboRepository : RepositoryBase<Combo>
     {
+
         public Combo? GetById(int id)
         {
             return _dbSet.Include(i => i.StoreNavigation).SingleOrDefault(i => i.Id == id);

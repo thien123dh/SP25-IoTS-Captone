@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CaptoneProject_IOTS_BOs.DTO.AttachmentDTO;
 using CaptoneProject_IOTS_BOs.Validation;
+using static CaptoneProject_IOTS_BOs.DTO.StoreDTO.StoreDTO;
 
 namespace CaptoneProject_IOTS_BOs.DTO.ProductDTO
 {
@@ -100,6 +101,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.ProductDTO
         public List<DeviceComboReponseDTO>? DeviceComboList { set; get; }
 
         public List<AttachmentsModelDTO>? AttachmentsList { set; get; }
+        public StoreDetailsResponseDTO? StoreInfo { set; get; }
         public int IsActive { set; get; }
     }
 
