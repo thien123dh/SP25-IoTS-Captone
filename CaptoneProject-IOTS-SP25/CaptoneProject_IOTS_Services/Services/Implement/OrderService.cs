@@ -908,7 +908,159 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     }
 
                     // Lưu vào database
-                    await _unitOfWork.OrderDetailRepository.SaveAsync();
+                    await _unitOfWork.OrderDetailRepository.UpdateAsync(orderItemsToUpdate);
+                }
+
+                // Chuyển đổi danh sách Order thành OrderResponseToStoreDTO
+                var orderDTOs = orders.Select(order => new OrderResponseToStoreDTO
+                {
+                    Id = order.Id,
+                    ApplicationSerialNumber = order.ApplicationSerialNumber,
+                    TotalPrice = order.TotalPrice,
+                    Address = order.Address,
+                    ContactNumber = order.ContactNumber,
+                    Notes = order.Notes,
+                    CreateDate = order.CreateDate,
+                    UpdatedDate = order.UpdatedDate,
+                    OrderStatusId = order.OrderStatusId,
+                    TrackingId = order.OrderItems.FirstOrDefault()?.TrackingId,
+                    OrderDetails = order.OrderItems
+                        .Where(oi => oi.SellerId == storeId)
+                        .Select(oi => new OrderIstemResponseToStoreDTO
+                        {
+                            Id = oi.Id,
+                            OrderId = oi.OrderId,
+                            IosDeviceId = oi.IosDeviceId,
+                            IosDeviceName = oi.IosDeviceId != null ? oi.IotsDevice.Name : null,
+                            ComboId = oi.ComboId,
+                            ComboName = oi.ComboId != null ? oi.Combo.Name : null,
+                            SellerId = oi.SellerId,
+                            ProductType = oi.ProductType,
+                            Quantity = oi.Quantity,
+                            Price = oi.Price,
+                            WarrantyEndDate = oi.WarrantyEndDate,
+                            OrderItemStatus = oi.OrderItemStatus
+                        }).ToList()
+                }).ToList();
+
+                return ResponseService<List<OrderResponseToStoreDTO>>.OK(orderDTOs);
+            }
+            catch (Exception ex)
+            {
+                return ResponseService<List<OrderResponseToStoreDTO>>.BadRequest("Cannot get orders. Please try again.");
+            }
+        }
+
+        public async Task<GenericResponseDTO<List<OrderResponseToStoreDTO>>> updateOrderDetailToDeleveringByStoreId(int? updateOrderId)
+        {
+            try
+            {
+                var loginUser = userServices.GetLoginUser();
+                if (loginUser == null || !await userServices.CheckLoginUserRole(RoleEnum.STORE))
+                    return ResponseService<List<OrderResponseToStoreDTO>>.Unauthorize("You don't have permission to access");
+
+                var storeId = loginUser.Id;
+
+                // Lấy danh sách đơn hàng của store
+                var orders = await _unitOfWork.OrderRepository.GetOrdersByStoreIdAsync(storeId);
+                if (orders == null || !orders.Any())
+                    return ResponseService<List<OrderResponseToStoreDTO>>.NotFound("No orders found for this store.");
+
+                // Nếu có updateOrderId, cập nhật trạng thái OrderItem
+                if (updateOrderId.HasValue)
+                {
+                    var orderToUpdate = orders.FirstOrDefault(o => o.Id == updateOrderId.Value);
+                    if (orderToUpdate == null)
+                        return ResponseService<List<OrderResponseToStoreDTO>>.NotFound("Order not found.");
+
+                    var orderItemsToUpdate = orderToUpdate.OrderItems.Where(oi => oi.SellerId == storeId).ToList();
+                    if (!orderItemsToUpdate.Any())
+                        return ResponseService<List<OrderResponseToStoreDTO>>.NotFound("No order items found for this store.");
+
+                    // Cập nhật trạng thái OrderItem
+                    foreach (var item in orderItemsToUpdate)
+                    {
+                        item.OrderItemStatus = (int)OrderItemStatusEnum.PENDING_TO_DELEVERING;
+                    }
+
+                    // Lưu vào database
+                    await _unitOfWork.OrderDetailRepository.UpdateAsync(orderItemsToUpdate);
+                }
+
+                // Chuyển đổi danh sách Order thành OrderResponseToStoreDTO
+                var orderDTOs = orders.Select(order => new OrderResponseToStoreDTO
+                {
+                    Id = order.Id,
+                    ApplicationSerialNumber = order.ApplicationSerialNumber,
+                    TotalPrice = order.TotalPrice,
+                    Address = order.Address,
+                    ContactNumber = order.ContactNumber,
+                    Notes = order.Notes,
+                    CreateDate = order.CreateDate,
+                    UpdatedDate = order.UpdatedDate,
+                    OrderStatusId = order.OrderStatusId,
+                    TrackingId = order.OrderItems.FirstOrDefault()?.TrackingId,
+                    OrderDetails = order.OrderItems
+                        .Where(oi => oi.SellerId == storeId)
+                        .Select(oi => new OrderIstemResponseToStoreDTO
+                        {
+                            Id = oi.Id,
+                            OrderId = oi.OrderId,
+                            IosDeviceId = oi.IosDeviceId,
+                            IosDeviceName = oi.IosDeviceId != null ? oi.IotsDevice.Name : null,
+                            ComboId = oi.ComboId,
+                            ComboName = oi.ComboId != null ? oi.Combo.Name : null,
+                            SellerId = oi.SellerId,
+                            ProductType = oi.ProductType,
+                            Quantity = oi.Quantity,
+                            Price = oi.Price,
+                            WarrantyEndDate = oi.WarrantyEndDate,
+                            OrderItemStatus = oi.OrderItemStatus
+                        }).ToList()
+                }).ToList();
+
+                return ResponseService<List<OrderResponseToStoreDTO>>.OK(orderDTOs);
+            }
+            catch (Exception ex)
+            {
+                return ResponseService<List<OrderResponseToStoreDTO>>.BadRequest("Cannot get orders. Please try again.");
+            }
+        }
+
+        public async Task<GenericResponseDTO<List<OrderResponseToStoreDTO>>> updateOrderDetailToDeleveredByStoreId(int? updateOrderId)
+        {
+            try
+            {
+                var loginUser = userServices.GetLoginUser();
+                if (loginUser == null || !await userServices.CheckLoginUserRole(RoleEnum.CUSTOMER))
+                    return ResponseService<List<OrderResponseToStoreDTO>>.Unauthorize("You don't have permission to access");
+
+                var storeId = loginUser.Id;
+
+                // Lấy danh sách đơn hàng của store
+                var orders = await _unitOfWork.OrderRepository.GetOrdersByStoreIdAsync(storeId);
+                if (orders == null || !orders.Any())
+                    return ResponseService<List<OrderResponseToStoreDTO>>.NotFound("No orders found for this store.");
+
+                // Nếu có updateOrderId, cập nhật trạng thái OrderItem
+                if (updateOrderId.HasValue)
+                {
+                    var orderToUpdate = orders.FirstOrDefault(o => o.Id == updateOrderId.Value);
+                    if (orderToUpdate == null)
+                        return ResponseService<List<OrderResponseToStoreDTO>>.NotFound("Order not found.");
+
+                    var orderItemsToUpdate = orderToUpdate.OrderItems.Where(oi => oi.SellerId == storeId).ToList();
+                    if (!orderItemsToUpdate.Any())
+                        return ResponseService<List<OrderResponseToStoreDTO>>.NotFound("No order items found for this store.");
+
+                    // Cập nhật trạng thái OrderItem
+                    foreach (var item in orderItemsToUpdate)
+                    {
+                        item.OrderItemStatus = (int)OrderItemStatusEnum.PENDING_TO_DELEVERING;
+                    }
+
+                    // Lưu vào database
+                    await _unitOfWork.OrderDetailRepository.UpdateAsync(orderItemsToUpdate);
                 }
 
                 // Chuyển đổi danh sách Order thành OrderResponseToStoreDTO
