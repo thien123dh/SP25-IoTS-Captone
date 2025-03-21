@@ -67,7 +67,18 @@ namespace CaptoneProject_IOTS_API.Controllers.LabController
             return GetActionResult(res);
         }
 
-        [HttpPost("trainer-management/create-lab-video-playlist/{labId}")]
+        [HttpPut("trainer-management/update-lab-information/{labId}")]
+        [Authorize]
+        public async Task<IActionResult> UpdateLabInformation(
+            int labId,
+            [FromBody] CreateUpdateLabInformationDTO payload)
+        {
+            var res = await labService.CreateOrUpdateLabDetailsInformation(labId, payload);
+
+            return GetActionResult(res);
+        }
+
+        [HttpPost("trainer-management/create-or-update-lab-video-playlist/{labId}")]
         [Authorize]
         public async Task<IActionResult> CreateLabVideoPlaylist(
             int labId,
