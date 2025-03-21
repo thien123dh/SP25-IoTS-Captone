@@ -13,7 +13,6 @@ namespace CaptoneProject_IOTS_BOs.DTO.GHTKDTO
         public int WardId { get; set; }
         public int AddressId { get; set; }
         public string Address { get; set; }
-
         public string note { get; set; }
     }
 }

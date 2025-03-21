@@ -145,7 +145,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 note = notes
                 });
 
-            var totalShippingFee = shippingFees.FirstOrDefault(f => f.ShopOwnerId == 99)?.Fee ?? 0m;
+            var totalShippingFee = shippingFees.FirstOrDefault(f => f.ShopOwnerId == -1)?.Fee ?? 0m;
 
             decimal totalAmount = (Convert.ToInt64(vnpay.GetResponseData("vnp_Amount")) / 100) - totalShippingFee;
 
@@ -171,6 +171,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             foreach (var item in selectedItems)
             {
+                var trackingId = createShipping.FirstOrDefault(s => s.ShopOwnerId == item.SellerId)?.TrackingId;
                 var orderDetail = new OrderItem
                 {
                     OrderId = createTransactionPayment.Id,
@@ -184,7 +185,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     ComboId = item.ComboNavigation?.Id,
                     LabId = item.LabNavigation?.Id,
                     Price = item.IosDeviceNavigation?.Price ?? item.ComboNavigation?.Price ?? item.LabNavigation?.Price ?? 0m,
-                    OrderItemStatus = (int)OrderItemStatusEnum.PENDING
+                    OrderItemStatus = (int)OrderItemStatusEnum.PENDING,
+                    TrackingId = trackingId
                 };
                 _unitOfWork.OrderDetailRepository.Create(orderDetail);
 
@@ -589,6 +591,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     {
                         ShopOwnerId = group.FirstOrDefault()?.Seller.Stores.FirstOrDefault()?.OwnerId ?? 0,
                         ShopOwnerName = group.FirstOrDefault()?.Seller.Stores.FirstOrDefault()?.Name ?? "Unknown",
+                        TrackingId = group.FirstOrDefault()?.TrackingId,
                         Items = group.Select(od => new OrderItemResponeUserDTO
                         {
                             NameShop = od.Seller.Fullname,
