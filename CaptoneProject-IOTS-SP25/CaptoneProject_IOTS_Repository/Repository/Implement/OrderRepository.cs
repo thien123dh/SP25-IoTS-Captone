@@ -48,6 +48,10 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
         {
             return await _dbSet
                 .Include(o => o.OrderItems) // Load OrderItems để tránh null
+                .ThenInclude(m => m.Seller)
+                .ThenInclude(h => h.Stores)
+                .Include(o=> o.OrderItems).ThenInclude(m => m.IotsDevice)
+                .Include(o => o.OrderItems).ThenInclude(m => m.Combo)
                 .FirstOrDefaultAsync(o => o.Id == orderId);
         }
     }
