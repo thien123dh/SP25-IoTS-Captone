@@ -1,5 +1,6 @@
 ﻿using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.Constant;
+using CaptoneProject_IOTS_BOs.DTO.NotificationDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.ProductDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
@@ -9,7 +10,9 @@ using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.OData.Results;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
+using Microsoft.OData.ModelBuilder;
 using System.Collections.Generic;
+using static CaptoneProject_IOTS_BOs.Constant.EntityTypeConst;
 using static CaptoneProject_IOTS_BOs.Constant.ProductConst;
 using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
 
@@ -19,11 +22,13 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
     {
         private readonly IUserServices userServices;
         private readonly UnitOfWork unitOfWork;
+        private readonly INotificationService notificationService;
 
-        public LabService(IUserServices userServices, UnitOfWork unitOfWork)
+        public LabService(IUserServices userServices, UnitOfWork unitOfWork, INotificationService notificationService)
         {
             this.userServices = userServices;
             this.unitOfWork = unitOfWork;
+            this.notificationService = notificationService;
         }
 
         private string GetApplicationSerialNumber(int trainerId, string serialNumber)
@@ -78,13 +83,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     lab = unitOfWork.LabRepository.Create(lab);
 
                 return ResponseService<LabDetailsInformationResponseDTO>.OK(await GetLabDetailsInformation(lab.Id));
-            } catch
+            }
+            catch
             {
                 return ResponseService<LabDetailsInformationResponseDTO>.BadRequest("Cannot save lab information. Please try again");
             }
         }
 
-        
+
 
         public async Task<ResponseDTO> GetComboLabsPagination(int comboId, PaginationRequest paginationRequest)
         {
@@ -122,11 +128,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 res.HasAbilityToViewPlaylist = await CheckPermissionToViewLabVideoList(res.Id);
 
                 return res;
-            } catch
+            }
+            catch
             {
                 throw new Exception("Error to get lab details information. Please try again");
             }
-            
+
         }
 
         public async Task<ResponseDTO> GetLabPagination(LabFilterRequestDTO filterRequest, PaginationRequest paginationRequest)
@@ -187,10 +194,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 return ResponseService<object>.NotFound(ExceptionMessage.STORE_NOTFOUND);
 
             var res = await GetLabPagination(new LabFilterRequestDTO
-                {
-                    StoreId = store?.Id,
-                    ComboId = comboId
-                },
+            {
+                StoreId = store?.Id,
+                ComboId = comboId
+            },
                 paginationRequest);
 
             return res;
@@ -202,7 +209,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             if (loginUserId == null || loginUserId != filterRequest.UserId)
                 return ResponseService<object>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
-            
+
             var res = await GetLabPagination(
                 filterRequest,
                 paginationRequest
@@ -239,9 +246,17 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
             else if (isCustomer) //Is role customer
             {
+                var doCustomerBuyLab = unitOfWork.OrderDetailRepository.Search(
+                    item => item.LabId == labId &&
+                    (item.OrderItemStatus == (int)OrderItemStatusEnum.COMPLETED
+                    ||
+                    item.OrderItemStatus == (int)OrderItemStatusEnum.PENDING_TO_FEEDBACK
+                    )
+                ).Any();
 
-            } 
-            
+                return doCustomerBuyLab;
+            }
+
             return false;
         }
 
@@ -257,7 +272,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (labVideoList == null)
                 return ResponseService<List<LabVideoResponseDTO>>.NotFound("No Video Found");
 
-            return ResponseService<List<LabVideoResponseDTO>>.OK(labVideoList?.Select(item => 
+            return ResponseService<List<LabVideoResponseDTO>>.OK(labVideoList?.Select(item =>
                 GenericMapper<LabAttachment, LabVideoResponseDTO>.MapTo(item)
             )?.ToList());
         }
@@ -287,14 +302,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 var saveVideoList = requestList.Select(
                     item => new LabAttachment
                     {
-                            Id = item.Id,
-                            LabId = item.LabId,
-                            CreatedDate = DateTime.Now,
-                            Description = item.Description,
-                            Title = item.Title,
-                            UpdatedDate = DateTime.Now,
-                            VideoUrl = item.VideoUrl,
-                            OrderIndex = ++count
+                        Id = item.Id,
+                        LabId = item.LabId,
+                        CreatedDate = DateTime.Now,
+                        Description = item.Description,
+                        Title = item.Title,
+                        UpdatedDate = DateTime.Now,
+                        VideoUrl = item.VideoUrl,
+                        OrderIndex = ++count
                     }
                 ).ToList();
 
@@ -308,7 +323,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     await unitOfWork.LabAttachmentRepository.UpdateAsync(updateList);
 
                 return await GetLabVideoList(labId);
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return ResponseService<List<LabVideoResponseDTO>>.BadRequest("Cannot create or update video list. Please try again");
             }
@@ -319,6 +335,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             int? loginUserId = userServices.GetLoginUserId();
 
             if (loginUserId == null)
+                return ResponseService<LabDetailsInformationResponseDTO>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
+
+            var store = unitOfWork.StoreRepository.GetByUserId((int)loginUserId);
+
+            if (store == null)
                 return ResponseService<LabDetailsInformationResponseDTO>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
 
             var lab = unitOfWork.LabRepository.GetById(labId);
@@ -339,7 +360,44 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 lab.Remark = (!isApprove) ? payload?.Remark : lab.Remark;
 
                 lab = unitOfWork.LabRepository.Update(lab);
-            } catch
+
+                var notification = new NotificationRequestDTO();
+
+                //SENDING NOTIFICATION
+                if (isApprove)
+                {
+                    notification = new NotificationRequestDTO
+                    {
+                        EntityId = lab.Id,
+                        EntityType = (int)EntityTypeEnum.LAB,
+                        Title = "Congratulation! Your Playlist '{labName}' was approved by Store '{storeName}'"
+                                    .Replace("{labName}", lab.Title)
+                                    .Replace("{storeName}", store.Name),
+                        Content = "Congratulation! Your Playlist '{labName}' was approved by Store '{storeName}'"
+                                    .Replace("{labName}", lab.Title)
+                                    .Replace("{storeName}", store.Name),
+                        ReceiverId = (int)lab.CreatedBy
+                    };
+                }
+                else
+                {
+                    notification = new NotificationRequestDTO
+                    {
+                        EntityId = lab.Id,
+                        EntityType = (int)EntityTypeEnum.LAB,
+                        Content = "Your Playlist '{labName}' was rejected by Store '{storeName}'. Please check the remarks"
+                                    .Replace("{labName}", lab.Title)
+                                    .Replace("{storeName}", store.Name),
+                        Title = "Your Playlist '{labName}' was rejected by Store '{storeName}'. Please check the remarks"
+                                    .Replace("{labName}", lab.Title)
+                                    .Replace("{storeName}", store.Name),
+                        ReceiverId = (int)lab.CreatedBy
+                    };
+                }
+
+                _ = notificationService.CreateUserNotification([notification]);
+            }
+            catch
             {
                 return ResponseService<LabDetailsInformationResponseDTO>.BadRequest("Cannot approve or reject the playlist. Please try again");
 
@@ -369,12 +427,26 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             try
             {
                 lab = unitOfWork.LabRepository.Update(lab);
-            } catch
+            }
+            catch
             {
                 ResponseService<LabDetailsInformationResponseDTO>.BadRequest("Cannot save the Lab. Please try again");
             }
 
             var res = await GetLabDetailsInformation(lab.Id);
+
+            var notification = new NotificationRequestDTO
+            {
+                EntityId = labId,
+                EntityType = (int)EntityTypeEnum.LAB,
+                Content = "The playlist '{labName}' was submitted for you to approve. Please check go to the details and check"
+                                    .Replace("{labName}", lab.Title),
+                ReceiverId = (int)lab?.ComboNavigation?.CreatedBy,
+                Title = "The playlist '{labName}' was submitted for you to approve. Please check go to the details and check"
+                                    .Replace("{labName}", lab.Title)
+            };
+
+            _ = notificationService.CreateUserNotification([notification]);
 
             return ResponseService<LabDetailsInformationResponseDTO>.OK(res);
         }

@@ -86,6 +86,9 @@ namespace CaptoneProject_IOTS_BOs.DTO.StoreDTO
             public DateTime? UpdatedDate { set; get; }
             public int? UpdatedBy { set; get; }
             public List<StoreAttachmentResponseDTO>? StoreAttachments { set; get; }
+            public int? StoreNumberOfProducts { set; get; }
+
+            public int? NumberOfFeedbacks { set; get; } = 155;
         }
     }
 }
