@@ -18,7 +18,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         Task<List<ShipmentResponse>> CreateShipmentAsync(ShippingRequest requestModel);
         Task<List<ShippingFeeResponse>> GetShippingFeeAsync(ShippingFeeRequest requestModel);
         Task<byte[]> PrintLabelAsync(string trackingOrder);
-        Task<string> GetTrackingOrderAsync(int orderId);
+        Task<TrackingResponse> GetTrackingOrderAsync(string trackingId);
     }
 }
 

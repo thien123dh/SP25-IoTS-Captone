@@ -46,7 +46,8 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO
     public class SellerOrderDetailsDTO
     {
         public string ShopOwnerName { get; set; }
-        public int ShopOwnerId { set; get; }
+        public int ShopOwnerId { get; set; }
+        public string TrackingId { get; set; }
         public List<OrderItemResponeUserDTO> Items { get; set; }
     }
 }

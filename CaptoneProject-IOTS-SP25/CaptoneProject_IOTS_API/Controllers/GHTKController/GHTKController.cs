@@ -1,6 +1,8 @@
-﻿using CaptoneProject_IOTS_Service.Services.Interface;
+﻿using CaptoneProject_IOTS_BOs.DTO.GHTKDTO;
+using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace CaptoneProject_IOTS_API.Controllers.GHTKController
 {
@@ -15,23 +17,22 @@ namespace CaptoneProject_IOTS_API.Controllers.GHTKController
             _ghtkService = ghtkService;
         }
 
-        [HttpGet("{orderId}")]
-        public async Task<IActionResult> GetTrackingOrder(int orderId)
+        [HttpGet("{trackingId}")]
+        public async Task<IActionResult> GetTrackingOrder(string trackingId)
         {
             try
             {
-                var trackingLabel = await _ghtkService.GetTrackingOrderAsync(orderId);
+                var trackingLabel = await _ghtkService.GetTrackingOrderAsync(trackingId);
 
-                if (string.IsNullOrEmpty(trackingLabel))
+                if (trackingLabel == null)
                 {
-                    return NotFound($"Tracking label not found for Order ID: {orderId}");
+                    return NotFound($"Not found for Tracking Order : {trackingId}");
                 }
-
-                return Ok(new { labelId = trackingLabel });
+                return Ok(trackingLabel);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error fetching tracking order {orderId}: {ex.Message}");
+                Console.WriteLine($"Error fetching tracking order {trackingId}: {ex.Message}");
                 return StatusCode(500, "Internal server error while fetching tracking order.");
             }
         }

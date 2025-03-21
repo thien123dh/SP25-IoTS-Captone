@@ -348,10 +348,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                     if (response.IsSuccessStatusCode)
                     {
+                        var responseJson = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(responseContent);
+                        var trackingId = responseJson?.order?.tracking_id?.ToString() ?? "Unknown";
+
                         shipments.Add(new ShipmentResponse
                         {
                             ShopOwnerId = shopOwner,
-                            Message = "Shipment created successfully"
+                            Message = "Shipment created successfully",
+                            TrackingId = trackingId
                         });
                     }
                     else
@@ -373,12 +377,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
-        public async Task<string> GetTrackingOrderAsync(int orderId)
+        public async Task<TrackingResponse> GetTrackingOrderAsync(string trackingId)
         {
             try
             {
                 var token = _configuration["GHTK:Token"];
-                string requestUrl = $"https://services-staging.ghtklab.com/services/shipment/v2/{orderId}";
+                string requestUrl = $"https://services-staging.ghtklab.com/services/shipment/v2/{trackingId}";
                 var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
                 request.Headers.Add("Token", token);
 
@@ -392,16 +396,15 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     throw new Exception($"Không thể lấy mã vận đơn: {response.StatusCode}");
                 }
 
-                // Parse the response data
+                // Parse JSON response
                 var responseData = await response.Content.ReadAsStringAsync();
-                var trackingData = JsonConvert.DeserializeObject<dynamic>(responseData);
+                var trackingData = JsonConvert.DeserializeObject<TrackingResponseWrapper>(responseData);
 
-                // Return the label_id if it exists
-                return trackingData?.order?.label_id;
+                return trackingData?.Order;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error fetching tracking order {orderId}: {ex.Message}");
+                Console.WriteLine($"Error fetching tracking order {trackingId}: {ex.Message}");
                 return null;
             }
         }
