@@ -25,6 +25,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderDTO
         public DateTime UpdatedDate { set; get; }
 
         public int OrderStatusId { set; get; }
+        public string? TrackingId { set; get; }
 
         public List<OrderIstemResponseToStoreDTO> OrderDetails { get; set; } = new List<OrderIstemResponseToStoreDTO>();
     }
