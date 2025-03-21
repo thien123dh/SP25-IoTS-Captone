@@ -98,6 +98,17 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
             return Ok(result);
         }
 
+        [HttpPost("change-status-order-detail-to-delevered-{orderId})")]
+        public async Task<IActionResult> updateOrderDetailToDeliveredByStoreId(int orderId, int storeId)
+        {
+            var result = await _orderService.updateOrderDetailToDeleveredByStoreId(orderId, storeId);
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
         [HttpPost("get-order-by-store-id-has-status-order-pending")]
         public async Task<IActionResult> GetOrderByStoreIdStatusOrderIsPending([FromQuery] int? OrderFilterId, [FromBody] PaginationRequest payload)
         {
