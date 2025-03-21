@@ -24,12 +24,17 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly UnitOfWork unitOfWork;
         private readonly IUserServices userServices;
         private readonly IAttachmentsService attachmentsService;
+        private readonly IStoreService storeService;
 
-        public ComboService(UnitOfWork unitOfWork, IUserServices userService, IAttachmentsService attachmentsService)
+        public ComboService(UnitOfWork unitOfWork, 
+            IUserServices userService, 
+            IAttachmentsService attachmentsService, 
+            IStoreService storeService)
         {
             this.unitOfWork = unitOfWork;
             this.userServices = userService;
             this.attachmentsService = attachmentsService;
+            this.storeService = storeService;
         }
         private string GetApplicationSerialNumber(int storeId, string serialNumber)
         {
@@ -70,6 +75,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 throw new Exception("Combo cannot be found. Please try again");
 
             var res = ComboMapper.MapToComboDetailsResponseDTO(combo);
+
+            var storeDetails = await storeService.BuildToStoreDetailsResponseDTO(combo.StoreNavigation);
+
+            res.StoreInfo = storeDetails;
 
             var attachments = await attachmentsService.GetByEntityId(comboId, (int)EntityTypeEnum.IOT_DEVICE_COMBO);
 

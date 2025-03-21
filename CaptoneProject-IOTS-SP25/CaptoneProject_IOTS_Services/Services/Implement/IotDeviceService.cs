@@ -22,14 +22,17 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
     {
         private readonly IAttachmentsService attachmentsService;
         private readonly IUserServices userServices;
+        private readonly IStoreService storeService;
         private readonly UnitOfWork unitOfWork;
         public IotDeviceService(IAttachmentsService attachmentsService,
             IUserServices userServices,
-            UnitOfWork unitOfWork)
+            UnitOfWork unitOfWork,
+            IStoreService storeService)
         {
             this.attachmentsService = attachmentsService;
             this.userServices = userServices;
             this.unitOfWork = unitOfWork;
+            this.storeService = storeService;
         }
 
         private string GetApplicationSerialNumber(int storeId, string serialNumber, int deviceType)
@@ -164,7 +167,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                                                                 .Id == device?.StoreId;
 
                 var res = IotDeviceMapper.MapToIotDeviceDetailsDTO(device);
-                
+
+                var storeDetails = await storeService.BuildToStoreDetailsResponseDTO(device.StoreNavigation);
+
+                res.StoreInfo = storeDetails;
+
                 res.IsEdit = isEdit;
 
                 if (res == null)

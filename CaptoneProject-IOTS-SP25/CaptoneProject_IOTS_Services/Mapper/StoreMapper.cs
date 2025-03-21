@@ -25,7 +25,7 @@ namespace CaptoneProject_IOTS_Service.Mapper
                 CreatedDate = sa?.CreatedDate,
                 CreatedBy = sa?.createdBy,
                 StoreId = sa.StoreId
-            }).ToList();
+            })?.ToList();
 
             return res;
         }

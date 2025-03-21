@@ -58,6 +58,25 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             this._ghtkService = ghtkService;
             this.unitOfWork = unitOfWork;
         }
+        public int CountStoreNumberOfProducts(int storeOwnerId)
+        {
+            var numberOfProduct = unitOfWork.IotsDeviceRepository.Search(item => item.CreatedBy == storeOwnerId && item.IsActive > 0)
+                .Count();
+
+            numberOfProduct += unitOfWork.ComboRepository.Search(item => item.CreatedBy == storeOwnerId && item.IsActive > 0)
+                .Count();
+
+            return numberOfProduct;
+        }
+
+        public async Task<StoreDetailsResponseDTO> BuildToStoreDetailsResponseDTO(Store store)
+        {
+            var res = StoreMapper.MapToStoreDetailsResponseDTO(store);
+
+            res.StoreNumberOfProducts = CountStoreNumberOfProducts(store.OwnerId);
+
+            return res;
+        }
 
         private async Task<GenericResponseDTO<StoreDetailsResponseDTO>> GetDetailsStoreById(int storeId)
         {
@@ -71,7 +90,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     StatusCode = HttpStatusCode.NotFound
                 };
 
-            var res = StoreMapper.MapToStoreDetailsResponseDTO(store);
+            var res = await BuildToStoreDetailsResponseDTO(store);
 
             var provinces = await _ghtkService.SyncProvincesAsync();
             var province = provinces.FirstOrDefault(p => p.Id == res.ProvinceId);

@@ -2,6 +2,7 @@
 using CaptoneProject_IOTS_BOs.Models;
 using System.ComponentModel.DataAnnotations;
 using static CaptoneProject_IOTS_BOs.Constant.ProductConst;
+using static CaptoneProject_IOTS_BOs.DTO.StoreDTO.StoreDTO;
 
 namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
 {
@@ -101,7 +102,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
         public string? ImageUrl { set; get; }
         public int WarrantyMonth { set; get; } = 0;
         public MaterialCategory? Category { set; get; }
-        public Store? StoreNavigation { set; get; }
+        public StoreDetailsResponseDTO? StoreInfo { set; get; }
         public IEnumerable<AttachmentsModelDTO>? Attachments { set; get; }
         public IEnumerable<DeviceSpecificationDTO>? DeviceSpecificationsList { set; get; }
         public decimal? SecondHandPrice { set; get; }
