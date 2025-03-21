@@ -248,7 +248,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 var doCustomerBuyLab = unitOfWork.OrderDetailRepository.Search(
                     item => item.LabId == labId &&
-                    (item.OrderItemStatus == (int)OrderItemStatusEnum.COMPLETED
+                    (item.OrderItemStatus == (int)OrderItemStatusEnum.ORDER_TO_SUCESS
                     ||
                     item.OrderItemStatus == (int)OrderItemStatusEnum.PENDING_TO_FEEDBACK
                     )

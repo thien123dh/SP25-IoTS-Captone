@@ -381,6 +381,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         {
             try
             {
+                var orderItems = await _unitOfWork.OrderDetailRepository.GetOrderItemsByTrackingIdAsync(trackingId);
+
+                if (orderItems == null || !orderItems.Any() || orderItems.Any(oi => oi.OrderItemStatus != 2))
+                {
+                    Console.WriteLine($"TrackingId {trackingId} invalid status.");
+                    return null;
+                }
+
                 var token = _configuration["GHTK:Token"];
                 string requestUrl = $"https://services-staging.ghtklab.com/services/shipment/v2/{trackingId}";
                 var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
@@ -413,6 +421,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         {
             try
             {
+                var orderItems = await _unitOfWork.OrderDetailRepository.GetOrderItemsByTrackingIdAsync(trackingOrder);
+
+                if (orderItems == null || !orderItems.Any() || orderItems.Any(oi => oi.OrderItemStatus != 2))
+                {
+                    Console.WriteLine($"TrackingId {trackingOrder} invalid status.");
+                    return null;
+                }
+
                 var token = _configuration["GHTK:Token"];
                 string requestUrl = $"https://services-staging.ghtklab.com/services/label/{trackingOrder}?original=false&paper_size=a6";
 

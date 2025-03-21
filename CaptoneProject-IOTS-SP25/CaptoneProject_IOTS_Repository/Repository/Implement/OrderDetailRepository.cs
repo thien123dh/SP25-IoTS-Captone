@@ -32,6 +32,13 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
             return _dbSet.AsQueryable();
         }
 
+        public async Task<List<OrderItem>> GetOrderItemsByTrackingIdAsync(string trackingId)
+        {
+            return await _context.OrderItems
+                .Where(oi => oi.TrackingId == trackingId)
+                .ToListAsync();
+        }
+
         public async Task<List<OrderItem>> GetByOrderIdsAsync(List<int> orderIds)
         {
             return await _dbSet
