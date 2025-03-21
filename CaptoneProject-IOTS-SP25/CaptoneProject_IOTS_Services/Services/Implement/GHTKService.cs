@@ -348,10 +348,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                     if (response.IsSuccessStatusCode)
                     {
+                        var responseJson = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(responseContent);
+                        int trackingId = responseJson?.order?.tracking_id?.ToString() ?? "Unknown";
+
                         shipments.Add(new ShipmentResponse
                         {
                             ShopOwnerId = shopOwner,
-                            Message = "Shipment created successfully"
+                            Message = "Shipment created successfully",
+                            TrackingId = trackingId
                         });
                     }
                     else

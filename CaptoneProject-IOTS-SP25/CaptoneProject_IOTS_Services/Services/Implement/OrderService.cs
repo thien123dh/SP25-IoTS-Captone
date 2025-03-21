@@ -171,6 +171,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             foreach (var item in selectedItems)
             {
+                var trackingId = createShipping.FirstOrDefault(s => s.ShopOwnerId == item.SellerId)?.TrackingId;
                 var orderDetail = new OrderItem
                 {
                     OrderId = createTransactionPayment.Id,
@@ -184,7 +185,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     ComboId = item.ComboNavigation?.Id,
                     LabId = item.LabNavigation?.Id,
                     Price = item.IosDeviceNavigation?.Price ?? item.ComboNavigation?.Price ?? item.LabNavigation?.Price ?? 0m,
-                    OrderItemStatus = (int)OrderItemStatusEnum.PENDING
+                    OrderItemStatus = (int)OrderItemStatusEnum.PENDING,
+                    TrackingId = trackingId
                 };
                 _unitOfWork.OrderDetailRepository.Create(orderDetail);
 
