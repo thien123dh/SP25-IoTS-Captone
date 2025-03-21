@@ -58,6 +58,18 @@ namespace CaptoneProject_IOTS_BOs.DTO.ProductDTO
         public string? ImageUrl { set; get; }
     }
 
+    public class ComboByStoreDetailsResponseDTO
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public decimal Price { get; set; }
+        public string ImageUrl { get; set; }
+        public decimal? Rating { set; get; } = 4;
+        public DateTime? CreatedDate { get; set; }
+    }
+
+
     public class ComboDetailsResponseDTO
     {
         public int Id { set; get; }

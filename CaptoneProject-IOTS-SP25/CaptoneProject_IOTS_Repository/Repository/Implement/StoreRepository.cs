@@ -28,5 +28,12 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
         {
             return _dbSet.AsQueryable();
         }
+
+        public async Task<Store> GetProductByIdAsync(int storeId)
+        {
+            return await _context.Stores
+                .Include(s => s.Owner)
+                .FirstOrDefaultAsync(s => s.Id == storeId);
+        }
     }
 }

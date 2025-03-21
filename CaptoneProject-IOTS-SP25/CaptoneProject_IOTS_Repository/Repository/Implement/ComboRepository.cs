@@ -22,5 +22,12 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
             return _dbSet.
                 FirstOrDefault(item => item.ApplicationSerialNumber == applicationNumber);
         }
+
+        public async Task<List<Combo>> GetByCreatorIdAsync(int creatorId)
+        {
+            return await _dbSet
+                .Where(combo => combo.CreatedBy == creatorId)
+                .ToListAsync();
+        }
     }
 }

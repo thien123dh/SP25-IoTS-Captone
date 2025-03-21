@@ -30,5 +30,12 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
                 .Include(item => item.StoreNavigation)
                 .SingleOrDefault(item => item.ApplicationSerialNumber == applicationSerialNumber);
         }
+
+        public async Task<List<IotsDevice>> GetByCreatorIdAsync(int creatorId)
+        {
+            return await _dbSet
+                .Where(device => device.CreatedBy == creatorId)
+                .ToListAsync();
+        }
     }
 }

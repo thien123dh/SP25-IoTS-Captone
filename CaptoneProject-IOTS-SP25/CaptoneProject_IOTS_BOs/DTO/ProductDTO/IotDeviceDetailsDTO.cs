@@ -133,4 +133,15 @@ namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
 
         public int WarrantyMonth { set; get; }
     }
+
+    public class IotDeviceByStoreDetailsResponseDTO
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public decimal Price { get; set; }
+        public string ImageUrl { get; set; }
+        public decimal? Rating { set; get; } = 4;
+        public DateTime? CreatedDate { get; set; }
+    }
 }

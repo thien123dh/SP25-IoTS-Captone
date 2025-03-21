@@ -2,8 +2,10 @@
 using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.AddressDTO;
 using CaptoneProject_IOTS_BOs.DTO.GHTKDTO;
+using CaptoneProject_IOTS_BOs.DTO.MaterialDTO;
 using CaptoneProject_IOTS_BOs.DTO.OrderDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
+using CaptoneProject_IOTS_BOs.DTO.ProductDTO;
 using CaptoneProject_IOTS_BOs.DTO.StoreDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
@@ -475,5 +477,66 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             return await  GetStoreDetailsByUserId(store.OwnerId);
         }
+
+        public async Task<GenericResponseDTO<GetStoreDetailsResponseDTO>> GetPaginationStoresDetails(PaginationRequest paginationRequest, int storeId)
+        {
+            var store = await _storeRepository.GetProductByIdAsync(storeId);
+
+            if (store == null)
+                return ResponseService<GetStoreDetailsResponseDTO>.NotFound("Store doesn't exist");
+
+            var ownerId = store.OwnerId;
+
+            // Tính tổng số phần tử cần lấy cho mỗi loại
+            int halfPageSize = paginationRequest.PageSize / 2;
+
+            // Phân trang danh sách sản phẩm IoT
+            var paginatedDevices = unitOfWork.IotsDeviceRepository.GetPaginate(
+                filter: d => d.CreatedBy == ownerId,
+                pageIndex: paginationRequest.PageIndex,
+                pageSize: halfPageSize
+            );
+
+            // Phân trang danh sách Combo
+            var paginatedCombos = unitOfWork.ComboRepository.GetPaginate(
+                filter: c => c.CreatedBy == ownerId,
+                pageIndex: paginationRequest.PageIndex,
+                pageSize: paginationRequest.PageSize - halfPageSize // Đảm bảo tổng đúng với PageSize
+            );
+
+            // Chuyển đổi sang DTO
+            var responseDTO = new GetStoreDetailsResponseDTO
+            {
+                StoreId = store.Id,
+                StoreName = store.Name,
+                OwnerId = store.OwnerId,
+                OwnerName = store.Owner.Fullname,
+                DevicesIot = paginatedDevices.Data.Select(device => new IotDeviceByStoreDetailsResponseDTO
+                {
+                    Id = device.Id,
+                    Name = device.Name,
+                    Description = device.Description,
+                    Price = device.Price,
+                    ImageUrl = device.ImageUrl,
+                    Rating = device.Rating,
+                    CreatedDate = device.CreatedDate
+                }).ToList(),
+                Combos = paginatedCombos.Data.Select(combo => new ComboByStoreDetailsResponseDTO
+                {
+                    Id = combo.Id,
+                    Name = combo.Name,
+                    Description = combo.Description,
+                    Price = combo.Price,
+                    ImageUrl = combo.ImageUrl,
+                    Rating = combo.Rating,
+                    CreatedDate = combo.CreatedDate
+                }).ToList(),
+                TotalDevices = paginatedDevices.TotalCount,
+                TotalCombos = paginatedCombos.TotalCount
+            };
+
+            return ResponseService<GetStoreDetailsResponseDTO>.OK(responseDTO);
+        }
+
     }
 }

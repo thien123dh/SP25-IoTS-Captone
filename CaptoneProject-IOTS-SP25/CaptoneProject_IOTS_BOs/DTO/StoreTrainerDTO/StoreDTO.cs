@@ -6,6 +6,8 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CaptoneProject_IOTS_BOs.DTO.MaterialDTO;
+using CaptoneProject_IOTS_BOs.DTO.ProductDTO;
 
 namespace CaptoneProject_IOTS_BOs.DTO.StoreDTO
 {
@@ -89,6 +91,18 @@ namespace CaptoneProject_IOTS_BOs.DTO.StoreDTO
             public int? StoreNumberOfProducts { set; get; }
 
             public int? NumberOfFeedbacks { set; get; } = 155;
+        }
+
+        public class GetStoreDetailsResponseDTO
+        {
+            public int StoreId { get; set; }
+            public string StoreName { get; set; }
+            public int OwnerId { get; set; }
+            public string OwnerName { get; set; }
+            public List<IotDeviceByStoreDetailsResponseDTO> DevicesIot { get; set; }
+            public List<ComboByStoreDetailsResponseDTO> Combos { get; set; }
+            public int TotalDevices { get; set; }
+            public int TotalCombos { get; set; } 
         }
     }
 }

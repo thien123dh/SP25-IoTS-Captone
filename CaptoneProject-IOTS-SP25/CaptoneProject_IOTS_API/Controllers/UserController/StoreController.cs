@@ -152,5 +152,13 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
 
             return GetActionResult(response);
         }
+
+        [HttpPost("get-pagination-product-by-stores-id")]
+        public async Task<IActionResult> GetPaginationStoresDetails([FromBody] PaginationRequest paginationRequest, int storeId)
+        {
+            var response = await _storeService.GetPaginationStoresDetails(paginationRequest, storeId);
+
+            return GetActionResult(response);
+        }
     }
 }

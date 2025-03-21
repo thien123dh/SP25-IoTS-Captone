@@ -383,7 +383,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 var orderItems = await _unitOfWork.OrderDetailRepository.GetOrderItemsByTrackingIdAsync(trackingId);
 
-                if (orderItems == null || !orderItems.Any() || orderItems.Any(oi => oi.OrderItemStatus != 2))
+                if (orderItems == null || !orderItems.Any() || orderItems.Any(oi => !new[] { 2, 3 }.Contains(oi.OrderItemStatus)))
                 {
                     Console.WriteLine($"TrackingId {trackingId} invalid status.");
                     return null;
@@ -423,7 +423,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 var orderItems = await _unitOfWork.OrderDetailRepository.GetOrderItemsByTrackingIdAsync(trackingOrder);
 
-                if (orderItems == null || !orderItems.Any() || orderItems.Any(oi => oi.OrderItemStatus != 2))
+                if (orderItems == null || !orderItems.Any() || orderItems.Any(oi => !new[] { 2, 3 }.Contains(oi.OrderItemStatus)))
                 {
                     Console.WriteLine($"TrackingId {trackingOrder} invalid status.");
                     return null;
