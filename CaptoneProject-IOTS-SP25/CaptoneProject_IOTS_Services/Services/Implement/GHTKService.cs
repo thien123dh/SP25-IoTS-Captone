@@ -409,11 +409,34 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
-        public Task<byte[]> PrintLabelAsync(string trackingOrder)
+        public async Task<byte[]> PrintLabelAsync(string trackingOrder)
         {
-            throw new NotImplementedException();
-        }
+            try
+            {
+                var token = _configuration["GHTK:Token"];
+                string requestUrl = $"https://services-staging.ghtklab.com/services/label/{trackingOrder}?original=false&paper_size=a6";
 
+                var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+                request.Headers.Add("Token", token);
+
+                HttpResponseMessage response = await _httpClient.SendAsync(request);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorMessage = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"API Error: {response.StatusCode} - {errorMessage}");
+                    throw new Exception("Unable to get Tracking Order.");
+                }
+
+                return await response.Content.ReadAsByteArrayAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching label {trackingOrder}: {ex.Message}");
+                return null;
+            }
+        }
+    
         public async Task<List<District>> SyncDistrictsAsync(int provinceId)
         {
             try
