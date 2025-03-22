@@ -133,7 +133,7 @@ namespace CaptoneProject_IOTS_API.Controllers.LabController
         public async Task<IActionResult> ApproveLab(int labId,
             [FromBody] RemarkDTO payload)
         {
-            var res = await labService.ApproveOrRejectLab(labId, true, payload);
+            var res = await labService.ApproveOrRejectLab(labId, false, payload);
 
             return GetActionResult(res);
         }
