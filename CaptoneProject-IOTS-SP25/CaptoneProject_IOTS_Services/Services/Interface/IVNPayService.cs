@@ -1,4 +1,5 @@
-﻿using CaptoneProject_IOTS_BOs.DTO.VNPayDTO;
+﻿using CaptoneProject_IOTS_BOs;
+using CaptoneProject_IOTS_BOs.DTO.VNPayDTO;
 using CaptoneProject_IOTS_Service.Business;
 using System;
 using System.Collections.Generic;

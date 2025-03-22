@@ -167,6 +167,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 CreatedBy = loginUserId,
                 UpdatedBy = loginUserId,
                 ShippingFee = totalShippingFee,
+                TxnRef = vnpay.GetResponseData("vnp_TxnRef"),
                 OrderStatusId = (int)OrderStatusEnum.SUCCESS_TO_ORDER
             };
             _unitOfWork.OrderRepository.Create(createTransactionPayment);
@@ -458,7 +459,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 }
 
                 // Generate transaction reference number
-                var vnp_TxnRef = $"{loginUserId}{DateTime.Now:HHmmss}";
+                var vnp_TxnRef = $"{loginUserId}{DateTime.Now:yyyyMMddHHmmssfff}{new Random().Next(1000, 9999)}";
 
                 long vnp_Amount = (long)(finalTotalPrice * 100);
                 if (finalTotalPrice <= 0)

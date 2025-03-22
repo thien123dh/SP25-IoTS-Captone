@@ -9,7 +9,7 @@ namespace CaptoneProject_IOTS_BOs.Constant
     public enum OrderStatusEnum
     {
         SUCCESS_TO_ORDER = 1,
-        REJECTED_BY_CUSTOMER = 2
+        REFUNDED = 2
     }
 
     public enum OrderItemStatusEnum
