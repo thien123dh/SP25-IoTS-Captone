@@ -15,6 +15,6 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         EmailTemplate GetStaffManagerOtpEmailTemplate(string otp, string redirectUrl, string To);
 
         Task SendInvoiceEmailAsync(string to, string invoiceId, string senderName, string senderAddress, string senderEmail,
-                                        string receiverName, string receiverProvince, string receiverDictricts, string receiverWards, string receiverAddress, List<ProductBillDTO> products, decimal totalAmount);
+                                        string receiverName, string receiverProvince, string receiverDictricts, string receiverWards, string receiverAddress, List<ProductBillDTO> products, decimal totalProductPrice, decimal totalFee, decimal totalAmount);
     }
 }
