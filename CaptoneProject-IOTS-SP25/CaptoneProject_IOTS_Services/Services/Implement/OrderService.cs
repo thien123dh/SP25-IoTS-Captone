@@ -147,8 +147,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 });
 
             var totalShippingFee = shippingFees.FirstOrDefault(f => f.ShopOwnerId == -1)?.Fee ?? 0m;
+            decimal totalProductPrice = (Convert.ToInt64(vnpay.GetResponseData("vnp_Amount")) / 100 - totalShippingFee);
+            decimal totalAmount = (Convert.ToInt64(vnpay.GetResponseData("vnp_Amount")) / 100);
 
-            decimal totalAmount = (Convert.ToInt64(vnpay.GetResponseData("vnp_Amount")) / 100) - totalShippingFee;
 
             var createTransactionPayment = new Orders
             {
@@ -248,6 +249,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var productBillList = selectedItems.Select(item => new ProductBillDTO
             {
+                Img = item.IosDeviceNavigation?.ImageUrl ?? item.ComboNavigation?.ImageUrl ?? item.LabNavigation?.ImageUrl ?? "https://photos.google.com/share/AF1QipOAm47U_r0mYVWWJxwxSLvEmX4pvf5A16824osh1cd76-QUAV0cie7Z4uoL-zvefg/photo/AF1QipPy0TZ1bvUJYlEuL5HC2ZTct16AVQh1IRbINQMq?key=YnZpSm1hTmtJUGhDa2E4Q2M0aHZDU0Jxd2F4MWhn",
                 Name = item.IosDeviceNavigation?.Name ?? item.ComboNavigation?.Name ?? item.LabNavigation?.Title ?? "Product",
                 Quantity = item.Quantity,
                 Price = item.IosDeviceNavigation?.Price ?? item.ComboNavigation?.Price ?? item.LabNavigation?.Price ?? 0m,
@@ -271,7 +273,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 wardNameCustomer,
                 addressNameCustomer,
                 productBillList,
-                createTransactionPayment.TotalPrice
+                totalProductPrice,
+                totalShippingFee,
+                totalAmount
             );
 
             await _unitOfWork.CartRepository.RemoveAsync(selectedItems);
