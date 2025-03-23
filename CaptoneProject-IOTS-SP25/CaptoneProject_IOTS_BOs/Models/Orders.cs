@@ -25,9 +25,6 @@ namespace CaptoneProject_IOTS_BOs.Models
         [Precision(18, 1)]
         public decimal TotalPrice { set; get; } = 0;
 
-        [MaxLength(500)]
-        public string? TxnRef { set; get; }
-
         [Precision(18, 1)]
         public decimal? ShippingFee { set; get; }
 
