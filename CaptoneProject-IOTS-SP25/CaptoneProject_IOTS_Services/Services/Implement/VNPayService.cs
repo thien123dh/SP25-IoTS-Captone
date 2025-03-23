@@ -1,14 +1,20 @@
-﻿using CaptoneProject_IOTS_BOs.DTO.VNPayDTO;
+﻿using CaptoneProject_IOTS_BOs.DTO.OrderDTO;
+using CaptoneProject_IOTS_BOs.DTO.VNPayDTO;
 using CaptoneProject_IOTS_BOs.DTO.WalletDTO;
+using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
 using CaptoneProject_IOTS_Service.Business;
+using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using MailKit.Search;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
+using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
 
 namespace CaptoneProject_IOTS_Service.Services.Implement
 {
@@ -28,8 +34,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 string vnp_ReturnUrl = !string.IsNullOrEmpty(returnUrl) ? returnUrl : "https://localhost:44346/checkout-process";
                 string vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-                string vnp_TmnCode = "2BF25S7Y";
-                string vnp_HashSecret = "UWEORVE5ULXN8YNCLM16TFK1FWPQ0SA9";
+                string vnp_TmnCode = "PJLU0FHO";
+                string vnp_HashSecret = "4RY7BQN7ED5YFS7YR4TS3YONAJPGYYFL";
 
                 if (string.IsNullOrEmpty(vnp_TmnCode) || string.IsNullOrEmpty(vnp_HashSecret))
                 {
@@ -106,7 +112,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         public async Task<ResponsePayment> GetInformationPayment(int userId, VNPayRequestDTO dto)
         {
-            string vnp_HashSecret = "UWEORVE5ULXN8YNCLM16TFK1FWPQ0SA9";
+            string vnp_HashSecret = "4RY7BQN7ED5YFS7YR4TS3YONAJPGYYFL";
             var vnpayData = dto.urlResponse.Split("?")[1];
             VnPayLibrary vnpay = new VnPayLibrary();
 
@@ -182,6 +188,52 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             };
 
             return payment;
+        }
+
+        public async Task<string> RefundPayment(long amount, string returnUrl, string txnRef)
+        {
+            var loginUser = _userService.GetLoginUser();
+
+            var loginUserId = loginUser.Id;
+
+            string vnp_ReturnUrl = !string.IsNullOrEmpty(returnUrl) ? returnUrl : "https://localhost:44346/refund";
+            string vnp_Url = "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction";
+            string vnp_TmnCode = "PJLU0FHO";
+            string vnp_HashSecret = "4RY7BQN7ED5YFS7YR4TS3YONAJPGYYFL";
+
+            if (string.IsNullOrEmpty(vnp_TmnCode) || string.IsNullOrEmpty(vnp_HashSecret))
+            {
+                throw new Exception("Merchant code or secret key is missing.");
+            }
+
+            // Fix cứng số tiền theo loại thanh toán
+            var amounts = ((long)amount * 100).ToString();
+            var vnp_TxnRef = $"{loginUserId}{DateTime.Now:HHmmss}";
+            var vnp_Amount = amounts;
+            var reuqestId = $"{loginUserId}{DateTime.Now:HHmmss}";
+            var TransactionType = "02";
+
+            var vnpay = new VnPayLibrary();
+            vnpay.AddRequestData("vnp_RequestId", reuqestId);
+            vnpay.AddRequestData("vnp_Version", "2.1.0");
+            vnpay.AddRequestData("vnp_Command", "refund");
+            vnpay.AddRequestData("vnp_TmnCode", vnp_TmnCode);
+            vnpay.AddRequestData("vnp_TransactionType", TransactionType);
+            vnpay.AddRequestData("vnp_TxnRef", vnp_TxnRef);
+            vnpay.AddRequestData("vnp_Amount", vnp_Amount);
+            vnpay.AddRequestData("vnp_OrderInfo", $"Payment type: Refund");
+            TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            DateTime vietnamTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
+            vnpay.AddRequestData("vnp_TransactionDate", vietnamTime.ToString("yyyyMMddHHmmss"));
+            vnpay.AddRequestData("vnp_CreateBy", "Admin");
+            vnpay.AddRequestData("vnp_CreateDate", vietnamTime.AddMinutes(-20).ToString("yyyyMMddHHmmss"));
+            vnpay.AddRequestData("vnp_IpAddr", Utils.GetIpAddress());
+            vnpay.AddRequestData("vnp_ReturnUrl", vnp_ReturnUrl);
+
+            vnpay.AddRequestData("vnp_ExpireDate", vietnamTime.AddMinutes(5).ToString("yyyyMMddHHmmss"));
+
+            string refundUrl = vnpay.CreateRequestUrl(vnp_Url, vnp_HashSecret);
+            return refundUrl;
         }
     }
 }

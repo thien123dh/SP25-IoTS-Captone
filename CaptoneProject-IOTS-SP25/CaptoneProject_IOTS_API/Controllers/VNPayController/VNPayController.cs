@@ -3,6 +3,7 @@ using CaptoneProject_IOTS_Service.Services.Implement;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -41,5 +42,19 @@ namespace CaptoneProject_IOTS_API.Controllers.VNPayController
             var result = await _vnPayService.GetInformationPayment(userId, dto);
             return Ok(result);
         }
+
+        [HttpPost("refund")]
+        public async Task<IActionResult> RefundPayment([FromBody] RefundRequestDTO request)
+        {
+            if (string.IsNullOrEmpty(request.TxnRef))
+            {
+                return BadRequest(new { message = "Mã giao dịch không được để trống!" });
+            }
+
+            var response = await _vnPayService.RefundPayment(request.amount,request.urlResponse,request.TxnRef);
+
+            return Ok(response);
+        }
     }
 }
+
