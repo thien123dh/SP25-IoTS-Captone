@@ -20,7 +20,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.ProductDTO
 
         public int? ComboId { set; get; }
 
-        public LabStatusEnum? LabStatus { set; get; }
+        public int? LabStatus { set; get; }
     }
 
     public class LabDetailsInformationResponseDTO

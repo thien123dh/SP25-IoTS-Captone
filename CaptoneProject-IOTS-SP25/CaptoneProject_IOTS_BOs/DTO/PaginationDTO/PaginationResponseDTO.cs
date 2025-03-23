@@ -20,7 +20,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.PaginationDTO
         public T AdvancedFilter { set; get; }
 
         [Required]
-        public PaginationRequest paginationRequest { set; get; }
+        public PaginationRequest PaginationRequest { set; get; }
     }
 
     public class PaginationRequest
