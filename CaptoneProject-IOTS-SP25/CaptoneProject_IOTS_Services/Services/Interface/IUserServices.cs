@@ -25,5 +25,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         Task<ResponseDTO> UserChangePassword(ChangePasswordRequestDTO payload);
         Task<bool> CheckLoginUserRole(RoleEnum role);
         Task<Boolean> CheckUserRole(int userId, RoleEnum role);
+
+        int? GetRole();
     }
 }

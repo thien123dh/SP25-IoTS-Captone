@@ -30,6 +30,15 @@ namespace CaptoneProject_IOTS_API.Controllers.LabController
             return GetActionResult(res);
         }
 
+        [HttpPost("user-management/get-lab-pagination")]
+        public async Task<IActionResult> GetCustomerLabsPagination(
+            [FromBody] PaginationRequest payload
+        )
+        {
+            var res = await labService.GetCustomerManagementLabsPagination(payload);
+            return GetActionResult(res);
+        }
+
         [HttpPost("store-management/get-lab-pagination")]
         [Authorize]
         public async Task<IActionResult> GetLabsPaginationStoreManagement([FromQuery] int? comboId,
@@ -44,7 +53,7 @@ namespace CaptoneProject_IOTS_API.Controllers.LabController
         [Authorize]
         public async Task<IActionResult> GetLabsPaginationTrainerManagement([FromBody] GenericPaginationRequest<LabFilterRequestDTO> payload)
         {
-            var res = await labService.GetTrainerManagementLabsPagination(payload.AdvancedFilter, payload.paginationRequest);
+            var res = await labService.GetTrainerManagementLabsPagination(payload.AdvancedFilter, payload.PaginationRequest);
 
             return GetActionResult(res);
         }
@@ -53,7 +62,7 @@ namespace CaptoneProject_IOTS_API.Controllers.LabController
         [Authorize]
         public async Task<IActionResult> GetLabsPaginationAdminOrManagerManagement([FromBody] GenericPaginationRequest<LabFilterRequestDTO> payload)
         {
-            var res = await labService.GetLabPagination(payload.AdvancedFilter, payload.paginationRequest);
+            var res = await labService.GetLabPagination(payload.AdvancedFilter, payload.PaginationRequest);
 
             return GetActionResult(res);
         }

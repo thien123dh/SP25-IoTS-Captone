@@ -401,6 +401,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return user?.UserRoles?.Select(u => u.Role)?.ToList();
         }
 
+        public int? GetRole()
+        {
+            return httpAccessor.GetRole();
+        }
+
         public async Task<bool> CheckLoginUserRole(RoleEnum role)
         {
             var roles = await GetLoginUserRoles();

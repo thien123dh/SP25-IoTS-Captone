@@ -41,6 +41,24 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return userId;
         }
 
+        public int? GetRole()
+        {
+            ClaimsPrincipal? user = httpContextAccessor.HttpContext?.User;
+
+            int? role = null;
+
+            try
+            {
+                role = (user == null) ? null : int.Parse(user.FindFirst(ClaimTypes.Role).Value);
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            return role;
+        }
+
         public User? GetLoginUser()
         {
             int? userId = GetLoginUserId();

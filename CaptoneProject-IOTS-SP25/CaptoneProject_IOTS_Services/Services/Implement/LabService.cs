@@ -1,10 +1,12 @@
 ﻿using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.NotificationDTO;
+using CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.ProductDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
 using CaptoneProject_IOTS_BOs.Models;
+using CaptoneProject_IOTS_Service.Builder;
 using CaptoneProject_IOTS_Service.Mapper;
 using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
@@ -12,6 +14,7 @@ using Microsoft.AspNetCore.OData.Results;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.OData.ModelBuilder;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using static CaptoneProject_IOTS_BOs.Constant.EntityTypeConst;
 using static CaptoneProject_IOTS_BOs.Constant.ProductConst;
 using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
@@ -98,7 +101,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 new LabFilterRequestDTO
                 {
                     ComboId = comboId,
-                    LabStatus = ProductConst.LabStatusEnum.APPROVED
+                    LabStatus = (int)ProductConst.LabStatusEnum.APPROVED
                 },
                 paginationRequest
             );
@@ -115,10 +118,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var loginUserId = userServices.GetLoginUserId();
 
+            var role = userServices.GetRole();
+
             //PERMISSION for anonymous or customer
-            if (await userServices.CheckLoginUserRole(RoleEnum.CUSTOMER) || loginUserId == null && lab.Status != (int)LabStatusEnum.APPROVED)
+            if ((role == (int)RoleEnum.CUSTOMER || loginUserId == null) && lab.Status != (int)LabStatusEnum.APPROVED)
             {
-                throw new Exception(ExceptionMessage.LAB_NOTFOUND);
+                throw new Exception(ExceptionMessage.INVALID_PERMISSION);
             }
 
             try
@@ -136,22 +141,33 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         }
 
-        public async Task<ResponseDTO> GetLabPagination(LabFilterRequestDTO filterRequest, PaginationRequest paginationRequest)
+        public async Task<ResponseDTO> GetLabPagination(LabFilterRequestDTO filterRequest, 
+                            PaginationRequest paginationRequest,
+                            Expression<Func<Lab, bool>> additionalFunc = null)
         {
             var loginUserId = userServices.GetLoginUserId();
 
-            var pagination = unitOfWork.LabRepository.GetPaginate(
-                filter: item => (
+            Expression<Func<Lab, bool>> defaultFilter = item => (
                     (filterRequest.StoreId == null || filterRequest.StoreId == (int)item.ComboNavigation.StoreId)
                     &&
                     (filterRequest.UserId == null || filterRequest.UserId == item.CreatedBy)
                     &&
                     (filterRequest.ComboId == null || filterRequest.ComboId == item.ComboId)
                     &&
-                    (loginUserId == item.CreatedBy || (loginUserId != item.CreatedBy && item.Status != (int)LabStatusEnum.DRAFT))
-                    &&
                     (filterRequest.LabStatus == null || (int)filterRequest.LabStatus == item.Status)
-                ),
+                    &&
+                    (paginationRequest.SearchKeyword == null || item.Title.Contains(paginationRequest.SearchKeyword))
+            );
+
+            Expression<Func<Lab, bool>> finalFilter = defaultFilter;
+
+            if (additionalFunc != null)
+            {
+                finalFilter = ExpressionBuilder.AndAlso<Lab>(finalFilter, additionalFunc);
+            }
+
+            var pagination = unitOfWork.LabRepository.GetPaginate(
+                filter: finalFilter,
                 orderBy: ob => ob.OrderByDescending(item => item.CreatedDate),
                 includeProperties: "ComboNavigation,ComboNavigation.StoreNavigation",
                 pageIndex: paginationRequest.PageIndex,
@@ -193,12 +209,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (store == null)
                 return ResponseService<object>.NotFound(ExceptionMessage.STORE_NOTFOUND);
 
+            Expression<Func<Lab, bool>> storeFilter = item => item.ComboNavigation.CreatedBy == loginUserId &&
+                                                  item.Status != (int)LabStatusEnum.DRAFT;
+
             var res = await GetLabPagination(new LabFilterRequestDTO
             {
                 StoreId = store?.Id,
                 ComboId = comboId
-            },
-                paginationRequest);
+            }, paginationRequest, storeFilter);
 
             return res;
         }
@@ -207,12 +225,15 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         {
             int? loginUserId = userServices.GetLoginUserId();
 
-            if (loginUserId == null || loginUserId != filterRequest.UserId)
+            if (loginUserId == null)
                 return ResponseService<object>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
+
+            Expression<Func<Lab, bool>> trainerFilter = item => item.CreatedBy == item.CreatedBy;
 
             var res = await GetLabPagination(
                 filterRequest,
-                paginationRequest
+                paginationRequest,
+                trainerFilter
             );
 
             return res;
@@ -449,6 +470,30 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             _ = notificationService.CreateUserNotification([notification]);
 
             return ResponseService<LabDetailsInformationResponseDTO>.OK(res);
+        }
+
+        public async Task<ResponseDTO> GetCustomerManagementLabsPagination(PaginationRequest paginationRequest)
+        {
+            int? loginUserId = userServices.GetLoginUserId();
+
+            if (loginUserId == null)
+                return ResponseService<object>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
+
+            var orderSuccessLabOrder = unitOfWork.OrderDetailRepository.Search(
+                item => item.LabId != null && (item.OrderItemStatus == (int)OrderItemStatusEnum.PENDING_TO_FEEDBACK ||
+                item.OrderItemStatus == (int)OrderItemStatusEnum.COMPLETED)
+            )?.Select(item => item.LabId)?.ToList();
+
+            Expression<Func<Lab, bool>> customerPermissionFilter = item => item.CreatedBy == item.CreatedBy
+                                            && (orderSuccessLabOrder != null) && orderSuccessLabOrder.Contains(item.Id);
+
+            var res = await GetLabPagination(
+                new LabFilterRequestDTO(),
+                paginationRequest,
+                customerPermissionFilter
+            );
+
+            return res;
         }
     }
 }

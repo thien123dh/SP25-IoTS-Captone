@@ -2,15 +2,18 @@
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.ProductDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
+using CaptoneProject_IOTS_BOs.Models;
+using System.Linq.Expressions;
 
 namespace CaptoneProject_IOTS_Service.Services.Interface
 {
     public interface ILabService
     {
-        Task<ResponseDTO> GetLabPagination(LabFilterRequestDTO filterRequest, PaginationRequest paginationRequest);
-
         Task<ResponseDTO> GetComboLabsPagination(int comboId, PaginationRequest paginationRequest);
-
+        Task<ResponseDTO> GetLabPagination(LabFilterRequestDTO filterRequest,
+                            PaginationRequest paginationRequest,
+                            Expression<Func<Lab, bool>>? additionalFunc = null);
+        Task<ResponseDTO> GetCustomerManagementLabsPagination(PaginationRequest paginationRequest);
         Task<ResponseDTO> GetTrainerManagementLabsPagination(LabFilterRequestDTO filterRequest, PaginationRequest paginationRequest);
 
         Task<ResponseDTO> GetStoreManagementLabsPagination(int? comboId, PaginationRequest paginationRequest);
