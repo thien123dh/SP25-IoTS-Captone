@@ -10,5 +10,6 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
 {
     public class FeedbackRepository : RepositoryBase<Feedback>
     {
+
     }
 }

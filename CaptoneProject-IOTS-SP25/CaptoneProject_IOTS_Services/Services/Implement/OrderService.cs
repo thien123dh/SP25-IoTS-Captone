@@ -555,6 +555,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
+        public OrderResponseDTO BuildToOrderResponseDTO(IMapService<Orders, OrderResponseDTO> mapper, Orders order)
+        {
+            return mapper.MappingTo(order);
+        }
+
         public async Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetOrdersByUserPagination(int? filterOrderId, PaginationRequest payload)
         {
             try
@@ -566,68 +571,71 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 var loginUserId = loginUser.Id;
 
-                var orders = await _unitOfWork.OrderRepository.GetByUserIdAsync(loginUserId);
-
-                if (orders == null || !orders.Any())
-                    return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.NotFound("No orders found for this user.");
-
-                // Áp dụng cả 2 bộ lọc (thời gian + ID)
-                var filteredOrders = orders.Where(order =>
-                    (!payload.StartFilterDate.HasValue || order.CreateDate >= payload.StartFilterDate.Value) &&
-                    (!payload.EndFilterDate.HasValue || order.CreateDate <= payload.EndFilterDate.Value) &&
-                    (filterOrderId == null || order.Id == filterOrderId)
+                var paginatedOrders = _unitOfWork.OrderRepository.GetPaginate(
+                    filter: item => item.OrderBy == loginUserId,
+                    orderBy: ob => ob.OrderByDescending(item => item.CreateDate),
+                    includeProperties: "OrderItems,OrderItems.IotsDevice,OrderItems.Combo,OrderItems.Lab",
+                    pageIndex: payload.PageIndex,
+                    pageSize: payload.PageSize
                 );
 
-                int totalOrders = filteredOrders.Count();
+                if (paginatedOrders == null)
+                    return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.NotFound("No orders found for this user.");
 
-                var paginatedOrders = filteredOrders
-                    .OrderByDescending(order => order.CreateDate)
-                    .Skip((payload.PageIndex - 1) * payload.PageSize)
-                    .Take(payload.PageSize)
-                    .ToList();
+                var sellerIds = paginatedOrders.Data?.SelectMany(item => item.OrderItems.Select(o => o.SellerId)).Distinct();
 
-                // Lấy danh sách OrderDetails dựa trên danh sách Order ID
-                var orderIds = paginatedOrders.Select(o => o.Id).ToList();
-                var orderDetails = await _unitOfWork.OrderDetailRepository.GetByOrderIdsAsync(orderIds);
+                var storeList = _unitOfWork.StoreRepository.Search(
+                    item => (sellerIds != null) && sellerIds.Contains(item.OwnerId)
+                ).Include(store => store.Owner).ToList();
 
-                // Chuyển đổi danh sách Order thành OrderResponseDTO
-                var orderDTOs = paginatedOrders.Select(order => new OrderResponseDTO
-                {
-                    OrderId = order.Id,
-                    ApplicationSerialNumber = order.ApplicationSerialNumber,
-                    TotalPrice = order.TotalPrice,
-                    Address = order.Address,
-                    ContactNumber = order.ContactNumber,
-                    Notes = order.Notes,
-                    CreateDate = order.CreateDate,
-                    UpdatedDate = order.UpdatedDate,
-                    OrderStatusId = order.OrderStatusId,
-                    OrderDetailsGrouped = orderDetails
+                var mapper = new MapService<Orders, OrderResponseDTO>();
+
+                // Build to Order Response DTO
+                var orderDTOs = paginatedOrders?.Data?.Select(order => {
+                    var orderResponseDTO = BuildToOrderResponseDTO(mapper, order);
+
+                    //Group by seller id
+                    var orderDetailsGrouped = order.OrderItems
                     .Where(od => od.OrderId == order.Id)
-                    .GroupBy(od => od.Seller.Stores.FirstOrDefault()?.Id)
-                    .Select(group => new SellerOrderDetailsDTO
+                    .GroupBy(od => od.SellerId)
+                    .Select(group =>
                     {
-                        ShopOwnerId = group.FirstOrDefault()?.Seller.Stores.FirstOrDefault()?.OwnerId ?? 0,
-                        ShopOwnerName = group.FirstOrDefault()?.Seller.Stores.FirstOrDefault()?.Name ?? "Unknown",
-                        TrackingId = group.FirstOrDefault()?.TrackingId,
-                        Items = group.Select(od => new OrderItemResponeUserDTO
+                        var sellerId = group?.FirstOrDefault()?.SellerId;
+                        var trackingId = group?.FirstOrDefault()?.TrackingId;
+                        var store = storeList.FirstOrDefault(s => s.OwnerId == sellerId);
+
+                        var res = new SellerOrderDetailsDTO
                         {
-                            NameShop = od.Seller.Fullname,
-                            NameProduct = od.IotsDevice.Name ?? od.Combo.Name ?? od.Lab.Title,
-                            ProductType = od.ProductType,
-                            ImageUrl = od.IotsDevice.ImageUrl ?? od.Combo.ImageUrl ?? od.Lab.ImageUrl,
-                            Quantity = od.Quantity,
-                            Price = od.Price,
-                            OrderItemStatus = od.OrderItemStatus,
-                            WarrantyEndDate = od.WarrantyEndDate
-                        }).ToList()
-                    }).ToList()
+                            ShopOwnerId = (int)sellerId,
+                            StoreName = store?.Name,
+                            StoreId = store?.Id,
+                            //ShopOwnerName = group.FirstOrDefault()?.Seller.Stores.FirstOrDefault()?.Name ?? "Unknown",
+                            TrackingId = trackingId,
+                            Items = group.Select(od => new OrderItemResponeUserDTO
+                                {
+                                    NameShop = store?.Name,
+                                    NameProduct = od?.IotsDevice?.Name ?? od?.Combo?.Name ?? od?.Lab?.Title,
+                                    ProductType = od.ProductType,
+                                    ImageUrl = od?.IotsDevice?.ImageUrl ?? od?.Combo?.ImageUrl ?? od?.Lab?.ImageUrl,
+                                    Quantity = od.Quantity,
+                                    Price = od.Price,
+                                    OrderItemStatus = od.OrderItemStatus,
+                                    WarrantyEndDate = od.WarrantyEndDate
+                                }).ToList()
+                        };
+
+                        return res;
+                    });
+
+                    orderResponseDTO.OrderDetailsGrouped = orderDetailsGrouped?.ToList() ?? orderResponseDTO.OrderDetailsGrouped;
+
+                    return orderResponseDTO;
                 });
 
                 var paginationResponse = new PaginationResponseDTO<OrderResponseDTO>
                 {
                     Data = orderDTOs,
-                    TotalCount = totalOrders,
+                    TotalCount = paginatedOrders?.TotalCount ?? 0,
                     PageIndex = payload.PageIndex,
                     PageSize = payload.PageSize
                 };
