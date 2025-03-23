@@ -39,6 +39,8 @@ namespace CaptoneProject_IOTS_BOs.Models
         [ForeignKey(nameof(User))]
         public int OrderBy { set; get; }
 
+        public string? TxnRef { set; get; }
+
         [Range(1, 10)]
         [Required]
         public int ProductType { set; get; }

@@ -187,6 +187,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     LabId = item.LabNavigation?.Id,
                     Price = item.IosDeviceNavigation?.Price ?? item.ComboNavigation?.Price ?? item.LabNavigation?.Price ?? 0m,
                     OrderItemStatus = (int)OrderItemStatusEnum.PENDING,
+                    TxnRef = vnpay.GetResponseData("vnp_TxnRef"),
                     TrackingId = trackingId
                 };
                 _unitOfWork.OrderDetailRepository.Create(orderDetail);
@@ -439,8 +440,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 string vnp_ReturnUrl = !string.IsNullOrEmpty(returnUrl) ? returnUrl : "https://localhost:44346/checkout-process-order";
                 string vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-                string vnp_TmnCode = "2BF25S7Y";
-                string vnp_HashSecret = "UWEORVE5ULXN8YNCLM16TFK1FWPQ0SA9";
+                string vnp_TmnCode = "PJLU0FHO";
+                string vnp_HashSecret = "4RY7BQN7ED5YFS7YR4TS3YONAJPGYYFL";
 
                 // Convert orderInfo to JSON
                 string orderInfoJson = JsonConvert.SerializeObject(orderInfo);
