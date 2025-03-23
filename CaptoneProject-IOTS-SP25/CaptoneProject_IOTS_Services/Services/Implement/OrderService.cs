@@ -150,7 +150,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             decimal totalProductPrice = (Convert.ToInt64(vnpay.GetResponseData("vnp_Amount")) / 100 - totalShippingFee);
             decimal totalAmount = (Convert.ToInt64(vnpay.GetResponseData("vnp_Amount")) / 100);
 
-
             var createTransactionPayment = new Orders
             {
                 ApplicationSerialNumber = GetApplicationSerialNumberOrder(loginUserId),
@@ -167,7 +166,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 CreatedBy = loginUserId,
                 UpdatedBy = loginUserId,
                 ShippingFee = totalShippingFee,
-                TxnRef = vnpay.GetResponseData("vnp_TxnRef"),
                 OrderStatusId = (int)OrderStatusEnum.SUCCESS_TO_ORDER
             };
             _unitOfWork.OrderRepository.Create(createTransactionPayment);
@@ -212,6 +210,16 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         combo.Quantity -= item.Quantity;
                         if (combo.Quantity < 0) combo.Quantity = 0;
                         _unitOfWork.ComboRepository.Update(combo);
+                    }
+                }
+
+                if (item.LabNavigation != null)
+                {
+                    var lab = await _unitOfWork.LabRepository.GetByIdAsync(item.LabNavigation.Id);
+                    if (lab != null)
+                    {
+                        orderDetail.OrderItemStatus = (int)OrderItemStatusEnum.ORDER_TO_SUCESS;
+                        _unitOfWork.OrderDetailRepository.Update(orderDetail);
                     }
                 }
             }
@@ -344,6 +352,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     .Where(item => item.CreatedBy == loginUserId && item.IsSelected)
                     .Include(item => item.IosDeviceNavigation)
                     .Include(item => item.ComboNavigation)
+                    .Include(item => item.LabNavigation)
                     .ToListAsync();
 
                 if (selectedItems == null || !selectedItems.Any())
@@ -357,7 +366,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 }
 
                 var totalPrice = selectedItems.Sum(item =>
-                    (((item.IosDeviceNavigation?.Price ?? 0m) * item.Quantity) + ((item.ComboNavigation?.Price ?? 0m) * item.Quantity))
+                    (((item.IosDeviceNavigation?.Price ?? 0m) * item.Quantity) + ((item.ComboNavigation?.Price ?? 0m) * item.Quantity)
+                    + ((item.LabNavigation?.Price ?? 0m) * item.Quantity)
+                    )
                 );
 
                 if (totalPrice <= 0)
