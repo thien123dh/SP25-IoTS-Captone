@@ -218,7 +218,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 CreatedBy = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? item.IosDeviceNavigation?.CreatedBy : item.ComboNavigation?.CreatedBy,
                 Price = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? (decimal)item.IosDeviceNavigation.Price : (decimal)item.ComboNavigation.Price,
                 CreatedByStore = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? item?.IosDeviceNavigation?.StoreNavigation.Name : item.ComboNavigation?.StoreNavigation?.Name,
-                ImageUrl = item?.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? item?.IosDeviceNavigation?.ImageUrl : item.ComboNavigation?.StoreNavigation?.ImageUrl,
+                ImageUrl = item?.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? item?.IosDeviceNavigation?.ImageUrl : item.ComboNavigation?.ImageUrl,
             };
         }
 

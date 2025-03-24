@@ -28,6 +28,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO
 
     public class OrderItemResponseDTO
     {
+        public int OrderItemId { set; get; }
         public string? ImageUrl { set; get; }
         public int? ProductId { set; get; }
         public string? NameProduct { get; set; }
@@ -49,7 +50,6 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO
         public int? SellerId { set; get; }
         public string? SellerName { set; get; }
         public int SellerRole { set; get; }
-        public decimal ShippingFee { set; get; }
         public virtual string SellerRoleName => this.SellerRole == (int)RoleEnum.STORE ? "Store" : "Trainer";
         public string TrackingId { get; set; }
         public int? OrderItemStatus { set; get; }
