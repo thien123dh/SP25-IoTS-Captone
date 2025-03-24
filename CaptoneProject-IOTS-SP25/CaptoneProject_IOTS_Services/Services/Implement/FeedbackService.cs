@@ -67,19 +67,19 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (order.CreatedBy != loginUserId)
                 return ResponseService<object>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
 
-            var store = unitOfWork.StoreRepository.GetByUserId(request.SellerId);
+            var store = unitOfWork.StoreRepository.GetById(request.SellerId);
 
-            if (store == null)
-                return ResponseService<object>.NotFound(ExceptionMessage.STORE_NOTFOUND);
+            //if (store == null)
+            //    return ResponseService<object>.NotFound(ExceptionMessage.STORE_NOTFOUND);
 
-            var storeOrderList = unitOfWork.OrderDetailRepository.Search(
+            var sellerOrderList = unitOfWork.OrderDetailRepository.Search(
                 item => item.OrderId == request.OrderId 
-                        && item.SellerId == store.OwnerId 
+                        && item.SellerId == request.SellerId
                         && item.OrderItemStatus == (int)OrderItemStatusEnum.PENDING_TO_FEEDBACK
             ).Include(item => item.Lab)
             .ThenInclude(lab => lab.CreatedByNavigation).ToList();
 
-            var checkValidation = CheckOrderFeedbackValidation(storeOrderList, request);
+            var checkValidation = CheckOrderFeedbackValidation(sellerOrderList, request);
 
             if (!checkValidation.IsSuccess)
                 return checkValidation;
@@ -92,7 +92,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 List<Report> reports = new List<Report>();
 
-                var updatedOrderItems = storeOrderList.Select(
+                var updatedOrderItems = sellerOrderList.Select(
                     item =>
                     {
                         var feedback = feedbackList.FirstOrDefault(f => f.OrderItemId == item.Id);
@@ -108,7 +108,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                                         : 
                                         "{Email} send a report to product of store '{StoreName}'"
                                         .Replace("{Email}", loginUser.Email)
-                                        .Replace("{StoreName}", store.Name);
+                                        .Replace("{StoreName}", store?.Name);
 
                             reports.Add(
                                 new Report
@@ -134,13 +134,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 _ = unitOfWork.FeedbackRepository.CreateAsync(feedbackList);
 
-                if (!reports.IsNullOrEmpty())
+                if (reports.Count() > 0)
                     _ = unitOfWork.ReportRepository.CreateAsync(reports);
 
                 return ResponseService<object>.OK(
                     new
                     {
-                        StoreId = request.SellerId,
+                        SellerId = request.SellerId,
+                        SellerRole = request.SellerRole,
                         OrderId = request.OrderId
                     }
                 );

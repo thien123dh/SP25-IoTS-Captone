@@ -127,10 +127,10 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
             return Ok(result);
         }
 
-        [HttpPost("get-all-order-pagination")]
+        [HttpPost("admin-manager/get-pagination")]
         public async Task<IActionResult> GetAllOrdersPagination([FromQuery] int? OrderFilterId, [FromBody] PaginationRequest payload)
         {
-            var result = await _orderService.GetAllOrdersPagination(null, payload);
+            var result = await _orderService.GetAdminOrdersPagination(null, null, payload);
 
             if (!result.IsSuccess)
                 return BadRequest(result);

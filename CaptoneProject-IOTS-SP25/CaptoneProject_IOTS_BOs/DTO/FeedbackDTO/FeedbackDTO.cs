@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using static CaptoneProject_IOTS_BOs.Constant.ProductConst;
+using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
 
 namespace CaptoneProject_IOTS_BOs.DTO.FeedbackDTO
 {
@@ -23,6 +24,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.FeedbackDTO
     {
         public int OrderId { set; get; }
         public int SellerId { set; get; }
+        public RoleEnum SellerRole { set; get; }
         public List<FeedbackItemRequestDTO> FeedbackList { set; get; }
     }
 

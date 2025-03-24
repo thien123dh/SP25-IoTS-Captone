@@ -553,7 +553,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         }
 
         public async Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetOrdersPagination(PaginationRequest payload,
-            Expression<Func<Orders, bool>> orderExpress, Func<OrderItem, bool> orderItemFunc)
+            Expression<Func<Orders, bool>> orderExpress, 
+            Func<OrderItem, bool> orderItemFunc)
         {
             try
             {
@@ -599,6 +600,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                         var items = group?.Select(od => new OrderItemResponseDTO
                         {
+                            OrderItemId = od.Id,
                             ProductId = od?.IosDeviceId ?? od?.LabId ?? od?.ComboId,
                             NameProduct = od?.IotsDevice?.Name ?? od?.Combo?.Name ?? od?.Lab?.Title,
                             ProductType = od.ProductType,
@@ -612,7 +614,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         var res = new OrderItemsGroupResponseDTO
                         {
                             SellerName = trainer != null ? trainer.Fullname : store?.Name,
-                            SellerId = store?.Id,
+                            SellerId = sellerId,
                             SellerRole = trainer != null ? (int)RoleEnum.TRAINER : (int)RoleEnum.STORE,
                             TrackingId = trackingId,
                             OrderItemStatus = orderItemStatusId,
@@ -653,8 +655,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (loginUserId == null || !await userServices.CheckLoginUserRole(RoleEnum.CUSTOMER))
                 return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.Unauthorize("You don't have permission to access");
 
-            Expression<Func<Orders, bool>> func = item => item.OrderBy == (int)loginUserId &&
-                (orderItemStatus == null || item.OrderItems.Any(item => item.OrderItemStatus == orderItemStatus));
+            Expression<Func<Orders, bool>> func = item => (filterOrderId == null || item.Id == filterOrderId) 
+                && item.OrderBy == (int)loginUserId 
+                && (orderItemStatus == null || item.OrderItems.Any(item => item.OrderItemStatus == orderItemStatus));
 
             var pagination = await GetOrdersPagination(
                 payload,
@@ -676,7 +679,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.Unauthorize("You don't have permission to access");
 
             Expression<Func<Orders, bool>> func = 
-                item => item.OrderItems.Any(item => item.SellerId == loginUserId) && 
+                item => (filterOrderId == null || item.Id == filterOrderId) && item.OrderItems.Any(item => item.SellerId == loginUserId) && 
                 (orderItemStatus == null || item.OrderItems.Any(item => item.OrderItemStatus == orderItemStatus));
 
             var pagination = await GetOrdersPagination(
@@ -688,57 +691,25 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return pagination;
         }
 
-        public async Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetAllOrdersPagination(int? filterOrderId, PaginationRequest payload)
+        public async Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetAdminOrdersPagination(int? orderItemStatus, 
+            int? filterOrderId, 
+            PaginationRequest payload)
         {
-            try
-            {
-                /*var loginUser = userServices.GetLoginUser();*/
+            var loginUserId = userServices.GetLoginUserId();
 
-                /*if (loginUser == null || !await userServices.CheckLoginUserRole(RoleEnum.ADMIN))
-                    return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.Unauthorize("You don't have permission to access");*/
+            if (loginUserId == null || (!await userServices.CheckLoginUserRole(RoleEnum.MANAGER) && !await userServices.CheckLoginUserRole(RoleEnum.ADMIN)))
+                return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.Unauthorize("You don't have permission to access");
 
-                var ordersQuery = _unitOfWork.OrderRepository.GetQueryable(); // Truy vấn cơ bản
+            Expression<Func<Orders, bool>> func =
+                item => (filterOrderId == null || item.Id == filterOrderId) && (orderItemStatus == null || item.OrderItems.Any(item => item.OrderItemStatus == orderItemStatus));
 
-                // Lọc theo OrderId nếu có
-                if (filterOrderId.HasValue)
-                {
-                    ordersQuery = ordersQuery.Where(o => o.Id == filterOrderId);
-                }
+            var pagination = await GetOrdersPagination(
+                payload,
+                func,
+                oi => true
+            );
 
-                int totalOrders = await ordersQuery.CountAsync();
-
-                var paginatedOrders = await ordersQuery
-                    .OrderByDescending(o => o.CreateDate)
-                    .Skip((payload.PageIndex - 1) * payload.PageSize)
-                    .Take(payload.PageSize)
-                    .ToListAsync();
-
-                var orderDTOs = paginatedOrders.Select(order => new OrderResponseDTO
-                {
-                    ApplicationSerialNumber = order.ApplicationSerialNumber,
-                    TotalPrice = order.TotalPrice,
-                    Address = order.Address,
-                    ContactNumber = order.ContactNumber,
-                    Notes = order.Notes,
-                    CreateDate = order.CreateDate,
-                    UpdatedDate = order.UpdatedDate,
-                    OrderStatusId = order.OrderStatusId
-                }).ToList();
-
-                var paginationResponse = new PaginationResponseDTO<OrderResponseDTO>
-                {
-                    Data = orderDTOs,
-                    TotalCount = totalOrders,
-                    PageIndex = payload.PageIndex,
-                    PageSize = payload.PageSize
-                };
-
-                return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.OK(paginationResponse);
-            }
-            catch (Exception ex)
-            {
-                return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.BadRequest("Cannot get orders. Please try again.");
-            }
+            return pagination;
         }
 
         public async Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseToStoreDTO>>> GetOrderByStoreIdHasStatusPending(int? filterOrderId, PaginationRequest payload)
@@ -817,52 +788,42 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         public async Task<GenericResponseDTO<OrderResponseDTO>> GetOrdersDetailsByOrderId(int orderId)
         {
-            try
+            var loginUserId = userServices.GetLoginUserId();
+
+            var role = userServices.GetRole();
+
+            if (loginUserId == null)
+                return ResponseService<OrderResponseDTO>.Unauthorize("You don't have permission to access");
+
+            OrderResponseDTO? result = null;
+
+            if (role == (int)RoleEnum.CUSTOMER)
             {
-                var order = await _unitOfWork.OrderRepository.GetByIdAsync(orderId);
-
-                if (order == null)
-                    return ResponseService<OrderResponseDTO>.NotFound("No orders found for this user.");
-
-                var orderDetails = await _unitOfWork.OrderDetailRepository.GetByOrderIdsAsync(new List<int> { order.Id });
-
-                // Chuyển đổi danh sách Order thành OrderResponseDTO
-                var orderDTOs = new OrderResponseDTO
+                var res = await GetOrdersByUserPagination(null, orderId, new PaginationRequest
                 {
-                    OrderId = order.Id,
-                    ApplicationSerialNumber = order.ApplicationSerialNumber,
-                    TotalPrice = order.TotalPrice,
-                    Address = order.Address,
-                    ContactNumber = order.ContactNumber,
-                    Notes = order.Notes,
-                    CreateDate = order.CreateDate,
-                    UpdatedDate = order.UpdatedDate,
-                    OrderStatusId = order.OrderStatusId,
-                    OrderDetailsGrouped = orderDetails
-                    .Where(od => od.OrderId == order.Id)
-                    .GroupBy(od => od.Seller.Stores.FirstOrDefault()?.Id)
-                    .Select(group => new OrderItemsGroupResponseDTO
-                    {
-                        ShopOwnerId = group.FirstOrDefault()?.Seller.Stores.FirstOrDefault()?.OwnerId ?? 0,
-                        ShopOwnerName = group.FirstOrDefault()?.Seller.Stores.FirstOrDefault()?.Name ?? "Unknown",
-                        Items = group.Select(od => new OrderItemResponseDTO
-                        {
-                            NameProduct = od.IotsDevice.Name ?? od.Combo.Name ?? od.Lab.Title,
-                            ProductType = od.ProductType,
-                            ImageUrl = od.IotsDevice.ImageUrl ?? od.Combo.ImageUrl ?? od.Lab.ImageUrl,
-                            Quantity = od.Quantity,
-                            Price = od.Price,
-                            OrderItemStatus = od.OrderItemStatus,
-                            WarrantyEndDate = od.WarrantyEndDate
-                        }).ToList()
-                    }).ToList()
-                };
-                return ResponseService<OrderResponseDTO>.OK(orderDTOs);
+                    PageIndex = 0,
+                    PageSize = 1,
+                    SearchKeyword = ""
+                });
+
+                result = res?.Data?.Data?.FirstOrDefault();
             }
-            catch (Exception ex)
+            else if (role == (int)RoleEnum.STORE)
             {
-                return ResponseService<OrderResponseDTO>.BadRequest("Cannot get orders. Please try again.");
+                var res = await GetOrderByStorePagination(null, orderId, new PaginationRequest
+                {
+                    PageIndex = 0,
+                    PageSize = 1,
+                    SearchKeyword = ""
+                });
+
+                result = res?.Data?.Data?.FirstOrDefault();
             }
+
+            if (result == null)
+                return ResponseService<OrderResponseDTO>.NotFound("Order cannot be found. Please try again");
+
+            return ResponseService<OrderResponseDTO>.OK(result);
         }
 
         public async Task<GenericResponseDTO<List<OrderResponseToStoreDTO>>> updateOrderDetailToPackingByStoreId(int? updateOrderId)
