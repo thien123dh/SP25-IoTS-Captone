@@ -1,33 +1,21 @@
 ﻿using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.GHTKDTO;
-using CaptoneProject_IOTS_BOs.DTO.MaterialCategotyDTO;
-using CaptoneProject_IOTS_BOs.DTO.MaterialDTO;
 using CaptoneProject_IOTS_BOs.DTO.OrderDTO;
 using CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.VNPayDTO;
-using CaptoneProject_IOTS_BOs.DTO.WalletDTO;
 using CaptoneProject_IOTS_BOs.Models;
-using CaptoneProject_IOTS_Service.Mapper;
 using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
-using MailKit.Search;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
-using Org.BouncyCastle.Asn1.X9;
-using Org.BouncyCastle.Pqc.Crypto.Lms;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Web;
-using static CaptoneProject_IOTS_BOs.Constant.EntityTypeConst;
 using static CaptoneProject_IOTS_BOs.Constant.ProductConst;
 using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
-using static CaptoneProject_IOTS_BOs.DTO.StoreDTO.StoreDTO;
 
 namespace CaptoneProject_IOTS_Service.Services.Implement
 {
@@ -89,7 +77,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             string encodedOrderInfo = vnpay.GetResponseData("vnp_OrderInfo");
 
             string address = "", contactPhone = "", notes = "";
-            int provinceId = 0, districtId = 0, wardId = 0, addressId = 0; 
+            int provinceId = 0, districtId = 0, wardId = 0, addressId = 0;
             string provinceName = "", districtName = "", wardName = "", fullAddress = "", deliver_option = "";
 
             if (!string.IsNullOrEmpty(encodedOrderInfo))
@@ -144,7 +132,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 AddressId = addressId,
                 Address = address,
                 note = notes
-                });
+            });
 
             var totalShippingFee = shippingFees.FirstOrDefault(f => f.ShopOwnerId == -1)?.Fee ?? 0m;
             decimal totalProductPrice = (Convert.ToInt64(vnpay.GetResponseData("vnp_Amount")) / 100 - totalShippingFee);
@@ -507,7 +495,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     IsSuccess = true,
                     Message = "Order created successfully, please proceed with payment.",
                     Data = new OrderReturnPaymentVNPayDTO
-                    { 
+                    {
                         PaymentUrl = paymentUrl
                     }
                 };
@@ -557,24 +545,24 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         public OrderResponseDTO BuildToOrderResponseDTO(IMapService<Orders, OrderResponseDTO> mapper, Orders order)
         {
-            return mapper.MappingTo(order);
+            var res = mapper.MappingTo(order);
+
+            res.OrderId = order.Id;
+
+            return res;
         }
 
-        public async Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetOrdersByUserPagination(int? filterOrderId, PaginationRequest payload)
+        public async Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetOrdersPagination(PaginationRequest payload,
+            Expression<Func<Orders, bool>> orderExpress, Func<OrderItem, bool> orderItemFunc)
         {
             try
             {
-                var loginUser = userServices.GetLoginUser();
-
-                if (loginUser == null || !await userServices.CheckLoginUserRole(RoleEnum.CUSTOMER))
-                    return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.Unauthorize("You don't have permission to access");
-
-                var loginUserId = loginUser.Id;
+                var loginUserId = userServices.GetLoginUserId();
 
                 var paginatedOrders = _unitOfWork.OrderRepository.GetPaginate(
-                    filter: item => item.OrderBy == loginUserId,
+                    filter: orderExpress,
                     orderBy: ob => ob.OrderByDescending(item => item.CreateDate),
-                    includeProperties: "OrderItems,OrderItems.IotsDevice,OrderItems.Combo,OrderItems.Lab",
+                    includeProperties: "OrderItems,OrderItems.IotsDevice,OrderItems.Combo,OrderItems.Lab,OrderItems.Lab.CreatedByNavigation",
                     pageIndex: payload.PageIndex,
                     pageSize: payload.PageSize
                 );
@@ -591,37 +579,45 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 var mapper = new MapService<Orders, OrderResponseDTO>();
 
                 // Build to Order Response DTO
-                var orderDTOs = paginatedOrders?.Data?.Select(order => {
+                var orderDTOs = paginatedOrders?.Data?.Select(order =>
+                {
                     var orderResponseDTO = BuildToOrderResponseDTO(mapper, order);
 
                     //Group by seller id
                     var orderDetailsGrouped = order.OrderItems
-                    .Where(od => od.OrderId == order.Id)
+                    .Where(orderItemFunc)
                     .GroupBy(od => od.SellerId)
                     .Select(group =>
                     {
-                        var sellerId = group?.FirstOrDefault()?.SellerId;
-                        var trackingId = group?.FirstOrDefault()?.TrackingId;
-                        var store = storeList.FirstOrDefault(s => s.OwnerId == sellerId);
+                        var od = group?.FirstOrDefault();
 
-                        var res = new SellerOrderDetailsDTO
+                        var sellerId = od?.SellerId;
+                        var trackingId = od?.TrackingId;
+                        var store = storeList.FirstOrDefault(s => s.OwnerId == sellerId);
+                        var trainer = od?.Lab?.CreatedByNavigation;
+                        var orderItemStatusId = od.OrderItemStatus;
+
+                        var items = group?.Select(od => new OrderItemResponseDTO
                         {
-                            ShopOwnerId = (int)sellerId,
-                            StoreName = store?.Name,
-                            StoreId = store?.Id,
-                            //ShopOwnerName = group.FirstOrDefault()?.Seller.Stores.FirstOrDefault()?.Name ?? "Unknown",
+                            ProductId = od?.IosDeviceId ?? od?.LabId ?? od?.ComboId,
+                            NameProduct = od?.IotsDevice?.Name ?? od?.Combo?.Name ?? od?.Lab?.Title,
+                            ProductType = od.ProductType,
+                            ImageUrl = od?.IotsDevice?.ImageUrl ?? od?.Combo?.ImageUrl ?? od?.Lab?.ImageUrl,
+                            Quantity = od.Quantity,
+                            Price = od.Price,
+                            OrderItemStatus = od.OrderItemStatus,
+                            WarrantyEndDate = od.WarrantyEndDate
+                        });
+
+                        var res = new OrderItemsGroupResponseDTO
+                        {
+                            SellerName = trainer != null ? trainer.Fullname : store?.Name,
+                            SellerId = store?.Id,
+                            SellerRole = trainer != null ? (int)RoleEnum.TRAINER : (int)RoleEnum.STORE,
                             TrackingId = trackingId,
-                            Items = group.Select(od => new OrderItemResponeUserDTO
-                                {
-                                    NameShop = store?.Name,
-                                    NameProduct = od?.IotsDevice?.Name ?? od?.Combo?.Name ?? od?.Lab?.Title,
-                                    ProductType = od.ProductType,
-                                    ImageUrl = od?.IotsDevice?.ImageUrl ?? od?.Combo?.ImageUrl ?? od?.Lab?.ImageUrl,
-                                    Quantity = od.Quantity,
-                                    Price = od.Price,
-                                    OrderItemStatus = od.OrderItemStatus,
-                                    WarrantyEndDate = od.WarrantyEndDate
-                                }).ToList()
+                            OrderItemStatus = orderItemStatusId,
+                            TotalAmount = items?.Sum(i => i.Price),
+                            Items = items?.ToList()
                         };
 
                         return res;
@@ -648,80 +644,48 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
-        public async Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseToStoreDTO>>> getOrderByStoreId(int? filterOrderId, PaginationRequest payload)
+        public async Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetOrdersByUserPagination(int? orderItemStatus, 
+            int? filterOrderId, 
+            PaginationRequest payload)
         {
-            try
-            {
-                var loginUser = userServices.GetLoginUser();
+            var loginUserId = userServices.GetLoginUserId();
 
-                if (loginUser == null || !await userServices.CheckLoginUserRole(RoleEnum.STORE))
-                    return ResponseService<PaginationResponseDTO<OrderResponseToStoreDTO>>.Unauthorize("You don't have permission to access");
+            if (loginUserId == null || !await userServices.CheckLoginUserRole(RoleEnum.CUSTOMER))
+                return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.Unauthorize("You don't have permission to access");
 
-                var storeId = loginUser.Id;
+            Expression<Func<Orders, bool>> func = item => item.OrderBy == (int)loginUserId &&
+                (orderItemStatus == null || item.OrderItems.Any(item => item.OrderItemStatus == orderItemStatus));
 
-                var orders = await _unitOfWork.OrderRepository.GetOrdersByStoreIdAsync(storeId);
+            var pagination = await GetOrdersPagination(
+                payload,
+                func,
+                orderItem => true
+            );
 
-                if (orders == null || !orders.Any())
-                    return ResponseService<PaginationResponseDTO<OrderResponseToStoreDTO>>.NotFound("No orders found for this store.");
+            return pagination;
+        }
 
-                var filteredOrders = orders.Where(order =>
-                    (filterOrderId == null || order.Id == filterOrderId)
-                );
+        public async Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetOrderByStorePagination(
+            int? orderItemStatus, 
+            int? filterOrderId, 
+            PaginationRequest payload)
+        {
+            var loginUserId = userServices.GetLoginUserId();
 
-                int totalOrders = filteredOrders.Count();
+            if (loginUserId == null || !await userServices.CheckLoginUserRole(RoleEnum.STORE))
+                return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.Unauthorize("You don't have permission to access");
 
-                var paginatedOrders = filteredOrders
-                    .OrderByDescending(order => order.CreateDate)
-                    .Skip((payload.PageIndex - 1) * payload.PageSize)
-                    .Take(payload.PageSize)
-                    .ToList();
+            Expression<Func<Orders, bool>> func = 
+                item => item.OrderItems.Any(item => item.SellerId == loginUserId) && 
+                (orderItemStatus == null || item.OrderItems.Any(item => item.OrderItemStatus == orderItemStatus));
 
-                // Chuyển đổi danh sách Order thành OrderResponseToStoreDTO
-                var orderDTOs = paginatedOrders.Select(order => new OrderResponseToStoreDTO
-                {
-                    Id = order.Id,
-                    ApplicationSerialNumber = order.ApplicationSerialNumber,
-                    TotalPrice = order.TotalPrice,
-                    Address = order.Address,
-                    ContactNumber = order.ContactNumber,
-                    Notes = order.Notes,
-                    CreateDate = order.CreateDate,
-                    UpdatedDate = order.UpdatedDate,
-                    OrderStatusId = order.OrderStatusId,
-                    TrackingId = order.OrderItems.FirstOrDefault()?.TrackingId,
-                    OrderDetails = order.OrderItems
-                        .Where(oi => oi.SellerId == storeId) // Chỉ lấy sản phẩm thuộc store này
-                        .Select(oi => new OrderIstemResponseToStoreDTO
-                        {
-                            Id = oi.Id,
-                            OrderId = oi.OrderId,
-                            IosDeviceId = oi.IosDeviceId,
-                            IosDeviceName = oi.IosDeviceId != null ? oi.IotsDevice.Name : null,
-                            ComboId = oi.ComboId,
-                            ComboName = oi.ComboId != null ? oi.Combo.Name : null,
-                            SellerId = oi.SellerId,
-                            ProductType = oi.ProductType,
-                            Quantity = oi.Quantity,
-                            Price = oi.Price,
-                            WarrantyEndDate = oi.WarrantyEndDate,
-                            OrderItemStatus = oi.OrderItemStatus
-                        }).ToList()
-                }).ToList();
+            var pagination = await GetOrdersPagination(
+                payload,
+                func,
+                oi => oi.SellerId == loginUserId
+            );
 
-                var paginationResponse = new PaginationResponseDTO<OrderResponseToStoreDTO>
-                {
-                    Data = orderDTOs,
-                    TotalCount = totalOrders,
-                    PageIndex = payload.PageIndex,
-                    PageSize = payload.PageSize
-                };
-
-                return ResponseService<PaginationResponseDTO<OrderResponseToStoreDTO>>.OK(paginationResponse);
-            }
-            catch (Exception ex)
-            {
-                return ResponseService<PaginationResponseDTO<OrderResponseToStoreDTO>>.BadRequest("Cannot get orders. Please try again.");
-            }
+            return pagination;
         }
 
         public async Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetAllOrdersPagination(int? filterOrderId, PaginationRequest payload)
@@ -777,7 +741,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
-        public async Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseToStoreDTO>>> getOrderByStoreIdHasStatusPending(int? filterOrderId, PaginationRequest payload)
+        public async Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseToStoreDTO>>> GetOrderByStoreIdHasStatusPending(int? filterOrderId, PaginationRequest payload)
         {
             try
             {
@@ -877,11 +841,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     OrderDetailsGrouped = orderDetails
                     .Where(od => od.OrderId == order.Id)
                     .GroupBy(od => od.Seller.Stores.FirstOrDefault()?.Id)
-                    .Select(group => new SellerOrderDetailsDTO
+                    .Select(group => new OrderItemsGroupResponseDTO
                     {
                         ShopOwnerId = group.FirstOrDefault()?.Seller.Stores.FirstOrDefault()?.OwnerId ?? 0,
                         ShopOwnerName = group.FirstOrDefault()?.Seller.Stores.FirstOrDefault()?.Name ?? "Unknown",
-                        Items = group.Select(od => new OrderItemResponeUserDTO
+                        Items = group.Select(od => new OrderItemResponseDTO
                         {
                             NameProduct = od.IotsDevice.Name ?? od.Combo.Name ?? od.Lab.Title,
                             ProductType = od.ProductType,

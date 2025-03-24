@@ -26,6 +26,8 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderDTO
 
         public int OrderStatusId { set; get; }
 
-        public List<SellerOrderDetailsDTO> OrderDetailsGrouped { get; set; }
+        public decimal? ShippingFee { set; get; }
+
+        public List<OrderItemsGroupResponseDTO> OrderDetailsGrouped { get; set; }
     }
 }

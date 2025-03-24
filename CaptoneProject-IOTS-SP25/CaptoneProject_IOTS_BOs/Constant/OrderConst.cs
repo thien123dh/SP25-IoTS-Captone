@@ -18,8 +18,8 @@ namespace CaptoneProject_IOTS_BOs.Constant
         PENDING_TO_PACKING = 2,
         PENDING_TO_DELEVERING = 3,
         PENDING_TO_DELEVERED = 4,
-        ORDER_TO_SUCESS = 5,
-        PENDING_TO_FEEDBACK = 6,
-        CLOSED = 6
+        PENDING_TO_FEEDBACK = 5,
+        ORDER_TO_SUCESS = 6,
+        CLOSED = 7
     }
 }

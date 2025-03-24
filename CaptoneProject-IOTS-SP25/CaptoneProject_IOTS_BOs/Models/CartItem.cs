@@ -29,7 +29,7 @@ namespace CaptoneProject_IOTS_BOs.Models
         [ForeignKey(nameof(Lab))]
         public int? LabId { set; get; }
 
-        [ForeignKey("LabId")]
+        [ForeignKey(nameof(LabId))]
         public virtual Lab? LabNavigation { set; get; }
 
         [ForeignKey(nameof(User))]

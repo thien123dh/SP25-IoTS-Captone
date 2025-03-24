@@ -6,6 +6,8 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Identity.Client;
+using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
 
 namespace CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO
 {
@@ -24,14 +26,11 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO
         public int OrderItemStatus { set; get; } = 1;
     }
 
-    public class OrderItemResponeUserDTO
+    public class OrderItemResponseDTO
     {
-        public string? NameShop { set; get; }
-
-        public string? NameProduct { get; set; }
-
         public string? ImageUrl { set; get; }
-
+        public int? ProductId { set; get; }
+        public string? NameProduct { get; set; }
         public int ProductType { set; get; }
 
         public int Quantity { set; get; } = 0;
@@ -43,13 +42,18 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO
         public int OrderItemStatus { set; get; } = 1;
     }
 
-    public class SellerOrderDetailsDTO
+    public class OrderItemsGroupResponseDTO
     {
         public string ShopOwnerName { get; set; }
         public int ShopOwnerId { get; set; }
-        public int? StoreId { set; get; }
-        public string? StoreName { set; get; }
+        public int? SellerId { set; get; }
+        public string? SellerName { set; get; }
+        public int SellerRole { set; get; }
+        public decimal ShippingFee { set; get; }
+        public virtual string SellerRoleName => this.SellerRole == (int)RoleEnum.STORE ? "Store" : "Trainer";
         public string TrackingId { get; set; }
-        public List<OrderItemResponeUserDTO> Items { get; set; }
+        public int? OrderItemStatus { set; get; }
+        public decimal? TotalAmount { set; get; }
+        public List<OrderItemResponseDTO>? Items { get; set; }
     }
 }
