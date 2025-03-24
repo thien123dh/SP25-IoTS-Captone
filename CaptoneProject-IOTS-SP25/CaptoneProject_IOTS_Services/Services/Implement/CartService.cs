@@ -332,8 +332,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return ResponseService<object>.OK(null);
         }
 
-        
-
         public async Task<List<CartLabItemDTO>?> GetCartLabItemsByParentId(int parentId)
         {
             var cart = unitOfWork.CartRepository.GetById(parentId);
@@ -346,9 +344,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var res = list?.Select(item =>
                 new CartLabItemDTO
                 {
-                    //IsSelected = item.IsSelected,
                     CreatedBy = item.CreatedBy,
-                    CreatedByTrainer = item?.LabNavigation?.CreatedByNavigation.Fullname,
+                    CreatedByTrainer = item?.LabNavigation?.CreatedByNavigation?.Fullname,
                     LabId = item?.LabId,
                     LabName = item?.LabNavigation?.Title,
                     LabSummary = item?.LabNavigation?.Summary,

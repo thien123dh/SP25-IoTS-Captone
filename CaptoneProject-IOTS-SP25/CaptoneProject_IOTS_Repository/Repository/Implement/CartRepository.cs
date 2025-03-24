@@ -51,6 +51,7 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
                 .Include(item => item.IosDeviceNavigation)
                 .Include(item => item.ComboNavigation)
                 .Include(item => item.LabNavigation)
+                .ThenInclude(item => item.CreatedByNavigation)
                 .Where(item => item.ParentCartItemId == parentId)?.ToList();
         }
 

@@ -1,5 +1,6 @@
 ﻿using Azure;
 using CaptoneProject_IOTS_BOs;
+using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.OrderDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.VNPayDTO;
@@ -43,10 +44,13 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
             return Ok(result);
         }
 
-        [HttpPost("get-order-by-user")]
-        public async Task<IActionResult> GetOrderByUser([FromQuery] int? OrderFilterId, [FromBody] PaginationRequest payload)
+        [HttpPost("customer/get-pagination")]
+        public async Task<IActionResult> GetOrderByUser(
+            [FromQuery] OrderItemStatusEnum? orderItemStatus,
+            [FromQuery] int? OrderFilterId, 
+            [FromBody] PaginationRequest payload)
         {
-            var result = await _orderService.GetOrdersByUserPagination(null,payload);
+            var result = await _orderService.GetOrdersByUserPagination((int?)orderItemStatus, null, payload);
 
             if (!result.IsSuccess)
                 return BadRequest(result);
@@ -65,10 +69,13 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
             return BadRequest(response);
         }
 
-        [HttpPost("get-order-by-store-id")]
-        public async Task<IActionResult> GetOrderByStoreId([FromQuery] int? OrderFilterId, [FromBody] PaginationRequest payload)
+        [HttpPost("store/get-pagination")]
+        public async Task<IActionResult> GetOrderByStoreId(
+            [FromQuery] OrderItemStatusEnum? orderItemStatus,
+            [FromQuery] int? OrderFilterId, 
+            [FromBody] PaginationRequest payload)
         {
-            var result = await _orderService.getOrderByStoreId(null, payload);
+            var result = await _orderService.GetOrderByStorePagination((int?)orderItemStatus, null, payload);
 
             if (!result.IsSuccess)
                 return BadRequest(result);
@@ -112,7 +119,7 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
         [HttpPost("get-order-by-store-id-has-status-order-pending")]
         public async Task<IActionResult> GetOrderByStoreIdStatusOrderIsPending([FromQuery] int? OrderFilterId, [FromBody] PaginationRequest payload)
         {
-            var result = await _orderService.getOrderByStoreIdHasStatusPending(null, payload);
+            var result = await _orderService.GetOrderByStoreIdHasStatusPending(null, payload);
 
             if (!result.IsSuccess)
                 return BadRequest(result);

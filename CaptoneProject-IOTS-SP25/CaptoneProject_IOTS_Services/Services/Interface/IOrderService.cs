@@ -16,14 +16,14 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
     {
         public Task<GenericResponseDTO<OrderReturnPaymentVNPayDTO>> CreateOrder(int? id, OrderRequestDTO payload, string returnUrl);
         public Task<GenericResponseDTO<OrderReturnPaymentDTO>> CheckOrderSuccessfull(int? id, VNPayRequestDTO dto);
-        public Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetOrdersByUserPagination(int? filterOrderId, PaginationRequest payload);
+        public Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetOrdersByUserPagination(int? orderItemStatus, int? filterOrderId, PaginationRequest payload);
         public Task<GenericResponseDTO<OrderResponseDTO>> GetOrdersDetailsByOrderId(int orderId);
-        public Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseToStoreDTO>>> getOrderByStoreId(int? filterOrderId, PaginationRequest payload);
+        public Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetOrderByStorePagination(int? orderItemStatus, int? filterOrderId, PaginationRequest payload);
         public Task<GenericResponseDTO<List<OrderResponseToStoreDTO>>> updateOrderDetailToPackingByStoreId(int? updateOrderId);
         public Task<GenericResponseDTO<List<OrderResponseToStoreDTO>>> updateOrderDetailToDeleveringByStoreId(int? updateOrderId);
         public Task<GenericResponseDTO<List<OrderResponseToStoreDTO>>> updateOrderDetailToDeleveredByStoreId(int updateOrderId, int storeId);
         public Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetAllOrdersPagination(int? filterOrderId, PaginationRequest payload);
-        public Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseToStoreDTO>>> getOrderByStoreIdHasStatusPending(int? filterOrderId, PaginationRequest payload);
+        public Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseToStoreDTO>>> GetOrderByStoreIdHasStatusPending(int? filterOrderId, PaginationRequest payload);
 
 
     }
