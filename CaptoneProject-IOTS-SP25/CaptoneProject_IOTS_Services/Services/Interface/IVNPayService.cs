@@ -13,6 +13,6 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
     {
         public Task<string> CallAPIPayByUserId(int userId, string returnUrl, long amount);
         public Task<ResponsePayment> GetInformationPayment(int userId, VNPayRequestDTO dto);
-        public Task<string> RefundPayment(long amount, string returnUrl, string txnRef);
+        /*public Task<bool> RefundPayment(long amount, string txnRef, string transactionDate);*/
     }
 }
