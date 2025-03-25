@@ -22,6 +22,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
     {
         private readonly UnitOfWork unitOfWork;
         private readonly IUserServices userService;
+        private readonly int MAX_RECORD = 500000;
 
         public CartService(UnitOfWork unitOfWork, IUserServices userService)
         {
@@ -362,10 +363,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         {
             var loginUserId = userService.GetLoginUserId();
 
-            if (loginUserId == null)
-            {
-                return ResponseService<object>.Unauthorize(ExceptionMessage.INVALID_LOGIN);
-            }
+            //if (loginUserId == null)
+            //{
+            //    return ResponseService<object>.Unauthorize(ExceptionMessage.INVALID_LOGIN);
+            //}
 
             var res = unitOfWork.CartRepository.Search(
                 item => item.IsSelected
@@ -465,17 +466,59 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 ).Count();
 
             decimal totalSelectedCartItemPrice = unitOfWork.CartRepository
-                .Search(item => item.CreatedBy == loginUserId && item.IsSelected && (
-                    item.ProductType == (int)ProductTypeEnum.COMBO || item.ProductType == (int)ProductTypeEnum.IOT_DEVICE
-                    )
-                ).Include(i => i.IosDeviceNavigation).Include(i => i.ComboNavigation).Include(i => i.LabNavigation)
+                .Search(item => item.CreatedBy == loginUserId && item.IsSelected).Include(i => i.IosDeviceNavigation).Include(i => i.ComboNavigation).Include(i => i.LabNavigation)
                 .Sum(i => (i.IosDeviceId != null ? i.IosDeviceNavigation.Price : (i.ComboId != null ? i.ComboNavigation.Price : i.LabNavigation.Price)) * (i.LabId != null ? 1 : i.Quantity));
-
+            
             return ResponseService<object>.OK(new
             {
                 TotalCartItemsAmount = totalCartItemsAmount,
                 TotalSelectedItemsPrice = totalSelectedCartItemPrice
             });
+        }
+
+        public async Task<ResponseDTO> GetPreviewCartOrders()
+        {
+            var loginUserId = userService.GetLoginUserId();
+
+            if (loginUserId == null)
+                return ResponseService<object>.Unauthorize(ExceptionMessage.INVALID_LOGIN);
+
+            var pagination = unitOfWork.CartRepository.GetPaginate(
+                filter: item => item.CreatedBy == loginUserId && item.IsSelected,
+                orderBy: ob => ob.OrderByDescending(item => item.Id),
+                includeProperties: "IosDeviceNavigation,ComboNavigation,IosDeviceNavigation.StoreNavigation,ComboNavigation.StoreNavigation",
+                pageIndex: 0,
+                pageSize: MAX_RECORD
+            );
+
+            var subCartItems = unitOfWork.CartRepository.GetSubItemsListByUserId((int)loginUserId);
+
+            var res = PaginationMapper<CartItem, CartItemResponseDTO>.MapTo((item) =>
+            {
+                int? productId = (item.IosDeviceId == null) ? item.ComboId : item.IosDeviceId;
+
+                var productInfo = MapToGeneralProductInfo(item);
+
+                var response = new CartItemResponseDTO
+                {
+                    IsSelected = item.IsSelected,
+                    Id = item.Id,
+                    ProductId = item.IosDeviceId != null ? item.IosDeviceId : item.ComboId != null ? item.ComboId : item.LabId,
+                    ProductType = item.ProductType,
+                    Quantity = item.Quantity,
+                    CreatedBy = item.SellerId,
+                    Price = productInfo.Price,
+                    ProductSummary = productInfo.Summary,
+                    ProductName = productInfo.Name,
+                    CreatedByStore = productInfo.CreatedByStore,
+                    ImageUrl = productInfo.ImageUrl,
+                    TotalPrice = (productInfo.Price * item.Quantity)
+                };
+
+                return response;
+            }, pagination);
+
+            return ResponseService<object>.OK(res);
         }
     }
 }

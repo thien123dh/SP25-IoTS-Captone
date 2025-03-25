@@ -128,5 +128,14 @@ namespace CaptoneProject_IOTS_API.Controllers.CartController
 
             return GetActionResult(res);
         }
+
+        [HttpGet("get-preview-cart-order")]
+        [Authorize]
+        public async Task<IActionResult> GetPreviewCartOrders()
+        {
+            var res = await cartService.GetPreviewCartOrders();
+
+            return GetActionResult(res);
+        }
     }
 }

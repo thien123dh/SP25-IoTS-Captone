@@ -101,8 +101,6 @@ builder.Services.AddScoped<IRatingService, RatingService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 
-
-
 //GHTK sandbox
 builder.Services.AddHttpClient<IGHTKService, GHTKService>();
 builder.Services.AddScoped<IGHTKService, GHTKService>();
