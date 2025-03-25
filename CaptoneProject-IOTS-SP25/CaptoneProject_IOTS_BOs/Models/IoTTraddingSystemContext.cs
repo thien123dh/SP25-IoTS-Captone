@@ -29,6 +29,7 @@ public partial class IoTTraddingSystemContext : DbContext
     public virtual DbSet<ActivityLog> ActivityLogs { get; set; }
     public virtual DbSet<Attachment> Attachments { set; get; }
 
+    public virtual DbSet<Message> Messages { set; get; }
     public virtual DbSet<Blog> Blogs { get; set; }
 
     public virtual DbSet<BlogAttachment> BlogAttachments { get; set; }
@@ -115,6 +116,13 @@ public partial class IoTTraddingSystemContext : DbContext
         modelBuilder.Entity<Notifications>(entity =>
         {
             entity.ToTable(nameof(Notifications));
+        });
+
+        modelBuilder.Entity<Message>(entity =>
+        {
+            entity.ToTable(nameof(Message));
+
+            entity.HasKey(item => item.Id);
         });
 
         modelBuilder.Entity<Blog>(entity =>
