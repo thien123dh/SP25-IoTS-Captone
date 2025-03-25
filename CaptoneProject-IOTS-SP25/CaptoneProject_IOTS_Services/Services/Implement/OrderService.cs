@@ -978,37 +978,42 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
-        public async Task<GenericResponseDTO<List<OrderResponseToStoreDTO>>> updateOrderDetailToDeleveredByStoreId(int updateOrderId, int storeId)
+        public async Task<GenericResponseDTO<List<OrderResponseToCustomerDTO>>> updateOrderDetailToDeleveredByStoreId(int updateOrderId, int storeId)
         {
             try
             {
                 var loginUser = userServices.GetLoginUser();
                 if (loginUser == null || !await userServices.CheckLoginUserRole(RoleEnum.CUSTOMER))
-                    return ResponseService<List<OrderResponseToStoreDTO>>.Unauthorize("You don't have permission to access");
+                    return ResponseService<List<OrderResponseToCustomerDTO>>.Unauthorize("You don't have permission to access");
 
                 // Lấy order theo orderId
-                var orderToUpdate = await _unitOfWork.OrderRepository.GetOrderByIdAsync(updateOrderId);
+                var orderToUpdate = await _unitOfWork.OrderRepository.GetOrderByIdWithDetailsAsync(updateOrderId);
                 if (orderToUpdate == null)
-                    return ResponseService<List<OrderResponseToStoreDTO>>.NotFound("Order not found.");
+                    return ResponseService<List<OrderResponseToCustomerDTO>>.NotFound("Order not found.");
 
                 var orderItemsToUpdate = orderToUpdate.OrderItems
                 .Where(oi => oi.Seller.Stores.FirstOrDefault().OwnerId == storeId)
                 .ToList();
 
                 if (!orderItemsToUpdate.Any())
-                    return ResponseService<List<OrderResponseToStoreDTO>>.NotFound("No order items found for this store in the order.");
+                    return ResponseService<List<OrderResponseToCustomerDTO>>.NotFound("No order items found for this store in the order.");
 
                 // Cập nhật trạng thái OrderItem cho store này trong order
                 foreach (var item in orderItemsToUpdate)
                 {
+                    int warrantyMonths = item.IosDeviceId != null ? item.IotsDevice.WarrantyMonth
+                   : item.ComboId != null ? item.Combo.WarrantyMonth
+                   : 0;
+
+                    item.WarrantyEndDate = DateTime.Now.AddMonths(warrantyMonths);
+
                     item.OrderItemStatus = (int)OrderItemStatusEnum.PENDING_TO_DELEVERED;
+
                 }
 
-                // Lưu vào database
                 await _unitOfWork.OrderDetailRepository.UpdateAsync(orderItemsToUpdate);
 
-                // Chuyển đổi dữ liệu sang DTO
-                var orderDTO = new OrderResponseToStoreDTO
+                var orderDTO = new OrderResponseToCustomerDTO
                 {
                     Id = orderToUpdate.Id,
                     ApplicationSerialNumber = orderToUpdate.ApplicationSerialNumber,
@@ -1020,7 +1025,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     UpdatedDate = orderToUpdate.UpdatedDate,
                     OrderStatusId = orderToUpdate.OrderStatusId,
                     TrackingId = orderItemsToUpdate.FirstOrDefault()?.TrackingId,
-                    OrderDetails = orderItemsToUpdate.Select(oi => new OrderIstemResponseToStoreDTO
+                    OrderDetails = orderItemsToUpdate.Select(oi => new OrderIstemResponseToCustomerDTO
                     {
                         Id = oi.Id,
                         OrderId = oi.OrderId,
@@ -1032,16 +1037,18 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         ProductType = oi.ProductType,
                         Quantity = oi.Quantity,
                         Price = oi.Price,
-                        WarrantyEndDate = oi.WarrantyEndDate,
+                        WarrantyEndDate = oi.WarrantyEndDate.HasValue
+                                         ? oi.WarrantyEndDate.Value.ToString("dd-MM-yyyy")
+                                        : string.Empty,
                         OrderItemStatus = oi.OrderItemStatus
                     }).ToList()
                 };
 
-                return ResponseService<List<OrderResponseToStoreDTO>>.OK(new List<OrderResponseToStoreDTO> { orderDTO });
+                return ResponseService<List<OrderResponseToCustomerDTO>>.OK(new List<OrderResponseToCustomerDTO> { orderDTO });
             }
             catch (Exception ex)
             {
-                return ResponseService<List<OrderResponseToStoreDTO>>.BadRequest("Cannot update order items. Please try again.");
+                return ResponseService<List<OrderResponseToCustomerDTO>>.BadRequest("Cannot update order items. Please try again.");
             }
         }
     }
