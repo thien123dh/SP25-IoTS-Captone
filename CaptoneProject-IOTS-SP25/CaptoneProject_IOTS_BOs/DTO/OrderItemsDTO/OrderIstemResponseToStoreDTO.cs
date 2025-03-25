@@ -33,4 +33,31 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO
         public DateTime? WarrantyEndDate { get; set; }
         public int OrderItemStatus { get; set; }
     }
+
+    public class OrderIstemResponseToCustomerDTO
+    {
+        public int Id { get; set; }
+        public int OrderId { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public int? IosDeviceId { get; set; }
+
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string IosDeviceName { get; set; }
+
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public int? ComboId { get; set; }
+
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string ComboName { get; set; }
+        public int SellerId { get; set; }
+        public int ProductType { get; set; }
+        public int Quantity { get; set; }
+        public decimal Price { get; set; }
+        public string WarrantyEndDate { get; set; }
+        public int OrderItemStatus { get; set; }
+    }
 }

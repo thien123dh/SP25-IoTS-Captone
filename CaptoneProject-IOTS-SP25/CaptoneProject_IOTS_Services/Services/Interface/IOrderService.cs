@@ -21,7 +21,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         public Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetOrderByStorePagination(int? orderItemStatus, int? filterOrderId, PaginationRequest payload);
         public Task<GenericResponseDTO<List<OrderResponseToStoreDTO>>> updateOrderDetailToPackingByStoreId(int? updateOrderId);
         public Task<GenericResponseDTO<List<OrderResponseToStoreDTO>>> updateOrderDetailToDeleveringByStoreId(int? updateOrderId);
-        public Task<GenericResponseDTO<List<OrderResponseToStoreDTO>>> updateOrderDetailToDeleveredByStoreId(int updateOrderId, int storeId);
+        public Task<GenericResponseDTO<List<OrderResponseToCustomerDTO>>> updateOrderDetailToDeleveredByStoreId(int updateOrderId, int storeId);
         public Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetAdminOrdersPagination(int? orderItemStatus,
             int? filterOrderId,
             PaginationRequest payload);

@@ -54,5 +54,19 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
                 .Include(o => o.OrderItems).ThenInclude(m => m.Combo)
                 .FirstOrDefaultAsync(o => o.Id == orderId);
         }
+
+        public async Task<Orders> GetOrderByIdWithDetailsAsync(int orderId)
+        {
+            return await _dbSet
+                .Where(o => o.Id == orderId)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Seller)
+                        .ThenInclude(s => s.Stores)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.IotsDevice)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Combo)
+                .FirstOrDefaultAsync();
+        }
     }
 }
