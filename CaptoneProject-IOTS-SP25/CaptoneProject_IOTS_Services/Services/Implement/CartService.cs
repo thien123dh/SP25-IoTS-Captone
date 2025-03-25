@@ -177,7 +177,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     //Exist combo included lab in cart
                     if (parentCartItem != null)
                     {
-                        if (CheckExistProductInCart((int)loginUserId, lab.Id, (int)ProductTypeEnum.COMBO))
+                        if (CheckExistProductInCart((int)loginUserId, lab.Id, (int)ProductTypeEnum.LAB))
                         {
                             throw new Exception("The tutorial video has been added already");
                         }
@@ -214,12 +214,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         {
             return new GeneralProductDTO
             {
-                Name = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? item.IosDeviceNavigation?.Name : item.ComboNavigation?.Name,
-                Summary = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? item.IosDeviceNavigation?.Summary : item.ComboNavigation?.Summary,
-                CreatedBy = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? item.IosDeviceNavigation?.CreatedBy : item.ComboNavigation?.CreatedBy,
-                Price = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? (decimal)item.IosDeviceNavigation.Price : (decimal)item.ComboNavigation.Price,
-                CreatedByStore = item.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? item?.IosDeviceNavigation?.StoreNavigation.Name : item.ComboNavigation?.StoreNavigation?.Name,
-                ImageUrl = item?.ProductType == (int)ProductTypeEnum.IOT_DEVICE ? item?.IosDeviceNavigation?.ImageUrl : item.ComboNavigation?.ImageUrl,
+                Name = item.IosDeviceNavigation?.Name ?? item.ComboNavigation?.Name ?? item.LabNavigation?.Title,
+                Summary = item.IosDeviceNavigation?.Summary ?? item.ComboNavigation?.Summary ?? item.LabNavigation?.Summary,
+                CreatedBy = item.IosDeviceNavigation?.CreatedBy ?? item.ComboNavigation?.CreatedBy ?? item.LabNavigation?.CreatedBy,
+                Price = item.IosDeviceNavigation?.Price ?? item.ComboNavigation?.Price ?? item.LabNavigation?.Price ?? 0,
+                CreatedByStore = item?.IosDeviceNavigation?.StoreNavigation.Name ?? item?.ComboNavigation?.StoreNavigation?.Name ?? $"Trainer {item?.LabNavigation?.CreatedByNavigation?.Fullname}",
+                ImageUrl = item?.IosDeviceNavigation?.ImageUrl ?? item?.ComboNavigation?.ImageUrl ?? item?.LabNavigation?.ImageUrl,
             };
         }
 
@@ -235,7 +235,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     item.ProductType == (int)ProductTypeEnum.COMBO || item.ProductType == (int)ProductTypeEnum.IOT_DEVICE
                 ),
                 orderBy: ob => ob.OrderByDescending(item => item.Id),
-                includeProperties: "IosDeviceNavigation,ComboNavigation,IosDeviceNavigation.StoreNavigation,ComboNavigation.StoreNavigation",
+                includeProperties: "IosDeviceNavigation,ComboNavigation,LabNavigation,IosDeviceNavigation.StoreNavigation,ComboNavigation.StoreNavigation",
                 pageIndex: request.PageIndex,
                 pageSize: request.PageSize
             );
@@ -287,18 +287,18 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             try
             {
                 var dependCartItems = unitOfWork.CartRepository.GetCartItemsListByParentId(cartItem.Id);
-                List<CartItem> updatedCartLabItems = new List<CartItem>();
 
                 //Auto set selected or unselect dependence lab
-                if (dependCartItems != null)
-                    foreach(CartItem item in dependCartItems)
+                dependCartItems = dependCartItems?.Select(
+                    item =>
                     {
                         item.IsSelected = isSelect;
-                        updatedCartLabItems.Append(item);
+                        return item;
                     }
+                )?.ToList();
 
-                if (updatedCartLabItems.Count > 0)
-                    await unitOfWork.CartRepository.UpdateAsync(updatedCartLabItems);
+                if (dependCartItems != null)
+                    await unitOfWork.CartRepository.UpdateAsync(dependCartItems);
 
                 unitOfWork.CartRepository.Update(cartItem);
             }
@@ -486,7 +486,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var pagination = unitOfWork.CartRepository.GetPaginate(
                 filter: item => item.CreatedBy == loginUserId && item.IsSelected,
                 orderBy: ob => ob.OrderByDescending(item => item.Id),
-                includeProperties: "IosDeviceNavigation,ComboNavigation,IosDeviceNavigation.StoreNavigation,ComboNavigation.StoreNavigation",
+                includeProperties: "IosDeviceNavigation,ComboNavigation,LabNavigation,IosDeviceNavigation.StoreNavigation,ComboNavigation.StoreNavigation,LabNavigation.CreatedByNavigation",
                 pageIndex: 0,
                 pageSize: MAX_RECORD
             );
@@ -495,7 +495,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var res = PaginationMapper<CartItem, CartItemResponseDTO>.MapTo((item) =>
             {
-                int? productId = (item.IosDeviceId == null) ? item.ComboId : item.IosDeviceId;
+                int? productId = item.IosDeviceId ??  item.ComboId ?? item.LabId;
 
                 var productInfo = MapToGeneralProductInfo(item);
 
