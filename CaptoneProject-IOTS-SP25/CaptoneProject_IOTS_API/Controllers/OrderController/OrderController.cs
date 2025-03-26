@@ -13,6 +13,7 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class OrderController : ControllerBase
     {
         private readonly IOrderService _orderService;
@@ -46,11 +47,9 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
 
         [HttpPost("customer/get-pagination")]
         public async Task<IActionResult> GetOrderByUser(
-            [FromQuery] OrderItemStatusEnum? orderItemStatus,
-            [FromQuery] int? OrderFilterId, 
             [FromBody] PaginationRequest payload)
         {
-            var result = await _orderService.GetOrdersByUserPagination((int?)orderItemStatus, null, payload);
+            var result = await _orderService.GetOrdersByUserPagination(payload);
 
             if (!result.IsSuccess)
                 return BadRequest(result);
@@ -59,9 +58,10 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
         }
 
         [HttpGet("{orderId}")]
-        public async Task<IActionResult> GetOrderDetails(int orderId)
+        public async Task<IActionResult> GetOrderDetails(int orderId, 
+            [FromQuery] OrderItemStatusEnum? orderItemStatusFilter)
         {
-            var response = await _orderService.GetOrdersDetailsByOrderId(orderId);
+            var response = await _orderService.GetOrdersDetailsByOrderId(orderId, orderItemStatusFilter);
 
             if (response.IsSuccess)
                 return Ok(response);
@@ -69,13 +69,11 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
             return BadRequest(response);
         }
 
-        [HttpPost("store/get-pagination")]
+        [HttpPost("store-trainer/get-pagination")]
         public async Task<IActionResult> GetOrderByStoreId(
-            [FromQuery] OrderItemStatusEnum? orderItemStatus,
-            [FromQuery] int? OrderFilterId, 
             [FromBody] PaginationRequest payload)
         {
-            var result = await _orderService.GetOrderByStorePagination((int?)orderItemStatus, null, payload);
+            var result = await _orderService.GetOrderByStoreOrTrainerPagination(payload);
 
             if (!result.IsSuccess)
                 return BadRequest(result);
@@ -83,10 +81,10 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
             return Ok(result);
         }
 
-        [HttpPost("change-status-order-detail-to-packing-{orderId})")]
-        public async Task<IActionResult> updateOrderDetailToPackingByStoreId(int orderId)
+        [HttpPost("order-status/packing/{orderId}")]
+        public async Task<IActionResult> UpdateOrderDetailToPackingByStoreId(int orderId)
         {
-            var result = await _orderService.updateOrderDetailToPackingByStoreId(orderId);
+            var result = await _orderService.UpdateOrderDetailToPackingByStoreId(orderId);
 
             if (!result.IsSuccess)
                 return BadRequest(result);
@@ -94,10 +92,10 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
             return Ok(result);
         }
 
-        [HttpPost("change-status-order-detail-to-delevering-{orderId})")]
-        public async Task<IActionResult> updateOrderDetailToDeliveringByStoreId(int orderId)
+        [HttpPost("order-status/delivering/{orderId}")]
+        public async Task<IActionResult> UpdateOrderDetailToDeliveringByStoreId(int orderId)
         {
-            var result = await _orderService.updateOrderDetailToDeleveringByStoreId(orderId);
+            var result = await _orderService.UpdateOrderDetailToDeliveringByStoreId(orderId);
 
             if (!result.IsSuccess)
                 return BadRequest(result);
@@ -105,21 +103,10 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
             return Ok(result);
         }
 
-        [HttpPost("change-status-order-detail-to-delevered-{orderId})")]
-        public async Task<IActionResult> updateOrderDetailToDeliveredByStoreId(int orderId, int storeId)
+        [HttpPost("order-status/pending-to-feedback/{orderId}")]
+        public async Task<IActionResult> UpdateOrderDetailToDeliveredByStoreId(int orderId)
         {
-            var result = await _orderService.updateOrderDetailToDeleveredByStoreId(orderId, storeId);
-
-            if (!result.IsSuccess)
-                return BadRequest(result);
-
-            return Ok(result);
-        }
-
-        [HttpPost("get-order-by-store-id-has-status-order-pending")]
-        public async Task<IActionResult> GetOrderByStoreIdStatusOrderIsPending([FromQuery] int? OrderFilterId, [FromBody] PaginationRequest payload)
-        {
-            var result = await _orderService.GetOrderByStoreIdHasStatusPending(null, payload);
+            var result = await _orderService.UpdateOrderDetailToPendingToFeedbackByStoreId(orderId);
 
             if (!result.IsSuccess)
                 return BadRequest(result);
@@ -130,7 +117,7 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
         [HttpPost("admin-manager/get-pagination")]
         public async Task<IActionResult> GetAllOrdersPagination([FromQuery] int? OrderFilterId, [FromBody] PaginationRequest payload)
         {
-            var result = await _orderService.GetAdminOrdersPagination(null, null, payload);
+            var result = await _orderService.GetAdminOrdersPagination(payload);
 
             if (!result.IsSuccess)
                 return BadRequest(result);

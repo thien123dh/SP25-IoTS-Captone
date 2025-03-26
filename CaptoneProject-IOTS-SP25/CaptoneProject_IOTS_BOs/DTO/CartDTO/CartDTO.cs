@@ -46,6 +46,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.CartDTO
     {
         public bool IsSelected { set; get; } = false;
         public int Id { set; get; }
+        public int? ParentId { set; get; }
         public string? ImageUrl { set; get; }
         public int? ProductId { set; get; }
         public int? CreatedBy { set; get; }
