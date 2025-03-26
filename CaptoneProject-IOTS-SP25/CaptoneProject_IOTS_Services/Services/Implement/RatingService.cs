@@ -128,7 +128,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var orderItems = unitOfWork.OrderDetailRepository.Search(
                 item => request.Count(item => item.OrderItemId == item.OrderItemId) > 0
-                    && item.OrderItemStatus == (int)OrderItemStatusEnum.ORDER_TO_SUCESS
+                    && item.OrderItemStatus == (int)OrderItemStatusEnum.SUCCESS_ORDER
             ).Include(item => item.IotsDevice)
             .Include(item => item.Combo)
             .Include(item => item.Lab);

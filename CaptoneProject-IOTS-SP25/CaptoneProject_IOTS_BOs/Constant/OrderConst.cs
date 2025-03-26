@@ -15,11 +15,11 @@ namespace CaptoneProject_IOTS_BOs.Constant
     public enum OrderItemStatusEnum
     {
         PENDING = 1,
-        PENDING_TO_PACKING = 2,
-        PENDING_TO_DELEVERING = 3,
-        PENDING_TO_DELEVERED = 4,
+        PACKING = 2,
+        DELEVERING = 3,
+        DELEVERED = 4,
         PENDING_TO_FEEDBACK = 5,
-        ORDER_TO_SUCESS = 6,
-        CLOSED = 7
+        SUCCESS_ORDER = 6,
+        CANCELLED = 7
     }
 }

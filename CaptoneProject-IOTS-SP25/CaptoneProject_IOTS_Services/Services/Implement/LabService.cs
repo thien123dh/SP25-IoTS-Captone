@@ -269,7 +269,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 var doCustomerBuyLab = unitOfWork.OrderDetailRepository.Search(
                     item => item.LabId == labId &&
-                    (item.OrderItemStatus == (int)OrderItemStatusEnum.ORDER_TO_SUCESS
+                    (item.OrderItemStatus == (int)OrderItemStatusEnum.SUCCESS_ORDER
                     ||
                     item.OrderItemStatus == (int)OrderItemStatusEnum.PENDING_TO_FEEDBACK
                     )
@@ -481,7 +481,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var orderSuccessLabOrder = unitOfWork.OrderDetailRepository.Search(
                 item => item.LabId != null && (item.OrderItemStatus == (int)OrderItemStatusEnum.PENDING_TO_FEEDBACK ||
-                item.OrderItemStatus == (int)OrderItemStatusEnum.ORDER_TO_SUCESS)
+                item.OrderItemStatus == (int)OrderItemStatusEnum.SUCCESS_ORDER)
             )?.Select(item => item.LabId)?.ToList();
 
             Expression<Func<Lab, bool>> customerPermissionFilter = item => item.CreatedBy == item.CreatedBy

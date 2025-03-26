@@ -503,6 +503,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 {
                     IsSelected = item.IsSelected,
                     Id = item.Id,
+                    ParentId = item.ParentCartItemId,
                     ProductId = item.IosDeviceId != null ? item.IosDeviceId : item.ComboId != null ? item.ComboId : item.LabId,
                     ProductType = item.ProductType,
                     Quantity = item.Quantity,
