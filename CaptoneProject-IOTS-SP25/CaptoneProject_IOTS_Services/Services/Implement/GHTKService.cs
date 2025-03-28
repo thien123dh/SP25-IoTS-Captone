@@ -178,9 +178,22 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     });
                 }
 
-                var totalFee = shippingFees.Any() ? shippingFees.Sum(fee => fee.Fee) : 50000;
-
-                return new List<ShippingFeeResponse>
+                var totalFee = shippingFees.Sum(fee => fee.Fee);
+                if(totalFee == 0)
+                {
+                    return new List<ShippingFeeResponse>
+                        {
+                            new ShippingFeeResponse
+                            {
+                            ShopOwnerId = -1,
+                            Fee = 50000,
+                            Message = "Total Shipping Fee"
+                            }
+                        };
+                }
+                else
+                {
+                    return new List<ShippingFeeResponse>
                         {
                             new ShippingFeeResponse
                             {
@@ -189,7 +202,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                             Message = "Total Shipping Fee"
                             }
                         };
-                    }
+                }
+            }
+
+                
             catch (Exception ex)
             {
                 return new List<ShippingFeeResponse> { new ShippingFeeResponse { Message = "System error" } };
