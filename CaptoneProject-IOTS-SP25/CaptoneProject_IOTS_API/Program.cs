@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json.Serialization;
 using static Org.BouncyCastle.Math.EC.ECCurve;
@@ -101,11 +102,22 @@ builder.Services.AddScoped<IRatingService, RatingService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 
+
 //GHTK sandbox
 builder.Services.AddHttpClient<IGHTKService, GHTKService>();
 builder.Services.AddScoped<IGHTKService, GHTKService>();
-
 builder.Services.AddTransient<IGHTKService, GHTKService>();
+
+//RabbitMQ
+builder.Services.AddScoped<IRabbitMQUnitOfWork, RabbitMQUnitOfWork>();
+builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddSingleton<IConnection>(sp =>
+{
+    var factory = new ConnectionFactory() { HostName = "localhost" };
+    return factory.CreateConnection();
+});
+builder.Services.AddScoped<IRabbitMQRepository, RabbitMQRepository>();
+
 builder.Services.AddScoped<IFileService>(provider =>
 {
     var bucket = configuration.GetConnectionString("Firebase-Storage-Bucket");
