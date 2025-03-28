@@ -45,10 +45,8 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO
 
     public class OrderItemsGroupResponseDTO
     {
-        public string ShopOwnerName { get; set; }
-        public int ShopOwnerId { get; set; }
-        public int? SellerId { set; get; }
         public string? SellerName { set; get; }
+        public int? SellerId { set; get; }
         public int SellerRole { set; get; }
         public virtual string SellerRoleName => this.SellerRole == (int)RoleEnum.STORE ? "Store" : "Trainer";
         public string TrackingId { get; set; }
