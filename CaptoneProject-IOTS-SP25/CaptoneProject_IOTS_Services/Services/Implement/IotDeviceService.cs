@@ -7,6 +7,7 @@ using CaptoneProject_IOTS_Repository.Repository.Implement;
 using CaptoneProject_IOTS_Service.Mapper;
 using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -181,6 +182,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 res.Attachments = attachments;
 
+                int iotId = res.Id;
+
+                var ratingQuery = unitOfWork?.FeedbackRepository.Search(
+                    item => iotId == item.OrderItem.IosDeviceId
+                ).Include(item => item.OrderItem);
+
+                res.Rating = ((ratingQuery?.Sum(r => r.Rating) ?? 0) + ProductConst.DEFAULT_RATING) / ((ratingQuery?.Count() ?? 0) + 1);
+
                 return ResponseService<IotDeviceDetailsDTO>.OK(res);
             }
             catch (Exception ex)
@@ -220,6 +229,23 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             );
 
             res = res == null ? new PaginationResponseDTO<IotsDevice>() : res;
+
+            var idsList = res?.Data?.Select(iot => iot.Id).ToList();
+
+            var ratingQuery = unitOfWork?.FeedbackRepository.Search(
+                item => idsList.Any(id => id == item.OrderItem.IosDeviceId)
+            ).Include(item => item.OrderItem);
+
+            res.Data = res?.Data?.Select(
+                iot =>
+                {
+                    var ratingList = ratingQuery?.Where(r => r.OrderItem.IosDeviceId == iot.Id);
+
+                    iot.Rating = ((ratingList?.Sum(r => r.Rating) ?? 0) + ProductConst.DEFAULT_RATING) / ((ratingList?.Count() ?? 0) + 1);
+
+                    return iot;
+                }
+            );
 
             return ResponseService<PaginationResponseDTO<IotDeviceItem>>.OK(
                 PaginationMapper<IotsDevice, IotDeviceItem>.MapTo(BuildIotDeviceItem, res)
