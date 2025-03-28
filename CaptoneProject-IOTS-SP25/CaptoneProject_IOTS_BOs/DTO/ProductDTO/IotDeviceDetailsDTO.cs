@@ -116,12 +116,14 @@ namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
     {
         public int Id { get; set; }
         public string Name { get; set; }
-
         public int? IsActive {  set; get; }
-        public DateTime? UpdatedDate { get; set; } = DateTime.Now;
-
+        public string? ImageUrl { set; get; }
+        public string? CategoryName { get; set; }
         public int? UpdatedBy { get; set; }
-
+        public int Quantity { set; get; } = 0;
+        public decimal Price { set; get; } = 0;
+        public DateTime? UpdatedDate { get; set; } = DateTime.Now;
+        public MaterialCategory? Category { set; get; }
     }
 
     public class IotDeviceItem
