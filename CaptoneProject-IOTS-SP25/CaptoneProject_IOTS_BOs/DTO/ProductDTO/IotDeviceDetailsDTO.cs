@@ -86,6 +86,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
 
         public string Notes { set; get; }
 
+        public decimal Rating { set; get; } = 5;
         public decimal Price { set; get; } = 0;
 
         public int Quantity { set; get; } = 0;

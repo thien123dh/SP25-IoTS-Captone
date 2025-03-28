@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.ConstrainedExecution;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -8,6 +9,7 @@ namespace CaptoneProject_IOTS_BOs.Constant
 {
    public static class ProductConst
    {
+        public static readonly decimal DEFAULT_RATING = 5;
         public enum ProductTypeEnum
         {
             IOT_DEVICE = 1,

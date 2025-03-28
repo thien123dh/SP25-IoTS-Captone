@@ -7,6 +7,7 @@ using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Service.Mapper;
 using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OData.ModelBuilder.Capabilities.V1;
 using System;
 using System.Collections.Generic;
@@ -64,6 +65,24 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var res = PaginationMapper<Combo, ComboItemDTO>.MapTo(GenericMapper<Combo, ComboItemDTO>.MapTo, pagination);
 
+            var idsList = res?.Data?.Select(i => i.Id).ToList();
+
+            var feedbacks = unitOfWork?.FeedbackRepository.Search(
+                item => idsList.Contains(item.Id)
+            ).Include(f => f.OrderItem);
+
+            res.Data = res?.Data?.Select(
+                c =>
+                {
+                    var comboId = c.Id;
+                    var ratingList = feedbacks?.Where(f => f.OrderItem.ComboId == c.Id);
+
+                    c.Rating = (DEFAULT_RATING + (ratingList?.Sum(r => r.Rating) ?? 0)) / ((ratingList?.Count() ?? 0) + 1);
+
+                    return c;
+                }
+            );
+
             return res;
         }
 
@@ -97,6 +116,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     OriginalPrice = item.IotDeviceNavigation.Price,
                     ImageUrl = item.IotDeviceNavigation.ImageUrl,
                 }).ToList();
+
+            var feedbacks = unitOfWork.FeedbackRepository.Search(
+                f => f.OrderItem.ComboId == comboId
+            ).Include(f => f.OrderItem);
+
+            res.Rating = (DEFAULT_RATING + (feedbacks?.Sum(f => f.Rating) ?? 0)) / (1 + (feedbacks?.Count() ?? 0));
 
             return res;
         }

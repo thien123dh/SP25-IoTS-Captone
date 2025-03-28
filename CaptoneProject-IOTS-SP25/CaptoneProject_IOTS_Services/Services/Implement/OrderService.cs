@@ -665,7 +665,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         public async Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetOrdersPagination(PaginationRequest payload,
             Expression<Func<Orders, bool>> orderExpress,
-            Func<OrderItem, bool> orderItemFunc)
+            Func<OrderItem, bool> orderItemFunc, 
+            OrderItemStatusEnum? orderItemStatusFilter = null)
         {
             try
             {
@@ -695,6 +696,50 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 {
                     var res = BuildToOrderResponseDTO(mapper, order, orderItemFunc);
 
+                    //Group by seller id
+                    var orderDetailsGrouped = order.OrderItems
+                    .Where(orderItemFunc)
+                    .Where(orderItem => orderItemStatusFilter == null || orderItem.OrderItemStatus == (int)orderItemStatusFilter)
+                    .GroupBy(od => od.SellerId)
+                    .Select(group =>
+                    {
+                        var od = group?.FirstOrDefault();
+
+                        var sellerId = od?.SellerId;
+                        var trackingId = od?.TrackingId;
+                        var store = storeList.FirstOrDefault(s => s.OwnerId == sellerId);
+                        var trainer = od?.Lab?.CreatedByNavigation;
+                        var orderItemStatusId = od.OrderItemStatus;
+
+                        var items = group?.Select(od => new OrderItemResponseDTO
+                        {
+                            OrderItemId = od.Id,
+                            ProductId = od?.IosDeviceId ?? od?.LabId ?? od?.ComboId,
+                            NameProduct = od?.IotsDevice?.Name ?? od?.Combo?.Name ?? od?.Lab?.Title,
+                            ProductType = od.ProductType,
+                            ImageUrl = od?.IotsDevice?.ImageUrl ?? od?.Combo?.ImageUrl ?? od?.Lab?.ImageUrl,
+                            Quantity = od.Quantity,
+                            Price = od.Price,
+                            OrderItemStatus = od.OrderItemStatus,
+                            WarrantyEndDate = od.WarrantyEndDate
+                        });
+
+                        var res = new OrderItemsGroupResponseDTO
+                        {
+                            SellerName = trainer != null ? trainer.Fullname : store?.Name,
+                            SellerId = sellerId,
+                            SellerRole = trainer != null ? (int)RoleEnum.TRAINER : (int)RoleEnum.STORE,
+                            TrackingId = trackingId,
+                            OrderItemStatus = orderItemStatusId,
+                            TotalAmount = items?.Sum(i => i.Price),
+                            Items = items?.ToList()
+                        };
+
+                        return res;
+                    });
+
+                    res.OrderDetailsGrouped = orderDetailsGrouped?.ToList() ?? res.OrderDetailsGrouped;
+
                     return res;
                 });
 
@@ -715,26 +760,29 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         }
 
         public async Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetOrdersByUserPagination(
-            PaginationRequest payload)
+            PaginationRequest payload,
+            OrderItemStatusEnum? orderItemStatusFilter = null)
         {
             var loginUserId = userServices.GetLoginUserId();
 
             if (loginUserId == null || !await userServices.CheckLoginUserRole(RoleEnum.CUSTOMER))
                 return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.Unauthorize("You don't have permission to access");
 
-            Expression<Func<Orders, bool>> func = item => item.OrderBy == (int)loginUserId;
+            Expression<Func<Orders, bool>> func = item => item.OrderBy == (int)loginUserId && item.OrderItems.Any(o => orderItemStatusFilter == null || o.OrderItemStatus == (int)orderItemStatusFilter);
 
             var pagination = await GetOrdersPagination(
                 payload,
                 func,
-                orderItem => true
+                orderItem => true,
+                orderItemStatusFilter
             );
 
             return pagination;
         }
 
         public async Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetOrderByStoreOrTrainerPagination(
-            PaginationRequest payload)
+            PaginationRequest payload,
+            OrderItemStatusEnum? orderItemStatusFilter = null)
         {
             var loginUserId = userServices.GetLoginUserId();
 
@@ -742,19 +790,21 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.Unauthorize("You don't have permission to access");
 
             Expression<Func<Orders, bool>> func =
-                item => item.OrderItems.Any(item => item.SellerId == loginUserId);
+                item => item.OrderItems.Any(item => item.SellerId == loginUserId && (orderItemStatusFilter == null || (int)orderItemStatusFilter == item.OrderItemStatus));
 
             var pagination = await GetOrdersPagination(
                 payload,
                 func,
-                oi => oi.SellerId == loginUserId
+                oi => oi.SellerId == loginUserId,
+                orderItemStatusFilter
             );
 
             return pagination;
         }
 
         public async Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetAdminOrdersPagination(
-            PaginationRequest payload)
+            PaginationRequest payload,
+            OrderItemStatusEnum? orderItemStatusFilter = null)
         {
             var loginUserId = userServices.GetLoginUserId();
 
@@ -762,12 +812,13 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.Unauthorize("You don't have permission to access");
 
             Expression<Func<Orders, bool>> func =
-                item => true;
+                item => (orderItemStatusFilter == null || item.OrderItems.Any(o => o.OrderItemStatus == (int)orderItemStatusFilter));
 
             var pagination = await GetOrdersPagination(
                 payload,
                 func,
-                oi => true
+                oi => true,
+                orderItemStatusFilter
             );
 
             return pagination;

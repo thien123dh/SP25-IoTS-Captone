@@ -47,9 +47,10 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
 
         [HttpPost("customer/get-pagination")]
         public async Task<IActionResult> GetOrderByUser(
+            [FromQuery] OrderItemStatusEnum? orderItemStatusFilter,
             [FromBody] PaginationRequest payload)
         {
-            var result = await _orderService.GetOrdersByUserPagination(payload);
+            var result = await _orderService.GetOrdersByUserPagination(payload, orderItemStatusFilter);
 
             if (!result.IsSuccess)
                 return BadRequest(result);
@@ -71,9 +72,10 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
 
         [HttpPost("store-trainer/get-pagination")]
         public async Task<IActionResult> GetOrderByStoreId(
+            [FromQuery] OrderItemStatusEnum? orderItemStatusFilter,
             [FromBody] PaginationRequest payload)
         {
-            var result = await _orderService.GetOrderByStoreOrTrainerPagination(payload);
+            var result = await _orderService.GetOrderByStoreOrTrainerPagination(payload, orderItemStatusFilter);
 
             if (!result.IsSuccess)
                 return BadRequest(result);
@@ -115,9 +117,11 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
         }
 
         [HttpPost("admin-manager/get-pagination")]
-        public async Task<IActionResult> GetAllOrdersPagination([FromQuery] int? OrderFilterId, [FromBody] PaginationRequest payload)
+        public async Task<IActionResult> GetAllOrdersPagination(
+            [FromQuery] OrderItemStatusEnum? orderItemStatusFilter,
+            [FromQuery] int? OrderFilterId, [FromBody] PaginationRequest payload)
         {
-            var result = await _orderService.GetAdminOrdersPagination(payload);
+            var result = await _orderService.GetAdminOrdersPagination(payload, orderItemStatusFilter);
 
             if (!result.IsSuccess)
                 return BadRequest(result);
