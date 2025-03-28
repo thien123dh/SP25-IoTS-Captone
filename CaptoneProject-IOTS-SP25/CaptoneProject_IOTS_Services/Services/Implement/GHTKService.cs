@@ -179,14 +179,16 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 }
 
                 var totalFee = shippingFees.Sum(fee => fee.Fee);
-                if(totalFee == 0)
+                var totalInsuranceFee = shippingFees.Sum(fee => fee.InsuranceFee);
+                if (totalFee == 0)
                 {
                     return new List<ShippingFeeResponse>
                         {
                             new ShippingFeeResponse
                             {
                             ShopOwnerId = -1,
-                            Fee = 50000,
+                            Fee = 50000 + totalInsuranceFee,
+                            InsuranceFee = totalInsuranceFee,
                             Message = "Total Shipping Fee"
                             }
                         };
@@ -199,6 +201,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                             {
                             ShopOwnerId = -1,
                             Fee = shippingFees.Sum(fee => fee.Fee),
+                            InsuranceFee = totalInsuranceFee,
                             Message = "Total Shipping Fee"
                             }
                         };
