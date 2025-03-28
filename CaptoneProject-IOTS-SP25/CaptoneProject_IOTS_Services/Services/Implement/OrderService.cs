@@ -958,22 +958,23 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     if (!orderItemsToUpdate.Any())
                         return ResponseService<List<OrderResponseToStoreDTO>>.NotFound("No order items found for this store.");
 
-                    orderItemsToUpdate.Select(
-                        item =>
-                        {
-                            item.OrderItemStatus = (int)status;
-
-                            return item;
-                        }
-                    );
+                    foreach (var item in orderItemsToUpdate)
+                    {
+                        item.OrderItemStatus = (int)status;
+                    }
 
                     await _unitOfWork.OrderDetailRepository.UpdateAsync(orderItemsToUpdate);
-                }
 
-                return ResponseService<object>.OK(new
-                {
-                    OrderId = orderId
-                });
+                    var trackingIds = orderItemsToUpdate.Select(item => item.TrackingId).FirstOrDefault();
+                    var orderItemStatus = orderItemsToUpdate.Select(item => item.OrderItemStatus).FirstOrDefault();
+                    return ResponseService<object>.OK(new
+                    {
+                        OrderId = orderId,
+                        TrackingId = trackingIds,
+                        OrderItemStatus = orderItemStatus
+                    });
+                }
+                return ResponseService<object>.BadRequest("Invalid orderId.");
             }
             catch (Exception ex)
             {
