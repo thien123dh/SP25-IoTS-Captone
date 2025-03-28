@@ -252,21 +252,21 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             );
         }
 
-        public async Task<GenericResponseDTO<IotDeviceDetailsDTO>> UpdateIotDeviceStatus(int id, int status)
+        public async Task<GenericResponseDTO<IotDeviceDetailsUpdateDTO>> UpdateIotDeviceStatus(int id, int status)
         {
             var loginUserId = userServices.GetLoginUserId();
 
             if (loginUserId == null)
-                return ResponseService<IotDeviceDetailsDTO>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
+                return ResponseService<IotDeviceDetailsUpdateDTO>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
 
             var isAdmin = await userServices.CheckLoginUserRole(RoleEnum.ADMIN);
             var isManager = await userServices.CheckLoginUserRole(RoleEnum.MANAGER);
             var isStore = await userServices.CheckLoginUserRole(RoleEnum.STORE);
 
-            var device = unitOfWork.IotsDeviceRepository.GetById(id);
+            var device = await unitOfWork.IotsDeviceRepository.GetByIdAsync(id); // Dùng async nếu có
 
             if (device == null)
-                return ResponseService<IotDeviceDetailsDTO>.NotFound(ExceptionMessage.DEVICE_NOTFOUND);
+                return ResponseService<IotDeviceDetailsUpdateDTO>.NotFound(ExceptionMessage.DEVICE_NOTFOUND);
 
             if (isAdmin || isManager || isStore || device.CreatedBy == loginUserId)
             {
@@ -276,14 +276,27 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     device.UpdatedBy = loginUserId;
                     device.UpdatedDate = DateTime.Now;
 
-                    device = unitOfWork.IotsDeviceRepository.Update(device);
-                } catch
+                    unitOfWork.IotsDeviceRepository.Update(device);
+
+                    // Chuẩn bị response DTO
+                    var responseDto = new IotDeviceDetailsUpdateDTO
+                    {
+                        Id = device.Id,
+                        Name = device.Name,
+                        IsActive = device.IsActive,
+                        UpdatedBy = device.UpdatedBy,
+                        UpdatedDate = device.UpdatedDate
+                    };
+
+                    return ResponseService<IotDeviceDetailsUpdateDTO>.OK(responseDto);
+                }
+                catch (Exception ex)
                 {
-                    return ResponseService<IotDeviceDetailsDTO>.BadRequest("Cannot Update the Iot Device");
+                    return ResponseService<IotDeviceDetailsUpdateDTO>.BadRequest("Cannot update the IoT device. Error: " + ex.Message);
                 }
             }
-            
-            return ResponseService<IotDeviceDetailsDTO>.Unauthorize(ExceptionMessage.DEVICE_UPDATE_SUCCESS);
+
+            return ResponseService<IotDeviceDetailsUpdateDTO>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
         }
     }
 }
