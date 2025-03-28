@@ -15,6 +15,6 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         public Task<GenericResponseDTO<IotDeviceDetailsDTO>> GetIotDeviceById(int id);
         public Task<GenericResponseDTO<IotDeviceDetailsDTO>> CreateOrUpdateIotDevice(int? id, CreateUpdateIotDeviceDTO payload);
         public Task<GenericResponseDTO<PaginationResponseDTO<IotDeviceItem>>> GetPagination(int? filterStoreId, int? categoryFilterId, IotDeviceTypeEnum? deviceTypeFilter, PaginationRequest payload);
-        public Task<GenericResponseDTO<IotDeviceDetailsDTO>> UpdateIotDeviceStatus(int id, int status);
+        public Task<GenericResponseDTO<IotDeviceDetailsUpdateDTO>> UpdateIotDeviceStatus(int id, int status);
     }
 }

@@ -112,6 +112,18 @@ namespace CaptoneProject_IOTS_BOs.DTO.MaterialDTO
         public bool IsEdit { set; get; }
     }
 
+    public class IotDeviceDetailsUpdateDTO
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+
+        public int? IsActive {  set; get; }
+        public DateTime? UpdatedDate { get; set; } = DateTime.Now;
+
+        public int? UpdatedBy { get; set; }
+
+    }
+
     public class IotDeviceItem
     {
         public int Id { set; get; }
