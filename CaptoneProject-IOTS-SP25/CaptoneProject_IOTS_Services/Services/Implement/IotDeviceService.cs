@@ -263,7 +263,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var isManager = await userServices.CheckLoginUserRole(RoleEnum.MANAGER);
             var isStore = await userServices.CheckLoginUserRole(RoleEnum.STORE);
 
-            var device = await unitOfWork.IotsDeviceRepository.GetByIdAsync(id); // Dùng async nếu có
+            var device = unitOfWork.IotsDeviceRepository.GetById(id);
 
             if (device == null)
                 return ResponseService<IotDeviceDetailsUpdateDTO>.NotFound(ExceptionMessage.DEVICE_NOTFOUND);
@@ -284,6 +284,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         Id = device.Id,
                         Name = device.Name,
                         IsActive = device.IsActive,
+                        CategoryName = device.Category.Label,
+                        ImageUrl = device.ImageUrl,
+                        Price = device.Price,
+                        Quantity = device.Quantity,
                         UpdatedBy = device.UpdatedBy,
                         UpdatedDate = device.UpdatedDate
                     };
