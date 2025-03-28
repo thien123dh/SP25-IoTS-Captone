@@ -72,19 +72,19 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 var districtsCustomer = await SyncDistrictsAsync(requestModel.ProvinceId);
                 var districtCustomer = districtsCustomer.FirstOrDefault(d => d.Id == requestModel.DistrictId);
                 if (districtCustomer == null)
-                    return new List<ShippingFeeResponse> { new ShippingFeeResponse { Message = "Invalid Province ID" } };
+                    return new List<ShippingFeeResponse> { new ShippingFeeResponse { Message = "Invalid District ID" } };
                 var DistrictNameCustomer = districtCustomer?.Name ?? "Not found";
 
                 var wardsCustomer = await SyncWardsAsync(requestModel.DistrictId);
                 var wardCustomer = wardsCustomer.FirstOrDefault(w => w.Id == requestModel.WardId);
                 if (wardCustomer == null)
-                    return new List<ShippingFeeResponse> { new ShippingFeeResponse { Message = "Invalid Province ID" } };
+                    return new List<ShippingFeeResponse> { new ShippingFeeResponse { Message = "Invalid Ward ID" } };
                 var WardNameCustomer = wardCustomer?.Name ?? "Not found";
 
                 var list_addressCustomer = await SyncAddressAsync(requestModel.WardId);
                 var addressNameCustomer = list_addressCustomer.FirstOrDefault(w => w.Id == requestModel.AddressId);
                 if (addressNameCustomer == null)
-                    return new List<ShippingFeeResponse> { new ShippingFeeResponse { Message = "Invalid Province ID" } };
+                    return new List<ShippingFeeResponse> { new ShippingFeeResponse { Message = "Invalid Address ID" } };
                 var AddressNameCustomer = addressNameCustomer?.Name ?? "Not found";
 
                 var groupedShops = selectedItems.GroupBy(item => item.SellerId)
@@ -177,14 +177,15 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         Message = $"Shipping Fee from Store {shopAddress.Name}"
                     });
                 }
-                var totalFee = shippingFees.Sum(fee => fee.Fee);
+
+                var totalFee = shippingFees.Any() ? shippingFees.Sum(fee => fee.Fee) : 50000;
 
                 return new List<ShippingFeeResponse>
                         {
                             new ShippingFeeResponse
                             {
                             ShopOwnerId = -1,
-                            Fee = shippingFees.Sum(fee => fee.Fee), // Tính tổng phí vận chuyển
+                            Fee = shippingFees.Sum(fee => fee.Fee),
                             Message = "Total Shipping Fee"
                             }
                         };
@@ -233,19 +234,19 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 var districtsCustomer = await SyncDistrictsAsync(requestModel.ProvinceId);
                 var districtCustomer = districtsCustomer.FirstOrDefault(d => d.Id == requestModel.DistrictId);
                 if (districtCustomer == null)
-                    return new List<ShipmentResponse> { new ShipmentResponse { Message = "Invalid Province ID" } };
+                    return new List<ShipmentResponse> { new ShipmentResponse { Message = "Invalid District ID" } };
                 var DistrictNameCustomer = districtCustomer?.Name ?? "Not found";
 
                 var wardsCustomer = await SyncWardsAsync(requestModel.DistrictId);
                 var wardCustomer = wardsCustomer.FirstOrDefault(w => w.Id == requestModel.WardId);
                 if (wardCustomer == null)
-                    return new List<ShipmentResponse> { new ShipmentResponse { Message = "Invalid Province ID" } };
+                    return new List<ShipmentResponse> { new ShipmentResponse { Message = "Invalid WardId ID" } };
                 var WardNameCustomer = wardCustomer?.Name ?? "Not found";
 
                 var list_addressCustomer = await SyncAddressAsync(requestModel.WardId);
                 var addressNameCustomer = list_addressCustomer.FirstOrDefault(w => w.Id == requestModel.AddressId);
                 if (addressNameCustomer == null)
-                    return new List<ShipmentResponse> { new ShipmentResponse { Message = "Invalid Province ID" } };
+                    return new List<ShipmentResponse> { new ShipmentResponse { Message = "Invalid Address ID" } };
                 var AddressNameCustomer = addressNameCustomer?.Name ?? "Not found";
 
 
@@ -272,7 +273,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                     var shopAddress = await _unitOfWork.StoreRepository
                         .GetQueryable()
-                        .Where(s => s.Id == shopOwner)
+                        .Where(s => s.OwnerId == shopOwner)
                         .Select(s => new { s.Address, s.ProvinceId, s.DistrictId, s.AddressId, s.WardId, s.Name, s.ContactNumber })
                         .FirstOrDefaultAsync();
 
