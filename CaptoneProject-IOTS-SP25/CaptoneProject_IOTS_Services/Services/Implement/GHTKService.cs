@@ -180,7 +180,23 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 var totalFee = shippingFees.Sum(fee => fee.Fee);
                 var totalInsuranceFee = shippingFees.Sum(fee => fee.InsuranceFee);
+                var totalFeeOnly = shippingFees.Sum(fee => fee.ShipFeeOnly);
+
                 if (totalFee == 0)
+                {
+                    return new List<ShippingFeeResponse>
+                        {
+                            new ShippingFeeResponse
+                            {
+                            ShopOwnerId = -1,
+                            Fee = 50000,
+                            InsuranceFee = totalInsuranceFee,
+                            ShipFeeOnly = totalFeeOnly,
+                            Message = "Total Shipping Fee"
+                            }
+                        };
+                }
+                else if (totalFee == totalInsuranceFee)
                 {
                     return new List<ShippingFeeResponse>
                         {
@@ -189,6 +205,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                             ShopOwnerId = -1,
                             Fee = 50000 + totalInsuranceFee,
                             InsuranceFee = totalInsuranceFee,
+                            ShipFeeOnly = totalFeeOnly,
                             Message = "Total Shipping Fee"
                             }
                         };
@@ -202,6 +219,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                             ShopOwnerId = -1,
                             Fee = shippingFees.Sum(fee => fee.Fee),
                             InsuranceFee = totalInsuranceFee,
+                            ShipFeeOnly = totalFeeOnly,
                             Message = "Total Shipping Fee"
                             }
                         };
