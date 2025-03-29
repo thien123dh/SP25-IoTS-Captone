@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CaptoneProject_IOTS_BOs.DTO.RabbitMQDTO;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,8 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
 {
     public interface IMessageService
     {
-        void SendMessage(string message);
+        /*Task<List<string>> GetMessagesForUserAsync(string userId);
+
+        public Task<List<RecentChatDTO>> GetRecentChats();*/
     }
 }

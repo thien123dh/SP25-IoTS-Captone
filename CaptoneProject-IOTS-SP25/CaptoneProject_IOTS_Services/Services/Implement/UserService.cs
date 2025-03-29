@@ -15,6 +15,7 @@ using System.Net;
 using System.Security.Claims;
 using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
 using static CaptoneProject_IOTS_BOs.Constant.UserRequestConstant;
+using static CaptoneProject_IOTS_BOs.DTO.StoreDTO.StoreDTO;
 
 namespace CaptoneProject_IOTS_Service.Services.Implement
 {
@@ -160,6 +161,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 )
             };
         }
+
         public async Task<ResponseDTO> LoginUserAsync(string email, string password)
         {
             var user = await unitOfWork.UserRepository.CheckLoginAsync(email, password);

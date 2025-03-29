@@ -1,4 +1,6 @@
-﻿using CaptoneProject_IOTS_Repository.Base;
+﻿using CaptoneProject_IOTS_BOs.DTO.RabbitMQDTO;
+using CaptoneProject_IOTS_Repository.Base;
+using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,23 +10,18 @@ namespace CaptoneProject_IOTS_API.Controllers.RabbitMQ
     [ApiController]
     public class RabbitMQController : ControllerBase
     {
-        private readonly IRabbitMQUnitOfWork _unitOfWork;
+        private readonly IRabbitMQService _rabbitMQService;
 
-        public RabbitMQController(IRabbitMQUnitOfWork unitOfWork)
+        public RabbitMQController(IRabbitMQService rabbitMQService)
         {
-            _unitOfWork = unitOfWork;
+            _rabbitMQService = rabbitMQService;
         }
 
         [HttpPost("send")]
-        public IActionResult SendMessage([FromBody] string message)
+        public IActionResult SendMessage([FromBody] RabbitMessageDTO request)
         {
-            if (string.IsNullOrEmpty(message))
-            {
-                return BadRequest("Message cannot be empty");
-            }
-
-            _unitOfWork.RabbitMQRepository.SendMessage(message);
-            return Ok($"Message sent: {message}");
+            _rabbitMQService.SendChatMessage(request.Message);
+            return Ok("Message sent to RabbitMQ");
         }
     }
 }
