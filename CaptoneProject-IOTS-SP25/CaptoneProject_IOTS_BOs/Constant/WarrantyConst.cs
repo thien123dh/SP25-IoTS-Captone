@@ -8,10 +8,9 @@ namespace CaptoneProject_IOTS_BOs.Constant
 {
     public enum WarrantyRequestStatusEnum
     {
-        DRAFT = 0,
+        PENDING_TO_APPROVE = 0,
         APPROVED = 1,
-        PENDING_TO_APPROVE = 2,
-        REJECTED = 3,
-        SUCCESS = 4
+        REJECTED = 2,
+        SUCCESS = 3,
     }
 }

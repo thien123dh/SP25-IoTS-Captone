@@ -6,10 +6,8 @@ using System.Threading.Tasks;
 
 namespace CaptoneProject_IOTS_BOs.Constant
 {
-    public enum ReportStatusEnum
+    public static class ApplicationConst
     {
-        HANDLING_FAILED = 2,
-        COMPLETED = 1,
-        PENDING_TO_HANDLING = 0
+        public const int FEE_PER_PRODUCT = 10;
     }
 }
