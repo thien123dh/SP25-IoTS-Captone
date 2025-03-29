@@ -27,6 +27,20 @@ namespace CaptoneProject_IOTS_BOs.DTO.UserDTO
         public int RoleId {get; set;}
     }
 
+    public class UpdateUserDTO
+    {
+        [Required]
+        public string Fullname { set; get; }
+
+        public string? Address { set; get; }
+
+        public string Phone { set; get; }
+    }
+
+    public class UpdateUserAvatarDTO
+    {
+        public string ImageUrl { set; get; }
+    }
     public class UserRegisterDTO
     {
         [Required]

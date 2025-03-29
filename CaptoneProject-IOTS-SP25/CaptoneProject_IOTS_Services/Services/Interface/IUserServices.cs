@@ -26,6 +26,9 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         Task<bool> CheckLoginUserRole(RoleEnum role);
         Task<Boolean> CheckUserRole(int userId, RoleEnum role);
 
+        Task<GenericResponseDTO<UserResponseDTO>> UpdateUserProfile(UpdateUserDTO request);
+
+        Task<GenericResponseDTO<UserResponseDTO>> UpdateUserAvatar(UpdateUserAvatarDTO request);
         int? GetRole();
     }
 }

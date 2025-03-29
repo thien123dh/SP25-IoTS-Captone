@@ -23,21 +23,15 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
     public class UsersController : ControllerBase
     {
         private readonly IUserServices _userService;
-        private readonly ICustomerService customerService;
-        private readonly IStaffManagerService staffManagerService;
         private readonly IActivityLogService activityLogService;
         //================ COMMON =====================
         public UsersController(
             IUserServices userService,
-            IActivityLogService activityLogService, 
-            ICustomerService customerService,
-            IStaffManagerService staffManagerService
+            IActivityLogService activityLogService
         )
         {
             this._userService = userService;
             this.activityLogService = activityLogService;
-            this.customerService = customerService;
-            this.staffManagerService = staffManagerService;
         }
         private IActionResult GetActionResult(ResponseDTO response)
         {
@@ -150,6 +144,26 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         public async Task<IActionResult> GetUserLoginInfo()
         {
             var response = await _userService.GetUserLoginInfo();
+            return Ok(response);
+        }
+
+        [HttpPut("update-user-profile")]
+        [Authorize]
+        public async Task<IActionResult> UpdateUserProfile(
+            [FromBody] UpdateUserDTO payload
+        )
+        {
+            var response = await _userService.UpdateUserProfile(payload);
+            return Ok(response);
+        }
+
+        [HttpPut("update-user-avatar")]
+        [Authorize]
+        public async Task<IActionResult> UpdateUserAvatar(
+            [FromBody] UpdateUserAvatarDTO payload
+        )
+        {
+            var response = await _userService.UpdateUserAvatar(payload);
             return Ok(response);
         }
     }
