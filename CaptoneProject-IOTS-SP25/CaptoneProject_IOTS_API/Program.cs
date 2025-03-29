@@ -102,7 +102,7 @@ builder.Services.AddScoped<IRatingService, RatingService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
-
+builder.Services.AddScoped<IWarrantyRequestService, WarrantyRequestService>();
 
 
 //GHTK sandbox

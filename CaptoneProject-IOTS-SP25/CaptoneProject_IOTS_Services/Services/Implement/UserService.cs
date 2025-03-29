@@ -424,5 +424,56 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             return user?.Data?.Roles?.Count(item => item.Id == (int)role) > 0;
         }
+
+        public async Task<GenericResponseDTO<UserResponseDTO>> UpdateUserProfile(UpdateUserDTO request)
+        {
+            var loginUserId = GetLoginUserId();
+
+            if (loginUserId == null)
+                return ResponseService<UserResponseDTO>.NotFound(ExceptionMessage.INVALID_PERMISSION);
+
+            var user = unitOfWork.UserRepository.GetById((int)loginUserId);
+
+            var checkExist = await CheckUserContactInformation(new ContactInformationDTO { Email = user.Email, Phone = user.Phone }, loginUserId);
+
+            if (!checkExist.IsSuccess)
+                return ResponseService<UserResponseDTO>.NotFound("Your contact number have already used. Please try another number");
+
+            user.Phone = request.Phone;
+            user.Fullname = request.Fullname;
+            user.Address = request.Address;
+            user.UpdatedBy = loginUserId;
+            user.UpdatedDate = DateTime.Now;
+            try
+            {
+                user = unitOfWork.UserRepository.Update(user);
+            } catch (Exception e)
+            {
+                return ResponseService<UserResponseDTO>.BadRequest("Cannot update user profile. Please try again");
+            }
+
+            var res = GenericMapper<User, UserResponseDTO>.MapTo(user);
+
+            return ResponseService<UserResponseDTO>.OK(res);
+        }
+
+        public async Task<GenericResponseDTO<UserResponseDTO>> UpdateUserAvatar(UpdateUserAvatarDTO request)
+        {
+            var loginUserId = GetLoginUserId();
+
+            if (loginUserId == null)
+                return ResponseService<UserResponseDTO>.NotFound(ExceptionMessage.INVALID_PERMISSION);
+
+            var user = unitOfWork.UserRepository.GetById((int)loginUserId);
+
+            user.ImageURL = request.ImageUrl;
+            user.UpdatedDate = DateTime.Now;
+
+            user = unitOfWork.UserRepository.Update(user);
+
+            var res = GenericMapper<User, UserResponseDTO>.MapTo(user);
+
+            return ResponseService<UserResponseDTO>.OK(res);
+        }
     }
 }

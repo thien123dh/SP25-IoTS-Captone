@@ -268,11 +268,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             else if (isCustomer) //Is role customer
             {
                 var doCustomerBuyLab = unitOfWork.OrderDetailRepository.Search(
-                    item => item.LabId == labId &&
+                    item => item.LabId == labId && item.OrderBy == (int)loginUserId && 
                     (item.OrderItemStatus == (int)OrderItemStatusEnum.SUCCESS_ORDER
-                    ||
-                    item.OrderItemStatus == (int)OrderItemStatusEnum.PENDING_TO_FEEDBACK
-                    )
+                    || item.OrderItemStatus == (int)OrderItemStatusEnum.PENDING_TO_FEEDBACK)
                 ).Any();
 
                 return doCustomerBuyLab;
@@ -480,7 +478,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 return ResponseService<object>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
 
             var orderSuccessLabOrder = unitOfWork.OrderDetailRepository.Search(
-                item => item.LabId != null && (item.OrderItemStatus == (int)OrderItemStatusEnum.PENDING_TO_FEEDBACK ||
+                item => item.LabId != null && item.OrderBy == loginUserId && (item.OrderItemStatus == (int)OrderItemStatusEnum.PENDING_TO_FEEDBACK ||
                 item.OrderItemStatus == (int)OrderItemStatusEnum.SUCCESS_ORDER)
             )?.Select(item => item.LabId)?.ToList();
 

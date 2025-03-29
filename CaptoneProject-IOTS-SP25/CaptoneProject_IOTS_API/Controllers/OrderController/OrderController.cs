@@ -8,6 +8,7 @@ using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace CaptoneProject_IOTS_API.Controllers.OrderController
 {
@@ -106,9 +107,10 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
         }
 
         [HttpPost("order-status/pending-to-feedback/{orderId}")]
-        public async Task<IActionResult> UpdateOrderDetailToDeliveredByStoreId(int orderId)
+        public async Task<IActionResult> UpdateOrderDetailToDeliveredByStoreId(int orderId,
+            [FromQuery][Required] int sellerId)
         {
-            var result = await _orderService.UpdateOrderDetailToPendingToFeedbackByStoreId(orderId);
+            var result = await _orderService.UpdateOrderDetailToPendingToFeedbackByStoreId(orderId, sellerId);
 
             if (!result.IsSuccess)
                 return BadRequest(result);

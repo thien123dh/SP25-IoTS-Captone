@@ -3,6 +3,7 @@ using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.FeedbackDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.ProductDTO;
+using CaptoneProject_IOTS_BOs.DTO.WalletDTO;
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
@@ -13,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Net.WebSockets;
 using System.Text;
 using System.Threading.Tasks;
 using static CaptoneProject_IOTS_BOs.Constant.ProductConst;
@@ -24,10 +26,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly UnitOfWork unitOfWork;
         private readonly IUserServices userServices;
         private readonly int MIN_REPORT_RATING = 2;
-        public FeedbackService(UnitOfWork unitOfWork, IUserServices userServices)
+        private readonly IWalletService walletService;
+        public FeedbackService(UnitOfWork unitOfWork, 
+            IUserServices userServices, 
+            IWalletService walletService)
         {
             this.unitOfWork = unitOfWork;
             this.userServices = userServices;
+            this.walletService = walletService;
         }
 
         public ResponseDTO CheckOrderFeedbackValidation(
@@ -69,9 +75,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var store = unitOfWork.StoreRepository.GetById(request.SellerId);
 
-            //if (store == null)
-            //    return ResponseService<object>.NotFound(ExceptionMessage.STORE_NOTFOUND);
-
             var sellerOrderList = unitOfWork.OrderDetailRepository.Search(
                 item => item.OrderId == request.OrderId 
                         && item.SellerId == request.SellerId
@@ -83,6 +86,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             if (!checkValidation.IsSuccess)
                 return checkValidation;
+
+            var sellerWalletUpdateRequest = new List<UpdateUserWalletRequestDTO>();
+
+            Dictionary<int, decimal> sellerWalletUpdateRequestMap = new Dictionary<int, decimal>();
 
             try
             {
@@ -97,7 +104,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     {
                         var feedback = feedbackList.FirstOrDefault(f => f.OrderItemId == item.Id);
 
-                        if (feedback?.Rating <= MIN_REPORT_RATING) //TODO: REPORTING
+                        if (feedback?.Rating <= MIN_REPORT_RATING)
                         {
                             item.OrderItemStatus = (int)OrderItemStatusEnum.CANCELLED;
 
@@ -117,24 +124,50 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                                     CreatedBy = loginUserId,
                                     CreatedDate = DateTime.Now,
                                     OrderItemId = feedback.OrderItemId,
-                                    Title = title
+                                    Title = title,
+                                    Status = (int)ReportStatusEnum.PENDING_TO_HANDLING
                                 }
                             );
                         }
                         else
                         {
+                            if (!sellerWalletUpdateRequestMap.ContainsKey(item.SellerId))
+                                sellerWalletUpdateRequestMap.Add(item.SellerId, 0);
+
+                            var amount = sellerWalletUpdateRequestMap.GetValueOrDefault(item.SellerId);
+
+                            sellerWalletUpdateRequestMap[item.SellerId] = amount + item.Price;
+
                             item.OrderItemStatus = (int)OrderItemStatusEnum.SUCCESS_ORDER;
                         }
 
                         return item;
                     }
-                );
+                )?.ToList();
 
-                await unitOfWork.OrderDetailRepository.UpdateAsync(updatedOrderItems);
+                var updateWalletRequest = new List<UpdateUserWalletRequestDTO>();
+
+                foreach (var userId in sellerWalletUpdateRequestMap.Keys)
+                {
+                    var amount = sellerWalletUpdateRequestMap.GetValueOrDefault(userId);
+
+                    updateWalletRequest.Add(
+                        new UpdateUserWalletRequestDTO
+                        {
+                            UserId = userId,
+                            Amount = amount - (amount) * ((decimal)ApplicationConst.FEE_PER_PRODUCT / 100)
+                        }
+                    );
+                }
+
+                if (!updatedOrderItems.IsNullOrEmpty())
+                    await unitOfWork.OrderDetailRepository.UpdateAsync(updatedOrderItems);
+
+                _ = walletService.UpdateUserWalletWithTransactionAsync(updateWalletRequest).ConfigureAwait(false);
 
                 _ = unitOfWork.FeedbackRepository.CreateAsync(feedbackList);
 
-                if (reports.Count() > 0)
+                if (!reports.IsNullOrEmpty())
                     _ = unitOfWork.ReportRepository.CreateAsync(reports);
 
                 return ResponseService<object>.OK(

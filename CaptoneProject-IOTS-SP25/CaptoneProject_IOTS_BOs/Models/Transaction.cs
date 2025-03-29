@@ -30,6 +30,8 @@ namespace CaptoneProject_IOTS_BOs.Models
 
         [MaxLength(250)]
         public string Description { set; get; }
+
+        public decimal? CurrentBallance { set; get; }
         [JsonIgnore]
         public virtual User UserNavigation { set; get; }
     }

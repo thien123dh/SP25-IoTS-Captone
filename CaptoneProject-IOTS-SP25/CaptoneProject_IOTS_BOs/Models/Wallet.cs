@@ -19,7 +19,7 @@ namespace CaptoneProject_IOTS_BOs.Models
 
         [Column("ballance")]
         [Precision(18, 1)]
-        public decimal Ballance { set; get; } = 0;
+        public decimal? Ballance { set; get; } = 0;
 
         [Column("user_id")]
         [ForeignKey(nameof(User))]

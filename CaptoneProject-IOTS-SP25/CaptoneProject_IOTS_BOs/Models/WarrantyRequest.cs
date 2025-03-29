@@ -13,15 +13,15 @@ namespace CaptoneProject_IOTS_BOs.Models
 
         public string Description { set; get; }
 
-        public string OrderItemId { set; get; }
-
-        public string Remarks { set; get; }
+        public int OrderItemId { set; get; }
+        public OrderItem OrderItem { set; get; }
+        public string? Remarks { set; get; }
 
         public int Status { set; get; }
 
-        public string IdentifySerialNumber { set; get; }
+        public string? VideoUrl { set; get; }
 
-        public string Address { set; get; }
+        public string IdentifySerialNumber { set; get; }
 
         public string ContactNumber { set; get; }
 
@@ -31,6 +31,5 @@ namespace CaptoneProject_IOTS_BOs.Models
         public DateTime CreatedDate { set; get; } = DateTime.Now;
 
         public DateTime ActionDate { set; get; } = DateTime.Now;
-        public virtual List<WarrantyRequestAttachments> WarrantyRequestAttachments { set; get; }
     }
 }
