@@ -6,10 +6,12 @@ using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Repository.Implement;
 using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
+using Microsoft.IdentityModel.Tokens;
 using Org.BouncyCastle.Ocsp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.WebSockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -20,16 +22,20 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly WalletRepository walletRepository;
         private readonly UserRepository userRepository;
         private readonly ITransactionService transactionService;
+        private readonly UnitOfWork unitOfWork;
 
         public WalletService(
-            WalletRepository walletRepository, 
+            WalletRepository walletRepository,
             UserRepository userRepository,
-            ITransactionService transactionService
+            ITransactionService transactionService,
+            INotificationService notificationService,
+            UnitOfWork unitOfWork
         )
         {
             this.walletRepository = walletRepository;
             this.userRepository = userRepository;
             this.transactionService = transactionService;
+            this.unitOfWork = unitOfWork;
         }
 
         public bool CheckWalletBalance(int userId, decimal? fee)
@@ -94,7 +100,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (wallet == null)
                 return ResponseService<Wallet>.NotFound("The Wallet cannot be found");
 
-            decimal newBallance = wallet?.Data?.Ballance == null ? 0 : wallet.Data.Ballance + source.Amount;
+            decimal newBallance = wallet.Data?.Ballance == null ? 0 : (decimal)wallet.Data.Ballance + source.Amount;
 
             if (newBallance >= 0)
             {
@@ -177,6 +183,78 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
 
             return ResponseService<Wallet>.OK(wallet);
+        }
+
+        public async Task<ResponseDTO> UpdateUserWalletWithTransactionAsync(List<UpdateUserWalletRequestDTO> request)
+        {
+            try
+            {
+                var userIdsList = request.Select(item => item.UserId).ToList();
+
+                var wallets = unitOfWork.WalletRepository.Search(
+                    item => userIdsList.Any(id => id == item.UserId)
+                ).ToList();
+
+                if (wallets.IsNullOrEmpty())
+                    return ResponseService<object>.NotFound("No wallet can be found. Please try again");
+
+                var notifications = request.Select(
+                    item => new Notifications
+                    {
+                        EntityId = item.UserId,
+                        EntityType = (int)EntityTypeConst.EntityTypeEnum.USER,
+                        Title = $"You have received {item.Amount} gold from success orders",
+                        Content = $"You have received {item.Amount} gold from success orders",
+                        ReceiverId = item.UserId
+                    }
+                ).ToList();
+
+                var transactions = request.Select(
+                    item =>
+                    {
+                        var wallet = wallets.FirstOrDefault(w => w.UserId == item.UserId);
+
+                        var transaction = new Transaction
+                        {
+                            UserId = item.UserId,
+                            Amount = item.Amount,
+                            CurrentBallance = wallet?.Ballance,
+                            Description = $"You have received {item.Amount} gold",
+                            TransactionType = TransactionTypeEnum.SUCCESS_ORDER
+                        };
+
+                        return transaction;
+                    }
+                ).ToList();
+
+                wallets = wallets?.Select(
+                   wallet =>
+                   {
+                       var req = request.FirstOrDefault(r => r.UserId == wallet.UserId);
+
+                       wallet.Ballance += (req?.Amount ?? 0);
+
+                       return wallet;
+                   }
+                )?.ToList();
+
+                if (!notifications.IsNullOrEmpty())
+                    await unitOfWork.NotificationRepository.CreateAsync(notifications);
+
+                if (!transactions.IsNullOrEmpty())
+                    await unitOfWork.TransactionRepository.CreateAsync(transactions);
+
+                if (!wallets.IsNullOrEmpty())
+                    await unitOfWork.WalletRepository.UpdateAsync(wallets);
+
+                return ResponseService<object>.OK(
+                    request
+                );
+            } catch (Exception ex)
+            {
+                return ResponseService<object>.BadRequest(ex.Message);
+            }
+            
         }
     }
 }

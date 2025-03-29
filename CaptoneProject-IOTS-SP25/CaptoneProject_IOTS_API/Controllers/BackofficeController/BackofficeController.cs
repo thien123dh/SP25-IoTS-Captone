@@ -29,7 +29,7 @@ namespace CaptoneProject_IOTS_API.Controllers.AdminController
         }
 
         [HttpPost("send-currency-to-user")]
-        public async Task<IActionResult> SendCurrencyToUser([FromBody] SendCurrencyToUserDTO payload)
+        public async Task<IActionResult> SendCurrencyToUser([FromBody] UpdateUserWalletRequestDTO payload)
         {
             var loginUserId = userServices.GetLoginUserId();
 

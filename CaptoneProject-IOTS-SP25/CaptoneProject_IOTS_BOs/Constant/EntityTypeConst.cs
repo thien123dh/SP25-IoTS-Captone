@@ -30,6 +30,8 @@ namespace CaptoneProject_IOTS_BOs.Constant
             IOT_DEVICE_COMBO = 4,
             LAB = 5,
             BLOG = 6, 
+            TRANSACTION = 7,
+            WARRANTY_REQUEST = 8
         }
     }
 

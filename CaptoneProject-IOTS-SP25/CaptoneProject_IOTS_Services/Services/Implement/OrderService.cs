@@ -8,6 +8,7 @@ using CaptoneProject_IOTS_BOs.DTO.VNPayDTO;
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
+using MailKit.Search;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.Linq.Expressions;
@@ -665,7 +666,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         public async Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetOrdersPagination(PaginationRequest payload,
             Expression<Func<Orders, bool>> orderExpress,
-            Func<OrderItem, bool> orderItemFunc, 
+            Func<OrderItem, bool> orderItemFunc,
             OrderItemStatusEnum? orderItemStatusFilter = null)
         {
             try
@@ -898,7 +899,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
-        public async Task<GenericResponseDTO<OrderResponseDTO>> GetOrdersDetailsByOrderId(int orderId, 
+        public async Task<GenericResponseDTO<OrderResponseDTO>> GetOrdersDetailsByOrderId(int orderId,
             OrderItemStatusEnum? orderItemStatusFilter = null)
         {
             var loginUserId = userServices.GetLoginUserId();
@@ -912,24 +913,24 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             if (role == (int)RoleEnum.CUSTOMER)
             {
-                var res = await GetOrderIncludedGroupOrderItems(o => o.Id == orderId && o.OrderBy == loginUserId, 
-                    oi => true, 
+                var res = await GetOrderIncludedGroupOrderItems(o => o.Id == orderId && o.OrderBy == loginUserId,
+                    oi => true,
                     orderItemStatusFilter);
 
                 result = res?.Data;
             }
             else if (role == (int)RoleEnum.STORE || role == (int)RoleEnum.TRAINER)
             {
-                var res = await GetOrderIncludedGroupOrderItems(order => order.Id == orderId && order.OrderItems.Any(orderItem => orderItem.SellerId == loginUserId), 
-                    item => item.SellerId == loginUserId, 
+                var res = await GetOrderIncludedGroupOrderItems(order => order.Id == orderId && order.OrderItems.Any(orderItem => orderItem.SellerId == loginUserId),
+                    item => item.SellerId == loginUserId,
                     orderItemStatusFilter);
 
                 result = res?.Data;
             }
             else if (role == (int)RoleEnum.ADMIN || role == (int)RoleEnum.STAFF)
             {
-                var res = await GetOrderIncludedGroupOrderItems(order => orderId == order.Id, 
-                    item => true, 
+                var res = await GetOrderIncludedGroupOrderItems(order => orderId == order.Id,
+                    item => true,
                     orderItemStatusFilter);
 
                 result = res?.Data;
@@ -941,7 +942,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return ResponseService<OrderResponseDTO>.OK(result);
         }
 
-        public async Task<ResponseDTO> UpdateGroupOrderItemStatus(int orderId, OrderItemStatusEnum status)
+        public async Task<ResponseDTO> UpdateSellerGroupOrderItemStatus(int orderId, OrderItemStatusEnum status)
         {
             try
             {
@@ -980,7 +981,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 return ResponseService<List<OrderResponseToStoreDTO>>.BadRequest("Cannot get orders. Please try again.");
             }
-        } 
+        }
 
         public async Task<ResponseDTO> UpdateOrderDetailToPackingByStoreId(int updateOrderId)
         {
@@ -1000,7 +1001,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 if (isNotAllPending)
                     return ResponseService<List<OrderResponseToStoreDTO>>.Unauthorize("Your Order Status must be pending before packing. Please try again");
 
-                var response = await UpdateGroupOrderItemStatus(updateOrderId, OrderItemStatusEnum.PACKING);
+                var response = await UpdateSellerGroupOrderItemStatus(updateOrderId, OrderItemStatusEnum.PACKING);
 
                 return response;
             }
@@ -1028,7 +1029,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 if (isNotAllPending)
                     return ResponseService<List<OrderResponseToStoreDTO>>.Unauthorize("Your Order Status must be packing before delivering. Please try again");
 
-                var response = await UpdateGroupOrderItemStatus(updateOrderId, OrderItemStatusEnum.DELEVERING);
+                var response = await UpdateSellerGroupOrderItemStatus(updateOrderId, OrderItemStatusEnum.DELEVERING);
 
                 return response;
             }
@@ -1038,7 +1039,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
-        public async Task<ResponseDTO> UpdateOrderDetailToPendingToFeedbackByStoreId(int updateOrderId)
+        public async Task<ResponseDTO> UpdateOrderDetailToPendingToFeedbackByStoreId(int updateOrderId, int sellerId)
         {
             try
             {
@@ -1049,16 +1050,31 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 if (loginUserId == null || role == (int)RoleEnum.CUSTOMER)
                     return ResponseService<List<OrderResponseToStoreDTO>>.Unauthorize("You don't have permission to access");
 
-                var isNotAllPending = _unitOfWork.OrderDetailRepository
-                        .Search(item => item.SellerId == loginUserId && item.OrderId == updateOrderId)
-                        .Any(item => item.OrderItemStatus != (int)OrderItemStatusEnum.DELEVERING);
+                var query = _unitOfWork.OrderDetailRepository
+                        .Search(item => item.SellerId == sellerId && item.OrderId == updateOrderId);
+
+                var isNotAllPending = query.Any(item => item.OrderItemStatus != (int)OrderItemStatusEnum.DELEVERING);
 
                 if (isNotAllPending)
                     return ResponseService<List<OrderResponseToStoreDTO>>.Unauthorize("Your Order Status must be delivering before delivered. Please try again");
 
-                var response = await UpdateGroupOrderItemStatus(updateOrderId, OrderItemStatusEnum.DELEVERED);
+                var orderItems = query.ToList();
 
-                return response;
+                foreach (var item in orderItems)
+                {
+                    item.OrderItemStatus = (int)OrderItemStatusEnum.PENDING_TO_FEEDBACK;
+                }
+
+                await _unitOfWork.OrderDetailRepository.UpdateAsync(orderItems);
+
+                var trackingIds = orderItems.Select(item => item.TrackingId).FirstOrDefault();
+
+                return ResponseService<object>.OK(new
+                {
+                    OrderId = updateOrderId,
+                    TrackingId = trackingIds,
+                    OrderItemStatus = (int)OrderItemStatusEnum.PENDING_TO_FEEDBACK
+                });
             }
             catch (Exception ex)
             {

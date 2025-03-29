@@ -39,6 +39,6 @@ namespace CaptoneProject_IOTS_Service
         public virtual ReportRepository ReportRepository => new ReportRepository();
         public virtual NotificationRepository NotificationRepository => new NotificationRepository();
         public virtual WarrantyRequestRepository WarrantyRequestRepository => new WarrantyRequestRepository();
-        public virtual RepositoryBase<WarrantyRequestAttachments> WarrantyRequestAttachmentsRepository => new RepositoryBase<WarrantyRequestAttachments>();
+        public virtual TransactionRepository TransactionRepository => new TransactionRepository();
     }
 }

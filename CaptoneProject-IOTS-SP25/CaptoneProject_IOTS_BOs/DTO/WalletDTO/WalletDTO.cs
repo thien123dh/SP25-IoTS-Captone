@@ -20,7 +20,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.WalletDTO
         public string TransactionType { set; get; }
     }
 
-    public class SendCurrencyToUserDTO
+    public class UpdateUserWalletRequestDTO
     {
         public int UserId { set; get; }
         public decimal Amount { set; get; }

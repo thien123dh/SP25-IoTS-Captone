@@ -72,6 +72,8 @@ public partial class IoTTraddingSystemContext : DbContext
 
     public virtual DbSet<Report> Reports { set; get; }
 
+    public virtual DbSet<WarrantyRequest> WarrantyRequests { set; get; }
+
     //    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     //#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
     //        => optionsBuilder.UseSqlServer("Server=iotsystem-db.c7yqwgmomb93.ap-southeast-2.rds.amazonaws.com;Uid=admin;Pwd=Iottradingsystem;Database=IoT_Tradding_System; TrustServerCertificate=True");
@@ -104,6 +106,13 @@ public partial class IoTTraddingSystemContext : DbContext
             entity.Property(e => e.Title)
                 .HasMaxLength(300)
                 .HasColumnName("title");
+        });
+
+        modelBuilder.Entity<WarrantyRequest>(entity =>
+        {
+            entity.ToTable(nameof(WarrantyRequest));
+
+            entity.HasOne(item => item.OrderItem);
         });
 
         modelBuilder.Entity<Report>(entity =>
