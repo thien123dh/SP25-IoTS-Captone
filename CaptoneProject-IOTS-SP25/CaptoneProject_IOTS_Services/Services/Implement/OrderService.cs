@@ -4,7 +4,9 @@ using CaptoneProject_IOTS_BOs.DTO.GHTKDTO;
 using CaptoneProject_IOTS_BOs.DTO.OrderDTO;
 using CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
+using CaptoneProject_IOTS_BOs.DTO.RefundDTO;
 using CaptoneProject_IOTS_BOs.DTO.VNPayDTO;
+using CaptoneProject_IOTS_BOs.Migrations;
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
@@ -872,6 +874,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         var store = storeList.FirstOrDefault(s => s.OwnerId == sellerId);
                         var trainer = od?.Lab?.CreatedByNavigation;
                         var orderItemStatusId = od.OrderItemStatus;
+                        var actionDate = od.UpdatedDate;
 
                         var items = group?.Select(od => new OrderItemResponseDTO
                         {
@@ -883,7 +886,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                             Quantity = od.Quantity,
                             Price = od.Price,
                             OrderItemStatus = od.OrderItemStatus,
-                            WarrantyEndDate = od.WarrantyEndDate
+                            WarrantyEndDate = od.WarrantyEndDate,
+                            UpdatedDate = actionDate
                         });
 
                         var res = new OrderItemsGroupResponseDTO
@@ -1123,6 +1127,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     foreach (var item in orderItemsToUpdate)
                     {
                         item.OrderItemStatus = (int)status;
+                        item.UpdatedDate = DateTime.Now;
                     }
 
                     await _unitOfWork.OrderDetailRepository.UpdateAsync(orderItemsToUpdate);
@@ -1160,7 +1165,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         .Any(item => item.OrderItemStatus != (int)OrderItemStatusEnum.PENDING);
 
                 if (isNotAllPending)
-                    return ResponseService<List<OrderResponseToStoreDTO>>.Unauthorize("Your Order Status must be pending before packing. Please try again");
+                    return ResponseService<List<OrderResponseToStoreDTO>>.BadRequest("Your Order Status must be pending before packing. Please try again");
 
                 var response = await UpdateSellerGroupOrderItemStatus(updateOrderId, OrderItemStatusEnum.PACKING);
 
@@ -1188,7 +1193,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         .Any(item => item.OrderItemStatus != (int)OrderItemStatusEnum.PACKING);
 
                 if (isNotAllPending)
-                    return ResponseService<List<OrderResponseToStoreDTO>>.Unauthorize("Your Order Status must be packing before delivering. Please try again");
+                    return ResponseService<List<OrderResponseToStoreDTO>>.BadRequest("Your Order Status must be packing before delivering. Please try again");
 
                 var response = await UpdateSellerGroupOrderItemStatus(updateOrderId, OrderItemStatusEnum.DELEVERING);
 
@@ -1217,13 +1222,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 var isNotAllPending = query.Any(item => item.OrderItemStatus != (int)OrderItemStatusEnum.DELEVERING);
 
                 if (isNotAllPending)
-                    return ResponseService<List<OrderResponseToStoreDTO>>.Unauthorize("Your Order Status must be delivering before delivered. Please try again");
+                    return ResponseService<List<OrderResponseToStoreDTO>>.BadRequest("Your Order Status must be delivering before delivered. Please try again");
 
                 var orderItems = query.ToList();
 
                 foreach (var item in orderItems)
                 {
                     item.OrderItemStatus = (int)OrderItemStatusEnum.PENDING_TO_FEEDBACK;
+                    item.UpdatedDate = DateTime.Now;
                 }
 
                 await _unitOfWork.OrderDetailRepository.UpdateAsync(orderItems);
@@ -1259,25 +1265,27 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         .Any(item => item.OrderItemStatus != (int)OrderItemStatusEnum.PENDING_TO_FEEDBACK);
 
                 if (isNotAllPendingToFeedback)
-                    return ResponseService<List<OrderResponseToStoreDTO>>.Unauthorize("Your Order Status must be packing before delivering. Please try again");
+                    return ResponseService<List<OrderResponseToStoreDTO>>.BadRequest("Your Order Status must be delivered before completed. Please try again");
 
                 var order = _unitOfWork.OrderRepository.GetById(orderId);
 
-                var days = (DateTime.Now - order.CreateDate).Days;
+                var orderItems = _unitOfWork.OrderDetailRepository.Search(
+                    item => item.OrderId == orderId && item.SellerId == loginUserId
+                ).ToList();
+
+                var actionDate = orderItems?.FirstOrDefault()?.UpdatedDate;
+
+                var days = (DateTime.Now - actionDate)?.Days;
 
                 if (days < AUTO_COMPLETE_DAYS)
                 {
-                    return ResponseService<List<OrderResponseToStoreDTO>>.Unauthorize($"You are not allowed to change its status to Completed until {order.CreateDate.AddDays(AUTO_COMPLETE_DAYS).Date}. Please wait");
+                    return ResponseService<List<OrderResponseToStoreDTO>>.BadRequest($"You are not allowed to change its status to Completed until {order.CreateDate.AddDays(AUTO_COMPLETE_DAYS).Date}. Please wait");
                 }
 
                 var response = await UpdateSellerGroupOrderItemStatus(orderId, OrderItemStatusEnum.SUCCESS_ORDER);
 
                 if (response.IsSuccess)
                 {
-                    var orderItems = _unitOfWork.OrderDetailRepository.Search(
-                        item => item.OrderId == orderId && item.SellerId == loginUserId
-                    ).ToList();
-
                     decimal totalReceivedGolds = orderItems?.Sum(item =>
                     {
                         var amount = (decimal)(item.Price * item.Quantity);
@@ -1307,6 +1315,73 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 }
 
                 return response;
+            }
+            catch (Exception ex)
+            {
+                return ResponseService<List<OrderResponseToStoreDTO>>.BadRequest("Cannot get orders. Please try again.");
+            }
+        }
+
+        public async Task<ResponseDTO> UpdateOrderDetailToCancel(int orderId, CreateRefundRequestDTO request)
+        {
+            try
+            {
+                var loginUserId = (int)userServices.GetLoginUserId();
+
+                var role = userServices.GetRole();
+
+                if (role != (int)RoleEnum.CUSTOMER)
+                    return ResponseService<List<OrderResponseToStoreDTO>>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
+
+                var isNotAllPending = _unitOfWork.OrderDetailRepository
+                        .Search(item => item.OrderId == orderId)
+                        .Any(item => item.OrderItemStatus != (int)OrderItemStatusEnum.PENDING);
+
+                if (isNotAllPending)
+                    return ResponseService<List<OrderResponseToStoreDTO>>.BadRequest("Your Order Status must be pending before cancelled.");
+
+                var order = _unitOfWork.OrderRepository.GetById(orderId);
+
+                var orderItems = _unitOfWork.OrderDetailRepository.Search(
+                    item => item.OrderId == orderId && item.SellerId == loginUserId
+                ).ToList();
+
+                if (order == null)
+                    return ResponseService<List<OrderResponseToStoreDTO>>.NotFound("Your Order Status must be pending before cancelled.");
+
+                foreach (var item in orderItems)
+                {
+                    item.OrderItemStatus = (int)OrderItemStatusEnum.CANCELLED;
+                    item.UpdatedDate = DateTime.Now;
+                }
+
+                order.OrderStatusId = (int)OrderStatusEnum.REFUNDED;
+                order.UpdatedDate = DateTime.Now;
+                order.UpdatedBy = loginUserId;
+
+                order = _unitOfWork.OrderRepository.Update(order);
+
+                await _unitOfWork.OrderDetailRepository.UpdateAsync(orderItems);
+
+                var refundRequest = new RefundRequest
+                {
+                    AccountName = request.AccountName,
+                    AccountNumber = request.AccountNumber,
+                    ActionBy = loginUserId,
+                    ActionDate = DateTime.Now,
+                    CreatedBy = loginUserId,
+                    CreatedDate = DateTime.Now,
+                    Amount = order.TotalPrice + (order?.ShippingFee ?? 0),
+                    OrderId = orderId
+                };
+
+                _ = _unitOfWork.RefundRequestRepository.Create(refundRequest);
+
+                return ResponseService<object>.OK(new
+                {
+                    OrderId = orderId,
+                    OrderItemStatus = (int)OrderItemStatusEnum.CANCELLED
+                }); ;
             }
             catch (Exception ex)
             {

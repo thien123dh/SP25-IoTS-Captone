@@ -3,6 +3,7 @@ using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.OrderDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
+using CaptoneProject_IOTS_BOs.DTO.RefundDTO;
 using CaptoneProject_IOTS_BOs.DTO.VNPayDTO;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
@@ -136,6 +137,15 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
         public async Task<IActionResult> UpdateOrderItemToSuccess(int orderId)
         {
             var res = await _orderService.UpdateOrderDetailToSuccess(orderId);
+
+            return GetActionResult(res);
+        }
+
+        [HttpPost("order-status/cancelled/{orderId}")]
+        public async Task<IActionResult> UpdateOrderItemToCancelled(int orderId,
+            [FromBody] CreateRefundRequestDTO payload)
+        {
+            var res = await _orderService.UpdateOrderDetailToCancel(orderId, payload);
 
             return GetActionResult(res);
         }

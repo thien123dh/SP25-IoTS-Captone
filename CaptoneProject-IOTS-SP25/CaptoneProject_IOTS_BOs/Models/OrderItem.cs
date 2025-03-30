@@ -41,6 +41,8 @@ namespace CaptoneProject_IOTS_BOs.Models
 
         public string? TxnRef { set; get; }
 
+        public DateTime? UpdatedDate { set; get; }
+
         [Range(1, 10)]
         [Required]
         public int ProductType { set; get; }
