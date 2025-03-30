@@ -116,16 +116,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (lab == null)
                 throw new Exception(ExceptionMessage.LAB_NOTFOUND);
 
-            var loginUserId = userServices.GetLoginUserId();
-
-            var role = userServices.GetRole();
-
-            //PERMISSION for anonymous or customer
-            if ((role == (int)RoleEnum.CUSTOMER || loginUserId == null) && lab.Status != (int)LabStatusEnum.APPROVED)
-            {
-                throw new Exception(ExceptionMessage.INVALID_PERMISSION);
-            }
-
             try
             {
                 var res = GenericMapper<Lab, LabDetailsInformationResponseDTO>.MapTo(lab);

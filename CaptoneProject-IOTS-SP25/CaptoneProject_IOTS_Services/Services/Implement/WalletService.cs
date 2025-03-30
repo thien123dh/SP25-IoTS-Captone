@@ -76,11 +76,13 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 if (wallet.Id > 0) //UPDATE
                 {
                     wallet = walletRepository.Update(wallet);
-                } else //CREATE
+                }
+                else //CREATE
                 {
                     wallet = walletRepository.Create(wallet);
                 }
-            } catch
+            }
+            catch
             {
                 ResponseService<Wallet>.BadRequest("Cannot Update Wallet. Please try again");
             }
@@ -129,7 +131,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                         transactionService.CreateTransactionAsync(transaction);
                     }
-                } catch
+                }
+                catch
                 {
                     var transaction = new CreateTransactionDTO
                     {
@@ -144,7 +147,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                     return ResponseService<Wallet>.BadRequest("Transaction was Failed. Please try again");
                 }
-            } else
+            }
+            else
             {
                 ResponseService<Wallet>.BadRequest(ExceptionMessage.INSUFFICIENT_WALLET);
             }
@@ -177,7 +181,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     );
                 }
 
-            } catch
+            }
+            catch
             {
                 ResponseService<Wallet>.BadRequest("Cannot get wallet information. Please try again");
             }
@@ -209,10 +214,21 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     }
                 ).ToList();
 
+                wallets = wallets?.Select(
+                   wallet =>
+                   {
+                       var req = request.FirstOrDefault(r => r.UserId == wallet.UserId);
+
+                       wallet.Ballance += (req?.Amount ?? 0);
+
+                       return wallet;
+                   }
+                )?.ToList();
+
                 var transactions = request.Select(
                     item =>
                     {
-                        var wallet = wallets.FirstOrDefault(w => w.UserId == item.UserId);
+                        var wallet = wallets?.FirstOrDefault(w => w.UserId == item.UserId);
 
                         var transaction = new Transaction
                         {
@@ -228,17 +244,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     }
                 ).ToList();
 
-                wallets = wallets?.Select(
-                   wallet =>
-                   {
-                       var req = request.FirstOrDefault(r => r.UserId == wallet.UserId);
-
-                       wallet.Ballance += (req?.Amount ?? 0);
-
-                       return wallet;
-                   }
-                )?.ToList();
-
                 if (notifications != null)
                     await unitOfWork.NotificationRepository.CreateAsync(notifications);
 
@@ -248,14 +253,13 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 if (wallets != null)
                     await unitOfWork.WalletRepository.UpdateAsync(wallets);
 
-                return ResponseService<object>.OK(
-                    request
-                );
-            } catch (Exception ex)
+                return ResponseService<object>.OK(request);
+            }
+            catch (Exception ex)
             {
                 return ResponseService<object>.BadRequest(ex.Message);
             }
-            
+
         }
     }
 }
