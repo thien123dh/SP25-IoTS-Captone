@@ -8,6 +8,7 @@ using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Identity.Client;
 using System.ComponentModel.DataAnnotations;
 
 namespace CaptoneProject_IOTS_API.Controllers.OrderController
@@ -15,7 +16,7 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class OrderController : ControllerBase
+    public class OrderController : MyBaseController.MyBaseController
     {
         private readonly IOrderService _orderService;
 
@@ -87,7 +88,7 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
         [HttpPost("order-status/packing/{orderId}")]
         public async Task<IActionResult> UpdateOrderDetailToPackingByStoreId(int orderId)
         {
-            var result = await _orderService.UpdateOrderDetailToPackingByStoreId(orderId);
+            var result = await _orderService.UpdateOrderDetailToPacking(orderId);
 
             if (!result.IsSuccess)
                 return BadRequest(result);
@@ -98,7 +99,7 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
         [HttpPost("order-status/delivering/{orderId}")]
         public async Task<IActionResult> UpdateOrderDetailToDeliveringByStoreId(int orderId)
         {
-            var result = await _orderService.UpdateOrderDetailToDeliveringByStoreId(orderId);
+            var result = await _orderService.UpdateOrderDetailToDelivering(orderId);
 
             if (!result.IsSuccess)
                 return BadRequest(result);
@@ -110,7 +111,7 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
         public async Task<IActionResult> UpdateOrderDetailToDeliveredByStoreId(int orderId,
             [FromQuery][Required] int sellerId)
         {
-            var result = await _orderService.UpdateOrderDetailToPendingToFeedbackByStoreId(orderId, sellerId);
+            var result = await _orderService.UpdateOrderDetailToPendingToFeedback(orderId, sellerId);
 
             if (!result.IsSuccess)
                 return BadRequest(result);
@@ -129,6 +130,14 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
                 return BadRequest(result);
 
             return Ok(result);
+        }
+
+        [HttpPost("order-status/success-order/{orderId}")]
+        public async Task<IActionResult> UpdateOrderItemToSuccess(int orderId)
+        {
+            var res = await _orderService.UpdateOrderDetailToSuccess(orderId);
+
+            return GetActionResult(res);
         }
     }
 }

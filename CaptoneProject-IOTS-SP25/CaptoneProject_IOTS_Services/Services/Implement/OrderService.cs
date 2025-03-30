@@ -27,14 +27,17 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly IVNPayService vnpayServices;
         private readonly IGHTKService _ghtkService;
         private readonly IEmailService _emailServices;
+        private readonly int AUTO_COMPLETE_DAYS = 3;
+        private readonly IWalletService walletService;
 
-        public OrderService(IUserServices userServices, IVNPayService vnpayServices, IGHTKService ghtkService, IEmailService emailServices)
+        public OrderService(IUserServices userServices, IVNPayService vnpayServices, IGHTKService ghtkService, IEmailService emailServices, IWalletService walletService)
         {
             _unitOfWork ??= new UnitOfWork();
             this.userServices = userServices;
             this.vnpayServices = vnpayServices;
             this._ghtkService = ghtkService;
             this._emailServices = emailServices;
+            this.walletService = walletService;
         }
 
         private string GetApplicationSerialNumberOrder(int userID)
@@ -1141,7 +1144,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
-        public async Task<ResponseDTO> UpdateOrderDetailToPackingByStoreId(int updateOrderId)
+        public async Task<ResponseDTO> UpdateOrderDetailToPacking(int updateOrderId)
         {
             try
             {
@@ -1169,7 +1172,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
-        public async Task<ResponseDTO> UpdateOrderDetailToDeliveringByStoreId(int updateOrderId)
+        public async Task<ResponseDTO> UpdateOrderDetailToDelivering(int updateOrderId)
         {
             try
             {
@@ -1197,7 +1200,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
-        public async Task<ResponseDTO> UpdateOrderDetailToPendingToFeedbackByStoreId(int updateOrderId, int sellerId)
+        public async Task<ResponseDTO> UpdateOrderDetailToPendingToFeedback(int updateOrderId, int sellerId)
         {
             try
             {
@@ -1233,6 +1236,77 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     TrackingId = trackingIds,
                     OrderItemStatus = (int)OrderItemStatusEnum.PENDING_TO_FEEDBACK
                 });
+            }
+            catch (Exception ex)
+            {
+                return ResponseService<List<OrderResponseToStoreDTO>>.BadRequest("Cannot get orders. Please try again.");
+            }
+        }
+
+        public async Task<ResponseDTO> UpdateOrderDetailToSuccess(int orderId)
+        {
+            try
+            {
+                var loginUserId = userServices.GetLoginUserId();
+
+                var role = userServices.GetRole();
+
+                if (loginUserId == null || role == (int)RoleEnum.CUSTOMER)
+                    return ResponseService<List<OrderResponseToStoreDTO>>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
+
+                var isNotAllPendingToFeedback = _unitOfWork.OrderDetailRepository
+                        .Search(item => item.SellerId == loginUserId && item.OrderId == orderId)
+                        .Any(item => item.OrderItemStatus != (int)OrderItemStatusEnum.PENDING_TO_FEEDBACK);
+
+                if (isNotAllPendingToFeedback)
+                    return ResponseService<List<OrderResponseToStoreDTO>>.Unauthorize("Your Order Status must be packing before delivering. Please try again");
+
+                var order = _unitOfWork.OrderRepository.GetById(orderId);
+
+                var days = (DateTime.Now - order.CreateDate).Days;
+
+                if (days < AUTO_COMPLETE_DAYS)
+                {
+                    return ResponseService<List<OrderResponseToStoreDTO>>.Unauthorize($"You are not allowed to change its status to Completed until {order.CreateDate.AddDays(AUTO_COMPLETE_DAYS).Date}. Please wait");
+                }
+
+                var response = await UpdateSellerGroupOrderItemStatus(orderId, OrderItemStatusEnum.SUCCESS_ORDER);
+
+                if (response.IsSuccess)
+                {
+                    var orderItems = _unitOfWork.OrderDetailRepository.Search(
+                        item => item.OrderId == orderId && item.SellerId == loginUserId
+                    ).ToList();
+
+                    decimal totalReceivedGolds = orderItems?.Sum(item =>
+                    {
+                        var amount = (decimal)(item.Price * item.Quantity);
+                        var fee = amount * ((decimal)ApplicationConst.FEE_PER_PRODUCT / 100);
+
+                        return (amount - fee) / 1000;
+                    }) ?? 0;
+
+                    var wallet = (await walletService.GetWalletByUserId((int)loginUserId)).Data;
+
+                    wallet.Ballance += totalReceivedGolds;
+
+                    Transaction trans = new Transaction
+                    {
+                        Amount = totalReceivedGolds,
+                        CreatedDate = DateTime.Now,
+                        CurrentBallance = wallet.Ballance,
+                        Description = $"You have received {totalReceivedGolds} gold for Success Order",
+                        Status = "Success",
+                        TransactionType = "Order",
+                        UserId = (int)loginUserId
+                    };
+
+                    _ = _unitOfWork.WalletRepository.Update(wallet);
+
+                    _ = _unitOfWork.TransactionRepository.Create(trans);
+                }
+
+                return response;
             }
             catch (Exception ex)
             {

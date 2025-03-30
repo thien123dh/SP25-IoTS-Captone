@@ -20,9 +20,11 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         public Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetOrdersByUserPagination(PaginationRequest payload, OrderItemStatusEnum? orderItemStatusFilter = null);
         public Task<GenericResponseDTO<OrderResponseDTO>> GetOrdersDetailsByOrderId(int orderId, OrderItemStatusEnum? orderItemStatusFilter);
         public Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetOrderByStoreOrTrainerPagination(PaginationRequest payload, OrderItemStatusEnum? orderItemStatusFilter = null);
-        public Task<ResponseDTO> UpdateOrderDetailToPackingByStoreId(int updateOrderId);
-        public Task<ResponseDTO> UpdateOrderDetailToDeliveringByStoreId(int updateOrderId);
-        public Task<ResponseDTO> UpdateOrderDetailToPendingToFeedbackByStoreId(int updateOrderId, int sellerId);
+        public Task<ResponseDTO> UpdateOrderDetailToPacking(int updateOrderId);
+        public Task<ResponseDTO> UpdateOrderDetailToDelivering(int updateOrderId);
+
+        public Task<ResponseDTO> UpdateOrderDetailToSuccess(int updateOrderId);
+        public Task<ResponseDTO> UpdateOrderDetailToPendingToFeedback(int updateOrderId, int sellerId);
         public Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetAdminOrdersPagination(PaginationRequest payload, OrderItemStatusEnum? orderItemStatusFilter = null);
         public Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseToStoreDTO>>> GetOrderByStoreIdHasStatusPending(int? filterOrderId, PaginationRequest payload);
     }
