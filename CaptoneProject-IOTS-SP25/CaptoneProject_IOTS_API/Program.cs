@@ -127,6 +127,9 @@ builder.Services.AddScoped<IEnvironmentService>(provider =>
     return new EnvironmentService(frontendDomain);
 });
 
+//Real-time
+builder.Services.AddSignalR();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", builder =>
@@ -151,7 +154,7 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Kit Stem Shop API", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "IoTs Shop API", Version = "v1" });
 
     //Swagger configuration
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -198,7 +201,26 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = audience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
     };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+
+            // Chỉ xử lý nếu kết nối đến SignalR
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chathub"))
+            {
+                context.Token = accessToken;
+            }
+
+            return Task.CompletedTask;
+        }
+    };
 });
+
+
 
 var app = builder.Build();
 
@@ -226,7 +248,7 @@ app.UseStaticFiles();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.MapHub<ChatHub>("/chathub");
 app.MapControllers();
 
 app.Run();

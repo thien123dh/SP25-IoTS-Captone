@@ -790,12 +790,13 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                         var res = new OrderItemsGroupResponseDTO
                         {
+                            StoreId = trainer != null ? trainer.Id : store?.Id,
                             SellerName = trainer != null ? trainer.Fullname : store?.Name,
                             SellerId = sellerId,
                             SellerRole = trainer != null ? (int)RoleEnum.TRAINER : (int)RoleEnum.STORE,
                             TrackingId = trackingId,
                             OrderItemStatus = orderItemStatusId,
-                            TotalAmount = items?.Sum(i => i.Price),
+                            TotalAmount = group.Sum(oi => oi.Price * oi.Quantity),
                             Items = items?.ToList()
                         };
 
@@ -885,6 +886,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                         var res = new OrderItemsGroupResponseDTO
                         {
+                            StoreId = trainer != null ? trainer.Id : store?.Id,
                             SellerName = trainer != null ? trainer.Fullname : store?.Name,
                             SellerId = sellerId,
                             SellerRole = trainer != null ? (int)RoleEnum.TRAINER : (int)RoleEnum.STORE,

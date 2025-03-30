@@ -45,6 +45,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO
 
     public class OrderItemsGroupResponseDTO
     {
+        public int? StoreId { set; get; }
         public string? SellerName { set; get; }
         public int? SellerId { set; get; }
         public int SellerRole { set; get; }

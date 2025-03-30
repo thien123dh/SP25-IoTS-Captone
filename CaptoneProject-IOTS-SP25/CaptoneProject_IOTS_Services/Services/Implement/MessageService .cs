@@ -1,6 +1,8 @@
-﻿using CaptoneProject_IOTS_BOs.DTO.OrderDTO;
+﻿using CaptoneProject_IOTS_BOs.DTO.MessageDTO;
+using CaptoneProject_IOTS_BOs.DTO.OrderDTO;
 using CaptoneProject_IOTS_BOs.DTO.RabbitMQDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserDTO;
+using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Repository.Base;
 using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
@@ -16,19 +18,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 {
     public class MessageService : IMessageService
     {
-        /*private readonly UnitOfWork _unitOfWork;
+        private readonly UnitOfWork _unitOfWork;
         private readonly IUserServices userServices;
-        public MessageService(IUserServices userServices) 
+        public MessageService(IUserServices userServices)
         {
             this._unitOfWork ??= new UnitOfWork();
+         
             this.userServices = userServices;
         }
-
-        public Task<List<string>> GetMessagesForUserAsync(string userId)
-        {
-            throw new NotImplementedException();
-        }
-
         public async Task<List<RecentChatDTO>> GetRecentChats()
         {
             var loginUser = userServices.GetLoginUser();
@@ -44,35 +41,77 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 .Select(g => g.OrderByDescending(m => m.CreatedDate).First().Id)
                 .ToListAsync();
 
-            // Lấy danh sách tin nhắn mới nhất với Include()
             var recentChats = await _unitOfWork.MessageRepository.GetAll()
                 .Where(m => userChatList.Contains(m.Id))
-                .Include(m => m.CreatedByUserNavigation)
-                .Include(m => m.ReceiverUserNavigation)
-                .Include(m => m.CreatedByStoreNavigation)
-                .Include(m => m.ReceiverStoreNavigation)
+                .Include(m => m.CreatedByNavigation)
+                    .ThenInclude(u => u.Stores) // Include danh sách Stores từ User
+                .Include(m => m.Receiver)
+                    .ThenInclude(u => u.Stores) // Include danh sách Stores từ User
                 .ToListAsync();
 
-            // Chuyển đổi sang DTO
-            var chatList = recentChats.Select(m =>
+            var chatList = new List<RecentChatDTO>();
+
+            foreach (var m in recentChats)
             {
                 bool isSender = m.CreatedBy == loginUserId;
-                var otherUserId = isSender ? m.ReceiverId ?? 0 : m.CreatedBy ?? 0;
+                var otherUser = isSender ? m.Receiver : m.CreatedByNavigation;
 
-                var otherUser = isSender ? m.ReceiverUserNavigation : m.CreatedByUserNavigation;
-                var otherStore = isSender ? m.ReceiverStoreNavigation : m.CreatedByStoreNavigation;
+                if (otherUser == null) continue;
 
-                return new RecentChatDTO
+                // Kiểm tra user có phải Store không
+                bool isStore = await userServices.CheckUserRole(otherUser.Id, RoleEnum.STORE);
+
+                // Nếu là Store, lấy thông tin Store, nếu không lấy thông tin User
+                var storeInfo = otherUser.Stores?.FirstOrDefault(); // Lấy store đầu tiên của user (nếu có)
+                string displayName = isStore ? storeInfo?.Name : otherUser.Fullname;
+                string imageUrl = isStore ? storeInfo?.ImageUrl : otherUser.ImageURL;
+
+                chatList.Add(new RecentChatDTO
                 {
-                    UserId = otherUserId,
-                    Username = otherStore?.Name ?? otherUser?.Fullname ?? "Unknown",
-                    ImageURL = otherStore?.ImageUrl ?? otherUser?.ImageURL,
+                    UserId = otherUser.Id,
+                    Username = displayName ?? "Unknown",
+                    ImageURL = imageUrl ?? "",
                     LastMessage = m.Content,
                     LastMessageTime = m.CreatedDate
-                };
-            }).ToList();
+                });
+            }
+            return chatList.OrderByDescending(c => c.LastMessageTime).ToList();
+        }
 
-            return chatList;
-        }*/
+        public async Task<MessageDTO> CreateMessage(CreateMessageDTO dto)
+        {
+            var loginUser = userServices.GetLoginUser();
+            if (loginUser == null)
+                throw new Exception("You don't have permission to access");
+
+            var loginUserId = loginUser.Id;
+
+            var sender = await _unitOfWork.UserRepository.GetByIdAsync(loginUserId);
+            var receiver = await _unitOfWork.UserRepository.GetByIdAsync(dto.ReceiverId);
+
+            if (sender == null || receiver == null)
+                throw new Exception("Sender or Receiver does not exist.");
+
+            var newMessage = new Message
+            {
+                Content = dto.Content,
+                CreatedBy = loginUserId,
+                ReceiverId = dto.ReceiverId,
+                CreatedDate = DateTime.Now,
+                Status = 1
+            };
+
+            _unitOfWork.MessageRepository.Create(newMessage);
+
+            return new MessageDTO
+            {
+                Id = newMessage.Id,
+                Content = newMessage.Content,
+                CreatedBy = newMessage.CreatedBy,
+                ReceiverId = newMessage.ReceiverId,
+                CreatedDate = newMessage.CreatedDate
+            };
+        }
+
     }
 }
