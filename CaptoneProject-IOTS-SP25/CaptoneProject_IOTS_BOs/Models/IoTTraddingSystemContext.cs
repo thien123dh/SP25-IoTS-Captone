@@ -22,7 +22,7 @@ public partial class IoTTraddingSystemContext : DbContext
     public virtual DbSet<OrderItem> OrderItems { set; get; }
     public virtual DbSet<CartItem> CartItems { set; get; }
     public virtual DbSet<Lab> Labs { set; get; }
-
+    public virtual DbSet<RefundRequest> RefundRequests { set; get; }
     public virtual DbSet<CashoutRequest> CashoutRequests { set; get; }
     public virtual DbSet<LabAttachment> LabAttachments { set; get; }
     public virtual DbSet<Combo> Combos { set; get; }
@@ -108,6 +108,11 @@ public partial class IoTTraddingSystemContext : DbContext
             entity.Property(e => e.Title)
                 .HasMaxLength(300)
                 .HasColumnName("title");
+        });
+
+        modelBuilder.Entity<RefundRequest>(entity =>
+        {
+            entity.ToTable(nameof(RefundRequest));
         });
 
         modelBuilder.Entity<WarrantyRequest>(entity =>
