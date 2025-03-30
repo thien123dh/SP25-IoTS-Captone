@@ -101,6 +101,7 @@ builder.Services.AddScoped<IOrderItemService, OrderItemService>();
 builder.Services.AddScoped<IRatingService, RatingService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();
+builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IWarrantyRequestService, WarrantyRequestService>();
 builder.Services.AddScoped<ICashoutService, CashoutRequestService>();
 //GHTK sandbox
@@ -109,14 +110,8 @@ builder.Services.AddScoped<IGHTKService, GHTKService>();
 builder.Services.AddTransient<IGHTKService, GHTKService>();
 
 //RabbitMQ
-builder.Services.AddScoped<IRabbitMQUnitOfWork, RabbitMQUnitOfWork>();
-builder.Services.AddScoped<IMessageService, MessageService>();
-builder.Services.AddSingleton<IConnection>(sp =>
-{
-    var factory = new ConnectionFactory() { HostName = "localhost" };
-    return factory.CreateConnection();
-});
-builder.Services.AddScoped<IRabbitMQRepository, RabbitMQRepository>();
+builder.Services.AddSingleton<IRabbitMQRepository, RabbitMQRepository>();
+builder.Services.AddSingleton<IRabbitMQService, RabbitMQService>();
 
 builder.Services.AddScoped<IFileService>(provider =>
 {
