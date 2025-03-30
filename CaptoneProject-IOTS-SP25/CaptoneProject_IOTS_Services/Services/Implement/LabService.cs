@@ -174,24 +174,35 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 pageSize: paginationRequest.PageSize
             );
 
+            var labIds = pagination?.Data?.Select(item => item.Id).ToList();
+
+            var labCarts = unitOfWork.CartRepository
+                .Search(item => labIds != null && labIds.Contains(item.LabId ?? 0)).ToList();
+            
+            var successLabOrders = unitOfWork.OrderDetailRepository
+                .Search(item => labIds != null && labIds.Contains(item.LabId ?? 0) 
+                        && (item.OrderItemStatus == (int)OrderItemStatusEnum.PENDING_TO_FEEDBACK || item.OrderItemStatus == (int)OrderItemStatusEnum.SUCCESS_ORDER)).ToList();
+
             var res = PaginationMapper<Lab, LabItemDTO>.MapTo(item => new LabItemDTO
             {
                 ApplicationSerialNumber = item.ApplicationSerialNumber,
                 ComboId = item.ComboId,
-                ComboNavigationName = item?.ComboNavigation.Name,
+                ComboNavigationName = item?.ComboNavigation?.Name,
                 CreatedBy = item?.CreatedBy,
                 CreatedDate = item?.CreatedDate,
-                Id = item.Id,
-                ImageUrl = item.ImageUrl,
-                Status = item.Status,
-                Price = item.Price,
-                Rating = item.Rating,
-                StoreId = item.ComboNavigation.StoreId,
+                Id = item?.Id ?? 0,
+                ImageUrl = item?.ImageUrl,
+                Status = item?.Status ?? 0,
+                Price = item?.Price ?? 0,
+                Rating = item?.Rating ?? 0,
+                StoreId = item?.ComboNavigation?.StoreId ?? 0,
                 StoreName = item?.ComboNavigation?.StoreNavigation?.Name,
                 Summary = item?.Summary,
                 Title = item?.Title,
                 UpdatedBy = item?.UpdatedBy,
-                UpdatedDate = item?.UpdatedDate
+                UpdatedDate = item?.UpdatedDate,
+                HasBeenAddToCartAlready = labCarts.Any(c => c.Id == (item?.Id ?? 0)),
+                HasBeenBought = successLabOrders.Any(c => c.Id == (item?.Id ?? 0))
             }, pagination);
 
             return ResponseService<object>.OK(res);

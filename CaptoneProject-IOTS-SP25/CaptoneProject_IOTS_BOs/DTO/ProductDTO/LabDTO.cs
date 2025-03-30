@@ -116,6 +116,10 @@ namespace CaptoneProject_IOTS_BOs.DTO.ProductDTO
 
         public decimal Price { set; get; } = 0;
 
+        public bool HasBeenAddToCartAlready { set; get; } = false;
+
+        public bool HasBeenBought { set; get; } = false;
+
         public DateTime? CreatedDate { set; get; } = DateTime.Now;
 
         public DateTime? UpdatedDate { set; get; } = DateTime.Now;
