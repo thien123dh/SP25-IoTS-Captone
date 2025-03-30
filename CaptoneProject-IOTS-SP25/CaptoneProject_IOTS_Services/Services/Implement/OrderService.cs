@@ -132,6 +132,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 WardId = wardId,
                 AddressId = addressId,
                 Address = address,
+                ContactNumber = contactPhone,
                 note = notes
             });
 
