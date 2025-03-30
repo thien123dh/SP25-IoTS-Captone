@@ -49,7 +49,7 @@ namespace CaptoneProject_IOTS_API.Controllers.GHTKController
                     return NotFound("Không tìm thấy nhãn vận đơn.");
                 }
 
-                return File(pdfBytes, "application/pdf", $"{trackingId}.pdf");
+                return File(pdfBytes, "application/pdf");
             }
             catch (Exception ex)
             {

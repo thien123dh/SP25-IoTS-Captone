@@ -44,9 +44,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var recentChats = await _unitOfWork.MessageRepository.GetAll()
                 .Where(m => userChatList.Contains(m.Id))
                 .Include(m => m.CreatedByNavigation)
-                    .ThenInclude(u => u.Stores) // Include danh sách Stores từ User
+                    .ThenInclude(u => u.Stores)
                 .Include(m => m.Receiver)
-                    .ThenInclude(u => u.Stores) // Include danh sách Stores từ User
+                    .ThenInclude(u => u.Stores) 
                 .ToListAsync();
 
             var chatList = new List<RecentChatDTO>();
@@ -58,11 +58,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 if (otherUser == null) continue;
 
-                // Kiểm tra user có phải Store không
                 bool isStore = await userServices.CheckUserRole(otherUser.Id, RoleEnum.STORE);
 
-                // Nếu là Store, lấy thông tin Store, nếu không lấy thông tin User
-                var storeInfo = otherUser.Stores?.FirstOrDefault(); // Lấy store đầu tiên của user (nếu có)
+                var storeInfo = otherUser.Stores?.FirstOrDefault();
                 string displayName = isStore ? storeInfo?.Name : otherUser.Fullname;
                 string imageUrl = isStore ? storeInfo?.ImageUrl : otherUser.ImageURL;
 
