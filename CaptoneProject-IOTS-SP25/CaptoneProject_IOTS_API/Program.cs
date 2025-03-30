@@ -107,6 +107,7 @@ builder.Services.AddScoped<ICashoutService, CashoutRequestService>();
 //GHTK sandbox
 builder.Services.AddHttpClient<IGHTKService, GHTKService>();
 builder.Services.AddScoped<IGHTKService, GHTKService>();
+
 builder.Services.AddTransient<IGHTKService, GHTKService>();
 
 //RabbitMQ

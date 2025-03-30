@@ -40,6 +40,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO
 
         public DateTime? WarrantyEndDate { set; get; } = null;
 
+        public DateTime? UpdatedDate { set; get; }
         public int OrderItemStatus { set; get; } = 1;
     }
 
