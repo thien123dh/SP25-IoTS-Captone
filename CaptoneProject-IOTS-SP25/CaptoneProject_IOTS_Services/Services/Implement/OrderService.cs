@@ -218,7 +218,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     var lab = await _unitOfWork.LabRepository.GetByIdAsync(item.LabNavigation.Id);
                     if (lab != null)
                     {
-                        orderDetail.OrderItemStatus = (int)OrderItemStatusEnum.SUCCESS_ORDER;
+                        orderDetail.OrderItemStatus = (int)OrderItemStatusEnum.PENDING_TO_FEEDBACK;
                         _unitOfWork.OrderDetailRepository.Update(orderDetail);
                     }
                 }
