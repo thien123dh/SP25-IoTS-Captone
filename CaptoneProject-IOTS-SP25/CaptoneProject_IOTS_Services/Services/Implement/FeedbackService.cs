@@ -155,7 +155,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         new UpdateUserWalletRequestDTO
                         {
                             UserId = userId,
-                            Amount = amount - (amount) * ((decimal)ApplicationConst.FEE_PER_PRODUCT / 100)
+                            Amount = (amount - (amount) * ((decimal)ApplicationConst.FEE_PER_PRODUCT / 100)) / 1000
                         }
                     );
                 }
