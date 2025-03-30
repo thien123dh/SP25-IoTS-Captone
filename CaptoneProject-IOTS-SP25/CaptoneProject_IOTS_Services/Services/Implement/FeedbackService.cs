@@ -136,7 +136,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                             var amount = sellerWalletUpdateRequestMap.GetValueOrDefault(item.SellerId);
 
-                            sellerWalletUpdateRequestMap[item.SellerId] = amount + item.Price;
+                            sellerWalletUpdateRequestMap[item.SellerId] = amount + (item.Price) * (item.Quantity);
 
                             item.OrderItemStatus = (int)OrderItemStatusEnum.SUCCESS_ORDER;
                         }
@@ -160,14 +160,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     );
                 }
 
-                if (!updatedOrderItems.IsNullOrEmpty())
+                if (updatedOrderItems != null)
                     await unitOfWork.OrderDetailRepository.UpdateAsync(updatedOrderItems);
 
                 _ = walletService.UpdateUserWalletWithTransactionAsync(updateWalletRequest).ConfigureAwait(false);
 
                 _ = unitOfWork.FeedbackRepository.CreateAsync(feedbackList);
 
-                if (!reports.IsNullOrEmpty())
+                if (reports != null)
                     _ = unitOfWork.ReportRepository.CreateAsync(reports);
 
                 return ResponseService<object>.OK(

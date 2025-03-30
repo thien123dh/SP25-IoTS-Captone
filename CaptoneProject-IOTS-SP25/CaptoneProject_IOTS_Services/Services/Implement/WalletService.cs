@@ -195,7 +195,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     item => userIdsList.Any(id => id == item.UserId)
                 ).ToList();
 
-                if (wallets.IsNullOrEmpty())
+                if (wallets == null)
                     return ResponseService<object>.NotFound("No wallet can be found. Please try again");
 
                 var notifications = request.Select(
@@ -220,7 +220,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                             Amount = item.Amount,
                             CurrentBallance = wallet?.Ballance,
                             Description = $"You have received {item.Amount} gold",
-                            TransactionType = TransactionTypeEnum.SUCCESS_ORDER
+                            TransactionType = TransactionTypeEnum.SUCCESS_ORDER,
+                            Status = "Success"
                         };
 
                         return transaction;
@@ -238,13 +239,13 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                    }
                 )?.ToList();
 
-                if (!notifications.IsNullOrEmpty())
+                if (notifications != null)
                     await unitOfWork.NotificationRepository.CreateAsync(notifications);
 
-                if (!transactions.IsNullOrEmpty())
+                if (transactions != null)
                     await unitOfWork.TransactionRepository.CreateAsync(transactions);
 
-                if (!wallets.IsNullOrEmpty())
+                if (wallets != null)
                     await unitOfWork.WalletRepository.UpdateAsync(wallets);
 
                 return ResponseService<object>.OK(

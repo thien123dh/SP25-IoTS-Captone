@@ -1047,7 +1047,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 var role = userServices.GetRole();
 
-                if (loginUserId == null || role == (int)RoleEnum.CUSTOMER)
+                if (role != (int)RoleEnum.CUSTOMER && role != (int)RoleEnum.MANAGER && role != (int)RoleEnum.ADMIN)
                     return ResponseService<List<OrderResponseToStoreDTO>>.Unauthorize("You don't have permission to access");
 
                 var query = _unitOfWork.OrderDetailRepository
