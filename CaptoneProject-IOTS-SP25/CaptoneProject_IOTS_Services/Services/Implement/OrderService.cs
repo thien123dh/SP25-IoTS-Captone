@@ -1347,7 +1347,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 var orderItems = _unitOfWork.OrderDetailRepository.Search(
                     item => item.OrderId == orderId && item.SellerId == loginUserId
-                ).ToList();
+                ).Include(item => item.IotsDevice)
+                .Include(item => item.Combo).ToList();
 
                 if (order == null)
                     return ResponseService<List<OrderResponseToStoreDTO>>.NotFound("Your Order Status must be pending before cancelled.");
@@ -1363,6 +1364,30 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 order.UpdatedBy = loginUserId;
 
                 order = _unitOfWork.OrderRepository.Update(order);
+
+                var deviceList = orderItems?
+                    .Where(item => item.IotsDevice != null)?
+                    .Select(item =>
+                    {
+                        item.IotsDevice.Quantity += item.Quantity;
+
+                        return item.IotsDevice;
+                    })?.ToList();
+
+                var comboList = orderItems?
+                    .Where(item => item.Combo != null)?
+                    .Select(item =>
+                    {
+                        item.Combo.Quantity += item.Quantity;
+
+                        return item.Combo;
+                    })?.ToList();
+
+                if (deviceList != null)
+                    await _unitOfWork.IotsDeviceRepository.UpdateAsync(deviceList);
+
+                if (comboList != null)
+                    await _unitOfWork.ComboRepository.UpdateAsync(comboList);
 
                 await _unitOfWork.OrderDetailRepository.UpdateAsync(orderItems);
 
@@ -1384,7 +1409,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 {
                     OrderId = orderId,
                     OrderItemStatus = (int)OrderItemStatusEnum.CANCELLED
-                }); ;
+                });
             }
             catch (Exception ex)
             {
