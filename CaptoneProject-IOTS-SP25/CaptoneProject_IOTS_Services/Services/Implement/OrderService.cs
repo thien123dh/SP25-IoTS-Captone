@@ -30,6 +30,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly IGHTKService _ghtkService;
         private readonly IEmailService _emailServices;
         private readonly int AUTO_COMPLETE_DAYS = 3;
+        private readonly int MAX_CANCELLED_PER_DAYS = 5;
         private readonly IWalletService walletService;
 
         public OrderService(IUserServices userServices, IVNPayService vnpayServices, IGHTKService ghtkService, IEmailService emailServices, IWalletService walletService)
@@ -1341,9 +1342,18 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         .Any(item => item.OrderItemStatus != (int)OrderItemStatusEnum.PENDING);
 
                 if (isNotAllPending)
-                    return ResponseService<List<OrderResponseToStoreDTO>>.BadRequest("Your Order Status must be pending before cancelled.");
+                    return ResponseService<List<OrderResponseToStoreDTO>>.BadRequest("Some orders was packing or delivering by store. You cannot cancel the order now");
 
                 var order = _unitOfWork.OrderRepository.GetById(orderId);
+
+                var numberOfCancelled = _unitOfWork.OrderRepository
+                    .Search(item => item.OrderStatusId == (int)OrderStatusEnum.REFUNDED 
+                    && item.OrderBy == loginUserId 
+                    && item.CreateDate.Date == DateTime.Now.Date).Count();
+
+                if (numberOfCancelled > MAX_CANCELLED_PER_DAYS)
+                    return ResponseService<List<OrderResponseToStoreDTO>>.BadRequest($"You cannot cancel more than {MAX_CANCELLED_PER_DAYS} orders per day");
+
 
                 var orderItems = _unitOfWork.OrderDetailRepository.Search(
                     item => item.OrderId == orderId && item.SellerId == loginUserId
