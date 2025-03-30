@@ -157,7 +157,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 ShippingFee = totalShippingFee,
                 OrderStatusId = (int)OrderStatusEnum.SUCCESS_TO_ORDER
             };
-            _unitOfWork.OrderRepository.Create(createTransactionPayment);
+            var orderResponse = _unitOfWork.OrderRepository.Create(createTransactionPayment);
+
+            var saveOrderItems = new List<OrderItem>();
 
             foreach (var item in selectedItems)
             {
@@ -179,7 +181,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     TxnRef = vnpay.GetResponseData("vnp_TxnRef"),
                     TrackingId = trackingId
                 };
+
                 _unitOfWork.OrderDetailRepository.Create(orderDetail);
+
+                saveOrderItems.Add(orderDetail);
 
                 if (item.IosDeviceNavigation != null)
                 {
@@ -187,7 +192,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     if (device != null)
                     {
                         device.Quantity -= item.Quantity;
-                        if (device.Quantity < 0) device.Quantity = 0; // Đảm bảo không bị âm
+                        if (device.Quantity < 0) 
+                            device.Quantity = 0; // Đảm bảo không bị âm
+
                         _unitOfWork.IotsDeviceRepository.Update(device);
                     }
                 }
@@ -198,7 +205,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     if (combo != null)
                     {
                         combo.Quantity -= item.Quantity;
-                        if (combo.Quantity < 0) combo.Quantity = 0;
+
+                        if (combo.Quantity < 0) 
+                            combo.Quantity = 0;
+
                         _unitOfWork.ComboRepository.Update(combo);
                     }
                 }
@@ -279,6 +289,60 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             await _unitOfWork.CartRepository.RemoveAsync(selectedItems);
             await _unitOfWork.CartRepository.SaveAsync();
+
+            var customerNotification = new Notifications
+            {
+                EntityId = orderResponse.Id,
+                EntityType = (int)EntityTypeConst.EntityTypeEnum.ORDER,
+                CreatedDate = DateTime.Now,
+                ReceiverId = loginUserId,
+                Content = $"Your Order has been created successfully. Please go to the order history to check",
+                Title = $"Your Order has been created successfully. Please go to the order history to check"
+            };
+
+            var storeNotifications = new List<Notifications>();
+            
+            //Create notification and transaction
+            try
+            {
+                if (saveOrderItems != null)
+                    storeNotifications = saveOrderItems?.Select(item => item.SellerId)?.Distinct()?.ToList()?.Select(
+                        sellerId =>
+                        {
+                            return new Notifications
+                            {
+                                EntityId = orderResponse.Id,
+                                EntityType = (int)EntityTypeConst.EntityTypeEnum.ORDER,
+                                Content = $"You have new order. Please go to order history to check",
+                                Title = $"You have new order. Please go to order history to check",
+                                ReceiverId = sellerId
+                            };
+                        }
+                    )?.ToList();
+
+                var transaction = new Transaction
+                {
+                    UserId = loginUserId,
+                    CreatedDate = DateTime.Now,
+                    Description = $"You have deposited {orderResponse.TotalPrice} VND into the system.",
+                    Amount = orderResponse.TotalPrice,
+                    CurrentBallance = -1,
+                    TransactionType = "Order",
+                    Status = "Success",
+                };
+
+                //Transaction and notification
+                _ = _unitOfWork.TransactionRepository.CreateAsync([transaction]);
+
+                _ = _unitOfWork.NotificationRepository.CreateAsync([customerNotification]);
+
+                if (storeNotifications != null)
+                    _ = _unitOfWork.NotificationRepository.CreateAsync(storeNotifications);
+            } catch
+            {
+
+            }
+
             return new GenericResponseDTO<OrderReturnPaymentDTO>
             {
                 IsSuccess = true,

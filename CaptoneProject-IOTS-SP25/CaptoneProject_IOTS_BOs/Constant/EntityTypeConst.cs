@@ -31,7 +31,8 @@ namespace CaptoneProject_IOTS_BOs.Constant
             LAB = 5,
             BLOG = 6, 
             TRANSACTION = 7,
-            WARRANTY_REQUEST = 8
+            WARRANTY_REQUEST = 8,
+            ORDER = 9
         }
     }
 
