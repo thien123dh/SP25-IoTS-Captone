@@ -81,10 +81,25 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             string vnp_ResponseCode = vnpay.GetResponseData("vnp_ResponseCode");
             string vnp_TransactionStatus = vnpay.GetResponseData("vnp_TransactionStatus");
             string encodedOrderInfo = vnpay.GetResponseData("vnp_OrderInfo");
+            string txn_ref = vnpay.GetResponseData("vnp_TxnRef");
 
             string address = "", contactPhone = "", notes = "";
             int provinceId = 0, districtId = 0, wardId = 0, addressId = 0;
             string provinceName = "", districtName = "", wardName = "", fullAddress = "", deliver_option = "";
+
+            var existingOrderItem = await _unitOfWork.OrderDetailRepository
+            .GetQueryable()
+            .FirstOrDefaultAsync(oi => oi.TxnRef == txn_ref);
+
+            if (existingOrderItem != null)
+            {
+                return new GenericResponseDTO<OrderReturnPaymentDTO>
+                {
+                    IsSuccess = false,
+                    Message = "Payment exits.",
+                    Data = null
+                };
+            }
 
             if (!string.IsNullOrEmpty(encodedOrderInfo))
             {
@@ -144,7 +159,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var totalShippingFee = shippingFees.FirstOrDefault(f => f.ShopOwnerId == -1)?.Fee ?? 0m;
             decimal totalProductPrice = (Convert.ToInt64(vnpay.GetResponseData("vnp_Amount")) / 100 - totalShippingFee);
             decimal totalAmount = (Convert.ToInt64(vnpay.GetResponseData("vnp_Amount")) / 100);
-
+            TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            DateTime vietnamTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
             var createTransactionPayment = new Orders
             {
                 ApplicationSerialNumber = GetApplicationSerialNumberOrder(loginUserId),
@@ -157,7 +173,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 AddressId = addressId,
                 ContactNumber = contactPhone,
                 Notes = notes,
-                CreateDate = DateTime.Now,
+                CreateDate = vietnamTime,
                 CreatedBy = loginUserId,
                 UpdatedBy = loginUserId,
                 ShippingFee = totalShippingFee,
