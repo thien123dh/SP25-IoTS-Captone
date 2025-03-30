@@ -57,5 +57,26 @@ namespace CaptoneProject_IOTS_API.Controllers.GHTKController
                 return StatusCode(500, "Internal server error while fetching label.");
             }
         }
+
+        [HttpGet("print-label/{trackingId}-download")]
+        public async Task<IActionResult> PrintLabelDowload(string trackingId)
+        {
+            try
+            {
+                var pdfBytes = await _ghtkService.PrintLabelAsync(trackingId);
+
+                if (pdfBytes == null || pdfBytes.Length == 0)
+                {
+                    return NotFound("Không tìm thấy nhãn vận đơn.");
+                }
+
+                return File(pdfBytes, "application/pdf", $"{trackingId}.pdf");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching label {trackingId}: {ex.Message}");
+                return StatusCode(500, "Internal server error while fetching label.");
+            }
+        }
     }
 }
