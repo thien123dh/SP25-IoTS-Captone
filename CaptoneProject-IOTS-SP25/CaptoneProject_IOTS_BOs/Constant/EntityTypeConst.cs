@@ -32,7 +32,8 @@ namespace CaptoneProject_IOTS_BOs.Constant
             BLOG = 6, 
             TRANSACTION = 7,
             WARRANTY_REQUEST = 8,
-            ORDER = 9
+            ORDER = 9,
+            CASHOUT_REQUEST = 10
         }
     }
 

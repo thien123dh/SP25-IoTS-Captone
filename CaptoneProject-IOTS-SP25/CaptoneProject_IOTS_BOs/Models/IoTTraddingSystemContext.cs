@@ -22,6 +22,8 @@ public partial class IoTTraddingSystemContext : DbContext
     public virtual DbSet<OrderItem> OrderItems { set; get; }
     public virtual DbSet<CartItem> CartItems { set; get; }
     public virtual DbSet<Lab> Labs { set; get; }
+
+    public virtual DbSet<CashoutRequest> CashoutRequests { set; get; }
     public virtual DbSet<LabAttachment> LabAttachments { set; get; }
     public virtual DbSet<Combo> Combos { set; get; }
     public virtual DbSet<IotsDevicesCombo> IotsDevicesCombos { set; get; }
@@ -126,7 +128,12 @@ public partial class IoTTraddingSystemContext : DbContext
         {
             entity.ToTable(nameof(Notifications));
         });
+        modelBuilder.Entity<CashoutRequest>(entity =>
+        {
+            entity.ToTable(nameof(CashoutRequest));
 
+            entity.HasKey(item => item.Id);
+        });
         modelBuilder.Entity<Message>(entity =>
         {
             entity.ToTable(nameof(Message));
