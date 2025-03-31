@@ -55,7 +55,7 @@ namespace CaptoneProject_IOTS_API.Controllers.CashoutRequestController
             int id, 
             [FromBody] RemarkDTO remarks)
         {
-            var res = await cashoutService.ApproveOrRejectCashoutRequest(id, true, remarks);
+            var res = await cashoutService.ApproveOrRejectCashoutRequest(id, false, remarks);
 
             return GetActionResult(res);
         }
