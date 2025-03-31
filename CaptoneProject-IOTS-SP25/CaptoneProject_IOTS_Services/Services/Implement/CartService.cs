@@ -183,6 +183,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         }
 
                         parentCartId = parentCartItem.Id;
+                        cartItem.IsSelected = parentCartItem.IsSelected;
                     } else
                     {
                         throw new Exception("Please add the current product to cart if you want to buy this tutorial video");
