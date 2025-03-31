@@ -203,6 +203,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     OrderItemStatus = (int)OrderItemStatusEnum.PENDING,
                     TxnRef = vnpay.GetResponseData("vnp_TxnRef"),
                     TrackingId = trackingId
+                    //WarrantyEndDate = DateTime.Now.AddMonths(item?.IosDeviceNavigation?.WarrantyMonth ?? item?.ComboNavigation?.WarrantyMonth ?? 0)
                 };
 
                 _unitOfWork.OrderDetailRepository.Create(orderDetail);
@@ -1237,7 +1238,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     return ResponseService<List<OrderResponseToStoreDTO>>.Unauthorize("You don't have permission to access");
 
                 var query = _unitOfWork.OrderDetailRepository
-                        .Search(item => item.SellerId == sellerId && item.OrderId == updateOrderId);
+                        .Search(item => item.SellerId == sellerId && item.OrderId == updateOrderId)
+                        .Include(item => item.IotsDevice).Include(item => item.Combo);
 
                 var isNotAllPending = query.Any(item => item.OrderItemStatus != (int)OrderItemStatusEnum.DELEVERING);
 
@@ -1248,8 +1250,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 foreach (var item in orderItems)
                 {
+                    var warrantyMonth = item?.IotsDevice?.WarrantyMonth ?? item?.Combo?.WarrantyMonth ?? 0;
+
                     item.OrderItemStatus = (int)OrderItemStatusEnum.PENDING_TO_FEEDBACK;
                     item.UpdatedDate = DateTime.Now;
+                    item.WarrantyEndDate = DateTime.Now.AddMonths(warrantyMonth);
                 }
 
                 await _unitOfWork.OrderDetailRepository.UpdateAsync(orderItems);

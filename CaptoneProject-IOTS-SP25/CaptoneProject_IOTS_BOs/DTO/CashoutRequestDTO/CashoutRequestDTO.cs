@@ -22,6 +22,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.CashoutRequestDTO
 
     public class CashoutRequestResponseDTO
     {
+        public int Id { set; get; }
         public decimal Amount { set; get; }
 
         public string ContactNumber { set; get; }
