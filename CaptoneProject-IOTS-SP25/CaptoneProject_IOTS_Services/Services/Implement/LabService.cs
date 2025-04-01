@@ -1,5 +1,6 @@
 ﻿using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.Constant;
+using CaptoneProject_IOTS_BOs.DTO.MaterialDTO;
 using CaptoneProject_IOTS_BOs.DTO.NotificationDTO;
 using CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
@@ -11,6 +12,7 @@ using CaptoneProject_IOTS_Service.Mapper;
 using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.OData.Results;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.OData.ModelBuilder;
 using System.Collections.Generic;
@@ -120,6 +122,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 var res = GenericMapper<Lab, LabDetailsInformationResponseDTO>.MapTo(lab);
 
+                var ratingQuery = unitOfWork?.FeedbackRepository.Search(
+                   item => labId == item.OrderItem.LabId
+                ).Include(item => item.OrderItem);
+
+                res.Rating = ((ratingQuery?.Sum(r => r.Rating) ?? 0) + ProductConst.DEFAULT_RATING) / ((ratingQuery?.Count() ?? 0) + 1);
+
                 res.HasAbilityToViewPlaylist = await CheckPermissionToViewLabVideoList(res.Id);
 
                 return res;
@@ -131,7 +139,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         }
 
-        public async Task<ResponseDTO> GetLabPagination(LabFilterRequestDTO filterRequest, 
+        public async Task<ResponseDTO> GetLabPagination(LabFilterRequestDTO filterRequest,
                             PaginationRequest paginationRequest,
                             Expression<Func<Lab, bool>> additionalFunc = null)
         {
@@ -168,9 +176,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var labCarts = unitOfWork.CartRepository
                 .Search(item => labIds != null && labIds.Contains(item.LabId ?? 0)).ToList();
-            
+
             var successLabOrders = unitOfWork.OrderDetailRepository
-                .Search(item => labIds != null && labIds.Contains(item.LabId ?? 0) 
+                .Search(item => labIds != null && labIds.Contains(item.LabId ?? 0)
                         && (item.OrderItemStatus == (int)OrderItemStatusEnum.PENDING_TO_FEEDBACK || item.OrderItemStatus == (int)OrderItemStatusEnum.SUCCESS_ORDER)).ToList();
 
             var res = PaginationMapper<Lab, LabItemDTO>.MapTo(item => new LabItemDTO
@@ -269,7 +277,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             else if (isCustomer) //Is role customer
             {
                 var doCustomerBuyLab = unitOfWork.OrderDetailRepository.Search(
-                    item => item.LabId == labId && item.OrderBy == (int)loginUserId && 
+                    item => item.LabId == labId && item.OrderBy == (int)loginUserId &&
                     (item.OrderItemStatus == (int)OrderItemStatusEnum.SUCCESS_ORDER
                     || item.OrderItemStatus == (int)OrderItemStatusEnum.PENDING_TO_FEEDBACK)
                 ).Any();
