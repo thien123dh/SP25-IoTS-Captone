@@ -27,6 +27,13 @@ namespace CaptoneProject_IOTS_API.Controllers.MessageController
             return Ok(chats);
         }
 
+        [HttpGet("get-all-chats-sender-reciver")]
+        public async Task<IActionResult> GetAllRecentChats([FromQuery] int receiverId)
+        {
+            var chats = await _messageService.GetMessagesBetweenUsers(receiverId);
+            return Ok(chats);
+        }
+
         [HttpPost("Chat-RabbitMQ")]
         public async Task<IActionResult> CreateChatMessage([FromBody] CreateMessageDTO payload)
         {

@@ -128,7 +128,7 @@ builder.Services.AddScoped<IEnvironmentService>(provider =>
     return new EnvironmentService(frontendDomain);
 });
 
-//Real-time
+//SignaIR Real-time
 builder.Services.AddSignalR();
 
 builder.Services.AddCors(options =>

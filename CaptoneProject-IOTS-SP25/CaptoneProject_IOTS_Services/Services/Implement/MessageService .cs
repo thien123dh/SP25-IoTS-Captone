@@ -111,5 +111,31 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             };
         }
 
+        public async Task<List<MessageDTO>> GetMessagesBetweenUsers(int receiverId)
+        {
+            var loginUser = userServices.GetLoginUser();
+            if (loginUser == null)
+                throw new Exception("You don't have permission to access");
+
+            var loginUserId = loginUser.Id;
+
+            var messages = await _unitOfWork.MessageRepository.GetAll()
+                .Where(m => (m.CreatedBy == loginUserId && m.ReceiverId == receiverId) ||
+                            (m.CreatedBy == receiverId && m.ReceiverId == loginUserId))
+                .OrderByDescending(m => m.CreatedDate) 
+                .ToListAsync();
+
+            var messageList = messages.Select(m => new MessageDTO
+            {
+                Id = m.Id,
+                CreatedBy = m.CreatedBy,
+                ReceiverId = m.ReceiverId,
+                Content = m.Content,
+                CreatedDate = m.CreatedDate
+            }).ToList();
+
+            return messageList;
+        }
+
     }
 }
