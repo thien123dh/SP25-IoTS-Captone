@@ -92,7 +92,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             try
             {
                 if (unReadNotifications != null)
-                    await unitOfWork.NotificationRepository.CreateAsync(unReadNotifications);
+                    await unitOfWork.NotificationRepository.UpdateAsync(unReadNotifications);
             }
             catch
             {
