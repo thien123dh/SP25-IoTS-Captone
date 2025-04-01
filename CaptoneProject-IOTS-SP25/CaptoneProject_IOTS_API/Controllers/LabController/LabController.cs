@@ -15,10 +15,11 @@ namespace CaptoneProject_IOTS_API.Controllers.LabController
     public class LabController : MyBaseController.MyBaseController
     {
         private readonly ILabService labService;
-
-        public LabController(ILabService labService)
+        private readonly IActivityLogService activityLogService;
+        public LabController(ILabService labService, IActivityLogService activityLogService)
         {
             this.labService = labService;
+            this.activityLogService = activityLogService;
         }
 
         [HttpPost("member/get-lab-pagination/{comboId}")]
@@ -31,6 +32,7 @@ namespace CaptoneProject_IOTS_API.Controllers.LabController
         }
 
         [HttpPost("user-management/get-lab-pagination")]
+        [Authorize]
         public async Task<IActionResult> GetCustomerLabsPagination(
             [FromBody] PaginationRequest payload
         )
@@ -73,6 +75,11 @@ namespace CaptoneProject_IOTS_API.Controllers.LabController
         {
             var res = await labService.CreateOrUpdateLabDetailsInformation(null, payload);
 
+            if (res.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Created new lab with ID {res?.Data?.Id}");
+            }
+
             return GetActionResult(res);
         }
 
@@ -84,6 +91,11 @@ namespace CaptoneProject_IOTS_API.Controllers.LabController
         {
             var res = await labService.CreateOrUpdateLabDetailsInformation(labId, payload);
 
+            if (res.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Updated lab with ID {labId}");
+            }
+
             return GetActionResult(res);
         }
 
@@ -94,6 +106,11 @@ namespace CaptoneProject_IOTS_API.Controllers.LabController
             [FromBody] List<CreateUpdateLabVideo> payload)
         {
             var res = await labService.CreateOrUpdateLabVideoList(labId, payload);
+
+            if (res.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Created or Updated lab playlist with ID {labId}");
+            }
 
             return GetActionResult(res);
         }
@@ -108,7 +125,6 @@ namespace CaptoneProject_IOTS_API.Controllers.LabController
         }
 
         [HttpGet("get-lab-information/{labId}")]
-        [Authorize]
         public async Task<IActionResult> GetLabInformation(int labId)
         {
             try
@@ -123,26 +139,72 @@ namespace CaptoneProject_IOTS_API.Controllers.LabController
         }
 
         [HttpPost("trainer-management/submit-lab/{labId}")]
+        [Authorize]
         public async Task<IActionResult> SubmitLab(int labId)
         {
             var res = await labService.SubmitLabRequest(labId);
+
+            if (res.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Submited lab with ID {labId}");
+            }
 
             return GetActionResult(res);
         }
 
         [HttpPost("store-management/approve/{labId}")]
+        [Authorize]
         public async Task<IActionResult> ApproveLab(int labId)
         {
             var res = await labService.ApproveOrRejectLab(labId, true);
+
+            if (res.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Approved lab with ID {labId}");
+            }
 
             return GetActionResult(res);
         }
 
         [HttpPost("store-management/reject/{labId}")]
+        [Authorize]
         public async Task<IActionResult> ApproveLab(int labId,
             [FromBody] RemarkDTO payload)
         {
             var res = await labService.ApproveOrRejectLab(labId, false, payload);
+
+            if (res.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Rejected lab with ID {labId}");
+            }
+
+            return GetActionResult(res);
+        }
+
+        [HttpPut("lab-status/activate")]
+        [Authorize]
+        public async Task<IActionResult> ActivateLab(int labId)
+        {
+            var res = await labService.ActiveOrDeactiveLab(labId, false);
+
+            if (res.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Activated lab with ID {labId}");
+            }
+
+            return GetActionResult(res);
+        }
+
+        [HttpPut("lab-status/deactivate")]
+        [Authorize]
+        public async Task<IActionResult> DeactivateLab(int labId)
+        {
+            var res = await labService.ActiveOrDeactiveLab(labId, true);
+
+            if (res.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Deactivated lab with ID {labId}");
+            }
 
             return GetActionResult(res);
         }

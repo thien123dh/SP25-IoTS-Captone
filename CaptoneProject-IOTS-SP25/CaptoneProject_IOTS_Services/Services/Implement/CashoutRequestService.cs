@@ -7,6 +7,7 @@ using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Service.Mapper;
 using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
+using Microsoft.Identity.Client;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,11 +25,16 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly IUserServices userServices;
         private readonly IWalletService walletService;
         private readonly int MAX_REQUEST_COUNT = 10;
-        public CashoutRequestService(UnitOfWork unitOfWork, IUserServices userServices, IWalletService walletService)
+        private readonly IActivityLogService activityLogService;
+        public CashoutRequestService(UnitOfWork unitOfWork, 
+            IUserServices userServices, 
+            IWalletService walletService, 
+            IActivityLogService activityLogService)
         {
             this.unitOfWork = unitOfWork;
             this.userServices = userServices;
             this.walletService = walletService;
+            this.activityLogService = activityLogService;
         }
 
         public async Task<GenericResponseDTO<CashoutRequest>> ApproveOrRejectCashoutRequest(int id, bool isApprove, RemarkDTO? remarks = null)

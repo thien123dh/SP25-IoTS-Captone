@@ -15,10 +15,11 @@ namespace CaptoneProject_IOTS_API.Controllers.WarrantyRequestController
     public class WarrantyRequestController : MyBaseController.MyBaseController
     {
         private readonly IWarrantyRequestService warrantyRequestService;
-
-        public WarrantyRequestController(IWarrantyRequestService warrantyRequestService)
+        private readonly IActivityLogService activityLogService;
+        public WarrantyRequestController(IWarrantyRequestService warrantyRequestService, IActivityLogService activityLogService)
         {
             this.warrantyRequestService = warrantyRequestService;
+            this.activityLogService = activityLogService;
         }
 
         [HttpGet("get/{id}")]
@@ -36,6 +37,10 @@ namespace CaptoneProject_IOTS_API.Controllers.WarrantyRequestController
         {
             var res = await warrantyRequestService.CreateCustomerWarrantyRequest(payload);
 
+            if (res.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Created warranty request with ID {res?.Data?.Id}");
+            }
             return GetActionResult(res);
         }
 
@@ -55,6 +60,11 @@ namespace CaptoneProject_IOTS_API.Controllers.WarrantyRequestController
         {
             var res = await warrantyRequestService.StoreApproveOrRejectWarrantyRequest(id, false, payload);
 
+            if (res.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Rejected warranty request with ID {res?.Data?.Id}");
+            }
+
             return GetActionResult(res);
         }
 
@@ -63,6 +73,11 @@ namespace CaptoneProject_IOTS_API.Controllers.WarrantyRequestController
         {
             var res = await warrantyRequestService.StoreApproveOrRejectWarrantyRequest(id, true);
 
+            if (res.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Approved warranty request with ID {res?.Data?.Id}");
+            }
+
             return GetActionResult(res);
         }
 
@@ -70,6 +85,11 @@ namespace CaptoneProject_IOTS_API.Controllers.WarrantyRequestController
         public async Task<IActionResult> CustomerConfirmSuccess(int id)
         {
             var res = await warrantyRequestService.ConfirmSuccess(id);
+
+            if (res.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Confirm Success warranty request with ID {res?.Data?.Id}");
+            }
 
             return GetActionResult(res);
         }

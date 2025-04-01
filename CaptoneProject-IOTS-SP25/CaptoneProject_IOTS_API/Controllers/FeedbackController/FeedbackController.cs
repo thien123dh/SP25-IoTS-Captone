@@ -13,10 +13,11 @@ namespace CaptoneProject_IOTS_API.Controllers.FeedbackController
     public class FeedbackController : MyBaseController.MyBaseController
     {
         private readonly IFeedbackService feedbackService;
-
-        public FeedbackController(IFeedbackService feedbackService)
+        private readonly IActivityLogService activityLogService;
+        public FeedbackController(IFeedbackService feedbackService, IActivityLogService activityLogService)
         {
             this.feedbackService = feedbackService;
+            this.activityLogService = activityLogService;
         }
 
         [HttpPost("product/get-pagination")]
@@ -36,6 +37,11 @@ namespace CaptoneProject_IOTS_API.Controllers.FeedbackController
         )
         {
             var res = await feedbackService.CreateOrderFeedback(payload);
+
+            if (res.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Create new feedback with order ID {payload.OrderId} and seller ID {payload.SellerId}");
+            }
 
             return GetActionResult(res);
         }

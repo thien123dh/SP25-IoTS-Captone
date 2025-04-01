@@ -244,5 +244,56 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 return ResponseService<ComboDetailsResponseDTO>.BadRequest("Cannot save the Combo Information. Please try again");
             }
         }
+
+        public async Task<ResponseDTO> ActivateOrDeactiveCombo(int comboId, bool isActivate)
+        {
+            var combo = unitOfWork.ComboRepository.GetById(comboId);
+            var loginUserId = userServices.GetLoginUserId();
+
+            if (combo == null)
+                return ResponseService<object>.NotFound("Combo cannot be found. Please try again");
+
+            var notiMessage = "";
+
+            if (isActivate)
+            {
+                combo.IsActive = 1;
+                combo.UpdateDate = DateTime.Now;
+                combo.UpdatedBy = loginUserId;
+
+                if (loginUserId != combo.CreatedBy)
+                {
+                    notiMessage = $"Your combo '{combo.Name}' has been activated by Manager";
+                }
+            } else
+            {
+                combo.IsActive = 0;
+                combo.UpdateDate = DateTime.Now;
+                combo.UpdatedBy = loginUserId;
+
+                if (loginUserId != combo.CreatedBy)
+                {
+                    notiMessage = $"Your combo '{combo.Name}' has been deactivated by Manager. Please check the reason";
+                }
+            }
+
+            combo = unitOfWork.ComboRepository.Update(combo);
+
+            if (notiMessage != "")
+            {
+                var noti = new Notifications
+                {
+                    Content = notiMessage,
+                    Title = notiMessage,
+                    EntityId = combo.Id,
+                    EntityType = (int)EntityTypeEnum.IOT_DEVICE_COMBO,
+                    ReceiverId = (int)combo.CreatedBy
+                };
+
+                _ = unitOfWork.NotificationRepository.Update(noti);
+            }
+
+            return ResponseService<object>.OK(combo);
+        }
     }
 }

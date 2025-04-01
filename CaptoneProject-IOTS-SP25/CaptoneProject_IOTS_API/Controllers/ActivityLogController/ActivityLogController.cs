@@ -2,6 +2,7 @@
 using CaptoneProject_IOTS_BOs.DTO.ActivityLogDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_Service.Services.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
@@ -10,6 +11,7 @@ namespace CaptoneProject_IOTS_API.Controllers.ActivityLogController
 {
     [Route("api/activity-log")]
     [ApiController]
+    [Authorize]
     public class ActivityLogController : ControllerBase
     {
         private readonly IActivityLogService activityLogService;
@@ -36,29 +38,13 @@ namespace CaptoneProject_IOTS_API.Controllers.ActivityLogController
             return Ok(response);
         }
 
-        [HttpGet("get-all-activity-log-entity-type")]
-        public async Task<IActionResult> GetAllActivityLogEntityType()
-        {
-            return GetActionResult(
-                    activityLogService.GetAllActivityLogTypes()
-            );
-        }
-
-        [HttpPost("get-pagination-activity-log")]
+        [HttpPost("get-pagination-activity-log/{userId}")]
         public async Task<IActionResult> GetPaginationActivityLog(
-            [FromQuery] int userId,
+            int userId,
             [FromBody] PaginationRequest payload
         )
         {
-            return GetActionResult(await activityLogService.GetPaginationActivityLog(payload, null, null, userId));
-        }
-
-        [HttpPost("create-activity-log")]
-        public async Task<IActionResult> CreateActivityLog(
-            [FromBody] CreateActivityLogDTO payload
-        )
-        {
-            return GetActionResult(await activityLogService.CreateActivityLog(payload));
+            return GetActionResult(await activityLogService.GetPaginationActivityLog(payload, userId));
         }
     }
 }

@@ -32,8 +32,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly int AUTO_COMPLETE_DAYS = 3;
         private readonly int MAX_CANCELLED_PER_DAYS = 5;
         private readonly IWalletService walletService;
+        private readonly IActivityLogService activityLogService;
 
-        public OrderService(IUserServices userServices, IVNPayService vnpayServices, IGHTKService ghtkService, IEmailService emailServices, IWalletService walletService)
+        public OrderService(IUserServices userServices, 
+            IVNPayService vnpayServices, 
+            IGHTKService ghtkService, 
+            IEmailService emailServices, 
+            IWalletService walletService, 
+            IActivityLogService activityLogService)
         {
             _unitOfWork ??= new UnitOfWork();
             this.userServices = userServices;
@@ -41,6 +47,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             this._ghtkService = ghtkService;
             this._emailServices = emailServices;
             this.walletService = walletService;
+            this.activityLogService = activityLogService;
         }
 
         private string GetApplicationSerialNumberOrder(int userID)
@@ -1260,6 +1267,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 await _unitOfWork.OrderDetailRepository.UpdateAsync(orderItems);
 
                 var trackingIds = orderItems.Select(item => item.TrackingId).FirstOrDefault();
+
+                _ = activityLogService.CreateActivityLog($"Change status of order {updateOrderId} of seller id {sellerId} to pending to feedback");
 
                 return ResponseService<object>.OK(new
                 {

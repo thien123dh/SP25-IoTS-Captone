@@ -105,7 +105,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     ComboId = comboId,
                     LabStatus = (int)ProductConst.LabStatusEnum.APPROVED
                 },
-                paginationRequest
+                paginationRequest, 
+                item => item.Status > 0
             );
 
             return res;
@@ -501,6 +502,59 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             );
 
             return res;
+        }
+
+        public async Task<ResponseDTO> ActiveOrDeactiveLab(int labId, bool isDeactive = false)
+        {
+            var loginUserId = (int)userServices.GetLoginUserId();
+            var role = userServices.GetRole();
+
+            var lab = unitOfWork.LabRepository.GetById(labId);
+
+            if (lab == null)
+                return ResponseService<object>.NotFound("Lab cannot be found. Please try again");
+
+            var notiMessage = "";
+
+            if (isDeactive)
+            {
+                lab.Status = 0;
+                lab.UpdatedDate = DateTime.Now;
+                lab.UpdatedBy = loginUserId;
+
+                if (loginUserId != lab.CreatedBy)
+                {
+                    notiMessage = $"Your lab '{lab.Title}' has been deactivated by Manager. Please check the reason";
+                }
+            } else
+            {
+                lab.Status = 1;
+                lab.UpdatedDate = DateTime.Now;
+                lab.UpdatedBy = loginUserId;
+
+                if (loginUserId != lab.CreatedBy)
+                {
+                    notiMessage = $"Your lab '{lab.Title}' has been activated by Manager";
+                }
+            }
+
+            lab = unitOfWork.LabRepository.Update(lab);
+
+            if (notiMessage != "")
+            {
+                var noti = new Notifications
+                {
+                    Content = notiMessage,
+                    Title = notiMessage,
+                    EntityId = lab.Id,
+                    EntityType = (int)EntityTypeEnum.LAB,
+                    ReceiverId = (int)lab.CreatedBy
+                };
+
+                _ = unitOfWork.NotificationRepository.Create(noti);
+            }
+
+            return ResponseService<object>.OK(lab);
         }
     }
 }
