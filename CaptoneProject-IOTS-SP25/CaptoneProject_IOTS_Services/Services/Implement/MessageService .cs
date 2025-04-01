@@ -1,4 +1,5 @@
-﻿using CaptoneProject_IOTS_BOs.DTO.MaterialCategotyDTO;
+﻿using CaptoneProject_IOTS_BOs;
+using CaptoneProject_IOTS_BOs.DTO.MaterialCategotyDTO;
 using CaptoneProject_IOTS_BOs.DTO.MessageDTO;
 using CaptoneProject_IOTS_BOs.DTO.OrderDTO;
 using CaptoneProject_IOTS_BOs.DTO.RabbitMQDTO;
@@ -8,6 +9,7 @@ using CaptoneProject_IOTS_Repository.Base;
 using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.EntityFrameworkCore;
+using MimeKit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,11 +29,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             this.userServices = userServices;
         }
-        public async Task<List<RecentChatDTO>> GetRecentChats()
+        public async Task<GenericResponseDTO<List<RecentChatDTO>>> GetRecentChats()
         {
             var loginUser = userServices.GetLoginUser();
             if (loginUser == null)
-                throw new UnauthorizedAccessException("You don't have permission to access");
+                return ResponseService<List<RecentChatDTO>>.Unauthorize("You don't have permission to access");
 
             var loginUserId = loginUser.Id;
 
@@ -74,14 +76,19 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     LastMessageTime = m.CreatedDate
                 });
             }
-            return chatList.OrderByDescending(c => c.LastMessageTime).ToList();
+            return new GenericResponseDTO<List<RecentChatDTO>>()
+            {
+                Data = chatList.OrderByDescending(c => c.LastMessageTime).ToList(),
+                Message = "Success",
+                IsSuccess = true
+            };
         }
 
-        public async Task<MessageDTO> CreateMessage(CreateMessageDTO dto)
+        public async Task<GenericResponseDTO<MessageDTO>> CreateMessage(CreateMessageDTO dto)
         {
             var loginUser = userServices.GetLoginUser();
             if (loginUser == null)
-                throw new UnauthorizedAccessException("You don't have permission to access");
+                return ResponseService<MessageDTO>.Unauthorize("You don't have permission to access");
 
             var loginUserId = loginUser.Id;
 
@@ -102,7 +109,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             _unitOfWork.MessageRepository.Create(newMessage);
 
-            return new MessageDTO
+            var message = new MessageDTO
             {
                 Id = newMessage.Id,
                 Content = newMessage.Content,
@@ -110,21 +117,28 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 ReceiverId = newMessage.ReceiverId,
                 CreatedDate = newMessage.CreatedDate
             };
-        }
 
-        public async Task<List<MessageGetBeweenUserDTO>> GetMessagesBetweenUsers(int receiverId)
+            return new GenericResponseDTO<MessageDTO>()
+            {
+                Data = message,
+                Message = "Success",
+                IsSuccess = true
+            };
+        }
+    
+
+        public async Task<GenericResponseDTO<List<MessageGetBeweenUserDTO>>> GetMessagesBetweenUsers(int receiverId)
         {
             var loginUser = userServices.GetLoginUser();
             if (loginUser == null)
-                throw new UnauthorizedAccessException("You don't have permission to access");
+                return ResponseService<List<MessageGetBeweenUserDTO>>.Unauthorize("You don't have permission to access");
 
             var loginUserId = loginUser.Id;
 
-            // Lấy tất cả tin nhắn giữa loginUserId và receiverId
             var messages = await _unitOfWork.MessageRepository.GetAll()
                 .Where(m => (m.CreatedBy == loginUserId && m.ReceiverId == receiverId) ||
                             (m.CreatedBy == receiverId && m.ReceiverId == loginUserId))
-                .OrderBy(m => m.CreatedDate)
+                .OrderByDescending(m => m.CreatedDate)
                 .Include(m => m.CreatedByNavigation)
                     .ThenInclude(u => u.Stores)
                 .Include(m => m.Receiver)
@@ -133,9 +147,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var messageList = new List<MessageGetBeweenUserDTO>();
 
-            if (messages.Any()) // Nếu đã có tin nhắn
+            if (messages.Any()) 
             {
-                // Duyệt qua tất cả tin nhắn
                 foreach (var m in messages)
                 {
                     bool isSender = m.CreatedBy == loginUserId;
@@ -178,8 +191,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                                 Id = 0,
                                 name = receiver.Stores?.FirstOrDefault().Name ?? "Unknown",
                                 CreatedBy = loginUserId,
-                                ReceiverId = receiverId, // Đây là StoreId
-                                Content = "Chưa có tin nhắn nào.",
+                                ReceiverId = receiverId,
+                                Content = "",
                                 CreatedDate = DateTime.UtcNow,
                                 imagUrl = receiver.Stores?.FirstOrDefault().ImageUrl ?? ""
                             });
@@ -196,15 +209,19 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                             name = displayName,
                             CreatedBy = loginUserId,
                             ReceiverId = receiverId,
-                            Content = "Chưa có tin nhắn nào.",
+                            Content = "",
                             CreatedDate = DateTime.UtcNow,
                             imagUrl = imageUrl
                         });
                     }
                 }
             }
-
-            return messageList;
+            return new GenericResponseDTO<List<MessageGetBeweenUserDTO>>()
+            {
+                Data = messageList,
+                Message = "Success",
+                IsSuccess = true
+            };
         }
     }
 }
