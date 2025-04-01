@@ -50,11 +50,14 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         [HttpPost("create-staff-manager-request")]
         public async Task<IActionResult> CreateStaffRequest([FromBody] CreateUserDTO payload)
         {
-            return GetActionResult(
+            var res = await staffManagerService.CreateStaffOrManager(payload);
 
-                await staffManagerService.CreateStaffOrManager(payload)
+            if (res.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Create a staff/manager account with email {payload.Email}");
+            }
 
-            );
+            return GetActionResult(res);
         }
 
         [HttpPost("verify-staff-manager-otp")]

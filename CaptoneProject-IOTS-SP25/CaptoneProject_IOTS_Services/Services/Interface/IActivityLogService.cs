@@ -13,10 +13,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
 {
     public interface IActivityLogService
     {
-        public ResponseDTO GetAllActivityLogTypes();
-        public Task<ResponseDTO> GetPaginationActivityLog(PaginationRequest payload, int? entityId, int? entityType, int? userId);
-        public Task<ResponseDTO> CreateActivityLog(CreateActivityLogDTO source);
-        public Task<ResponseDTO> CreateUserHistoryTrackingActivityLog(string action, string target, string? metaData);
-
+        public Task<ResponseDTO> GetPaginationActivityLog(PaginationRequest payload, int? userId);
+        public Task<ResponseDTO> CreateActivityLog(string message);
     }
 }

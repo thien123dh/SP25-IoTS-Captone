@@ -3,6 +3,7 @@ using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
 using CaptoneProject_IOTS_Service.Services.Implement;
 using CaptoneProject_IOTS_Service.Services.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel;
@@ -63,6 +64,7 @@ namespace CaptoneProject_IOTS_API.Controllers.UserRequestController
         }
 
         [HttpPost("listing")]
+        [Authorize]
         public async Task<IActionResult> GetPaginationUserRequest(
             [FromQuery] int? statusFilter,
             [FromBody] PaginationRequest paginationRequest
@@ -80,6 +82,7 @@ namespace CaptoneProject_IOTS_API.Controllers.UserRequestController
         }
 
         [HttpGet("get-user-request-details-by-user-id/{userId}")]
+        [Authorize]
         public async Task<IActionResult> GetUserRequestDetailsByUserId(int userId)
         {
             return GetActionResult(await userRequestService.GetUserRequestDetailsByUserId(userId));
@@ -87,6 +90,7 @@ namespace CaptoneProject_IOTS_API.Controllers.UserRequestController
 
 
         [HttpPost("approve-user-request/{id}")]
+        [Authorize]
         public async Task<IActionResult> ApproveUserRequest(int id,
             [FromBody] RemarkDTO payload
         )
@@ -95,13 +99,14 @@ namespace CaptoneProject_IOTS_API.Controllers.UserRequestController
 
             if (response.IsSuccess)
             {
-                _ = activityLogService.CreateUserHistoryTrackingActivityLog("Approved User Request", response?.Data?.userRequestInfo.Email, "Approved");
+                _ = activityLogService.CreateActivityLog($"Approve user request with ID {id}");
             }
 
             return GetActionResult(response);
         }
 
         [HttpPost("reject-user-request/{id}")]
+        [Authorize]
         public async Task<IActionResult> RejectUserRequest(int id,
             [FromBody] RemarkDTO payload)
         {
@@ -109,16 +114,22 @@ namespace CaptoneProject_IOTS_API.Controllers.UserRequestController
 
             if (response.IsSuccess)
             {
-                _ = activityLogService.CreateUserHistoryTrackingActivityLog("Rejected User Request", response?.Data?.userRequestInfo.Email, "Rejected");
+                _ = activityLogService.CreateActivityLog($"Rejected user request with ID {id}");
             }
 
             return GetActionResult(response);
         }
 
         [HttpDelete("delete/{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteUserRequest(int id)
         {
             var response = await userRequestService.DeleteUserRequestById(id);
+
+            if (response.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Deleted user request with ID {id}");
+            }
 
             return GetActionResult(response);
         }

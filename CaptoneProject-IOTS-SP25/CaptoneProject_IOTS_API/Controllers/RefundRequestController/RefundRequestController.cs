@@ -13,10 +13,11 @@ namespace CaptoneProject_IOTS_API.Controllers.RefundRequestController
     public class RefundRequestController : MyBaseController.MyBaseController
     {
         private readonly IRefundRequestService refundRequestService;
-
-        public RefundRequestController(IRefundRequestService refundRequestService)
+        private readonly IActivityLogService activityLogService;
+        public RefundRequestController(IRefundRequestService refundRequestService, IActivityLogService activityLogService)
         {
             this.refundRequestService = refundRequestService;
+            this.activityLogService = activityLogService;
         }
 
         [HttpPost("get-pagination")]

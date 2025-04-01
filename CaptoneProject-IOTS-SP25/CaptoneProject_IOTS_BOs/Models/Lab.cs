@@ -16,11 +16,9 @@ namespace CaptoneProject_IOTS_BOs.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { set; get; }
 
-        [MaxLength(150)]
         [Required]
         public string Title { set; get; }
 
-        [MaxLength(300)]
         [Required]
         public string Summary { set; get; }
 
@@ -33,13 +31,10 @@ namespace CaptoneProject_IOTS_BOs.Models
         [MaxLength(1000)]
         public string Description { set; get; }
 
-        [MaxLength(300)]
         public string? Remark { set; get; }
 
-        [MaxLength(100)]
         public string? SerialNumber { set; get; }
 
-        [MaxLength(250)]
         public string ApplicationSerialNumber { set; get; }
 
         [MaxLength(1000)]
