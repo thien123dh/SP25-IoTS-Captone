@@ -194,7 +194,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (role == (int)RoleEnum.ADMIN || role == (int)RoleEnum.STAFF)
                 func = item => (statusFilter == null) || (statusFilter == item.Status);
             else if (role == (int)RoleEnum.STORE || role == (int)RoleEnum.TRAINER)
-                func = item => item.CreatedBy == loginUserId && (statusFilter == null) || (statusFilter == item.Status);
+                func = item => item.CreatedBy == loginUserId && ((statusFilter == null) || (statusFilter == item.Status));
 
             var pagination = unitOfWork.CashoutRequestRepository.GetPaginate(
                 filter: func,
