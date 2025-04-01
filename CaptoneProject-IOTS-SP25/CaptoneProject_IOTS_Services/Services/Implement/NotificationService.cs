@@ -30,7 +30,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var loginUserId = userServices.GetLoginUserId();
 
             var count = unitOfWork.NotificationRepository
-                .Search(item => item.IsRead && item.ReceiverId == loginUserId)
+                .Search(item => !item.IsRead && item.ReceiverId == loginUserId)
                 .Count();
 
             return ResponseService<object>.OK(count);
