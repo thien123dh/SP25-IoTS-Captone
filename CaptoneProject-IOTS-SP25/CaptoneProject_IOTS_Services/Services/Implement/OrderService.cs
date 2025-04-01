@@ -348,7 +348,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 //Transaction and notification
                 _ = _unitOfWork.TransactionRepository.CreateAsync([transaction]);
 
-                _ = _unitOfWork.NotificationRepository.CreateAsync([customerNotification]);
+                _ = _unitOfWork.NotificationRepository.Create(customerNotification);
 
                 if (storeNotifications != null)
                     _ = _unitOfWork.NotificationRepository.CreateAsync(storeNotifications);
