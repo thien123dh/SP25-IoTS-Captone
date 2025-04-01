@@ -10,10 +10,11 @@ namespace CaptoneProject_IOTS_API.Controllers.AccountMembershipPackageController
     public class AccountMembershipPackageController : MyBaseController.MyBaseController
     {
         private readonly IAccountMembershipPackageService accountMembershipPackageService;
-
-        public AccountMembershipPackageController(IAccountMembershipPackageService accountMembershipPackageService)
+        private readonly IActivityLogService activityLogService;
+        public AccountMembershipPackageController(IAccountMembershipPackageService accountMembershipPackageService, IActivityLogService activityLogService)
         {
             this.accountMembershipPackageService = accountMembershipPackageService;
+            this.activityLogService = activityLogService;
         }
 
         [HttpGet("get-all-membership-package-options")]
@@ -35,7 +36,10 @@ namespace CaptoneProject_IOTS_API.Controllers.AccountMembershipPackageController
         public async Task<IActionResult> RegisterMembershipPackage([FromBody] AccountRegisterMembershipPackageDTO payload)
         {
             var res = await accountMembershipPackageService.RegisterAccountMembershipPackage(payload);
-
+            if (res.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Register to access website");
+            }
             return GetActionResult(res);
         }
     }

@@ -16,10 +16,11 @@ namespace CaptoneProject_IOTS_API.Controllers.CashoutRequestController
     public class CashoutRequestController : MyBaseController.MyBaseController
     {
         private readonly ICashoutService cashoutService;
-
-        public CashoutRequestController(ICashoutService cashoutService)
+        private readonly IActivityLogService activityLogService;
+        public CashoutRequestController(ICashoutService cashoutService, IActivityLogService activityLogService)
         {
             this.cashoutService = cashoutService;
+            this.activityLogService = activityLogService;
         }
 
         [HttpPost("get-pagination")]
@@ -38,6 +39,11 @@ namespace CaptoneProject_IOTS_API.Controllers.CashoutRequestController
         {
             var res = await cashoutService.CreateCashoutRequest(payload);
 
+            if (res.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Create new request to cashout with ID {res?.Data?.Id}");
+            }
+
             return GetActionResult(res);
         }
 
@@ -45,6 +51,11 @@ namespace CaptoneProject_IOTS_API.Controllers.CashoutRequestController
         public async Task<IActionResult> CreateCashoutRequest(int id)
         {
             var res = await cashoutService.ApproveOrRejectCashoutRequest(id, true);
+
+            if (res.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Approved cashout request with ID {id}");
+            }
 
             return GetActionResult(res);
         }
@@ -56,6 +67,11 @@ namespace CaptoneProject_IOTS_API.Controllers.CashoutRequestController
             [FromBody] RemarkDTO remarks)
         {
             var res = await cashoutService.ApproveOrRejectCashoutRequest(id, false, remarks);
+
+            if (res.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Rejected cashout request with ID {id}");
+            }
 
             return GetActionResult(res);
         }

@@ -88,26 +88,9 @@ public partial class IoTTraddingSystemContext : DbContext
     {
         modelBuilder.Entity<ActivityLog>(entity =>
         {
-            entity.ToTable("ActivityLog");
+            entity.ToTable(nameof(ActivityLog));
 
-            entity.Property(e => e.Id)
-                //.ValueGeneratedNever()
-                .HasColumnName("id");
-            entity.Property(e => e.Contents)
-                .HasMaxLength(500)
-                .HasColumnName("contents");
-            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
-            entity.Property(e => e.CreatedDate)
-                .HasColumnType("datetime")
-                .HasColumnName("created_date");
-            entity.Property(e => e.EntityId).HasColumnName("entity_id");
-            entity.Property(e => e.EntityType).HasColumnName("entity_type");
-            entity.Property(e => e.Metadata)
-                .HasMaxLength(500)
-                .HasColumnName("metadata");
-            entity.Property(e => e.Title)
-                .HasMaxLength(300)
-                .HasColumnName("title");
+            
         });
 
         modelBuilder.Entity<RefundRequest>(entity =>

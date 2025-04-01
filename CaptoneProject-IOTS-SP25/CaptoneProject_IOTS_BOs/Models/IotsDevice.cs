@@ -29,7 +29,6 @@ public partial class IotsDevice
     [Range(0, 100)]
     public int? SecondhandQualityPercent { set; get; } = 0;
 
-    [MaxLength(500)]
     [Column("summary")]
     public string Summary { set; get; }
     public string Description { get; set; }
@@ -47,11 +46,9 @@ public partial class IotsDevice
     public string ApplicationSerialNumber { set; get; }
 
     [Column("specifications")]
-    [MaxLength(500)]
     public string Specifications { set; get; }
 
     [Column("notes")]
-    [MaxLength(500)]
     public string Notes { set; get; }
 
     [Column("price")]

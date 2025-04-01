@@ -18,11 +18,15 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
     {
         private readonly IUserServices userServices;
         private readonly UnitOfWork unitOfWork;
+        private readonly IActivityLogService activityLogService;
 
-        public RefundRequestService(IUserServices userServices, UnitOfWork unitOfWork)
+        public RefundRequestService(IUserServices userServices, 
+            UnitOfWork unitOfWork, 
+            IActivityLogService activityLogService)
         {
             this.userServices = userServices;
             this.unitOfWork = unitOfWork;
+            this.activityLogService = activityLogService;
         }
 
         public async Task<ResponseDTO> GetPaginationRefundRequest(int? statusFilter, PaginationRequest request)
@@ -80,6 +84,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             };
 
             _ = unitOfWork.NotificationRepository.Create(noti);
+
+            _ = activityLogService.CreateActivityLog($"Changed status of refund request ID {requestId} to Handled");
 
             return ResponseService<object>.OK(refund);
 

@@ -292,6 +292,30 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         UpdatedDate = device.UpdatedDate
                     };
 
+                    var notiMessage = "";
+
+                    if (status == 0 && device.CreatedBy != loginUserId)
+                    {
+                        notiMessage = $"Your device '{device.Name}' has been deactivated by Manager. Please check the reason";
+                    } else if (status > 0 && device.CreatedBy != loginUserId)
+                    {
+                        notiMessage = $"Your device '{device.Name}' has been activated by Manager";
+                    }
+
+                    if (notiMessage != "")
+                    {
+                        var noti = new Notifications
+                        {
+                            Content = notiMessage,
+                            Title = notiMessage,
+                            EntityId = device.Id,
+                            EntityType = (int)EntityTypeEnum.IOT_DEVICE,
+                            ReceiverId = (int)device.CreatedBy
+                        };
+
+                        _ = unitOfWork.NotificationRepository.Create(noti);
+                    }
+
                     return ResponseService<IotDeviceDetailsUpdateDTO>.OK(responseDto);
                 }
                 catch (Exception ex)

@@ -3,6 +3,7 @@ using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.ProductDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
 using CaptoneProject_IOTS_BOs.Models;
+using Microsoft.Identity.Client;
 using System.Linq.Expressions;
 
 namespace CaptoneProject_IOTS_Service.Services.Interface
@@ -27,7 +28,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         Task<GenericResponseDTO<List<LabVideoResponseDTO>>> CreateOrUpdateLabVideoList(int labId, List<CreateUpdateLabVideo> requestList);
         Task<GenericResponseDTO<LabDetailsInformationResponseDTO>> ApproveOrRejectLab(int labId, bool isApprove, RemarkDTO? payload = null);
         Task<GenericResponseDTO<LabDetailsInformationResponseDTO>> SubmitLabRequest(int labId);
-
         Task<bool> CheckPermissionToViewLabVideoList(int labId);
+        Task<ResponseDTO> ActiveOrDeactiveLab(int labId, bool isDeactive = false);
     }
 }

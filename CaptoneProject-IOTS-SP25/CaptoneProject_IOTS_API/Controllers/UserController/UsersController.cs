@@ -79,11 +79,6 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         {
             var response = await _userService.UpdateUserRole(id, payload.RoleIdList);
 
-            if (response.IsSuccess)
-            {
-                activityLogService.CreateUserHistoryTrackingActivityLog("Update Role User ", response.Data.Email, "Updated");
-            }
-
             return GetActionResult(response);
         }
 
@@ -91,16 +86,10 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         public async Task<IActionResult> ActivateUser(int id)
         {
             var response = await _userService.UpdateUserStatus(id, isActive: 1);
-            ResponseDTO activityLogResponse;
 
-            //Create activity log
             if (response.IsSuccess)
             {
-                activityLogService.CreateUserHistoryTrackingActivityLog(
-                    "Activate",
-                    response.Data?.Fullname,
-                    "Activate"
-                );
+                _ = activityLogService.CreateActivityLog($"Activated User ID {id}");
             }
 
             return GetActionResult(response);
@@ -112,6 +101,11 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         {
             var res = await _userService.UserChangePassword(payload);
 
+            if (res.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Updated user password");
+            }
+
             return GetActionResult(res);
         }
 
@@ -122,11 +116,7 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
 
             if (response.IsSuccess)
             {
-                activityLogService.CreateUserHistoryTrackingActivityLog(
-                    "Deactivate",
-                    response.Data?.Fullname,
-                    "Deactivate"
-                );
+                _ = activityLogService.CreateActivityLog($"Deactivated User ID {id}");
             }
 
             return GetActionResult(response);
@@ -154,6 +144,12 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         )
         {
             var response = await _userService.UpdateUserProfile(payload);
+
+            if (response.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Updated user profile");
+            }
+
             return Ok(response);
         }
 
@@ -164,6 +160,11 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         )
         {
             var response = await _userService.UpdateUserAvatar(payload);
+
+            if (response.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Updated user avatar");
+            }
             return Ok(response);
         }
     }

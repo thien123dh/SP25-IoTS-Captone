@@ -13,17 +13,4 @@ using System.Threading.Tasks;
 
 namespace CaptoneProject_IOTS_Service.Mapper
 {
-    public static class ActivityLogMapper
-    {
-        private readonly static IMapService<ActivityLog, ActivityLogResponseDTO> activityLogMapper = new MapService<ActivityLog, ActivityLogResponseDTO>();
-
-        public static ActivityLogResponseDTO mappingToActivityLogResponseDTO(ActivityLog source)
-        {
-            ActivityLogResponseDTO res = activityLogMapper.MappingTo(source);
-
-            res.EntityTypeLabel = EntityTypeConst.GetAllActivityLogEntityTypes()?.SingleOrDefault(type => type.Id == res.EntityType)?.label;
-
-            return res;
-        }
-    }
 }

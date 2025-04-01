@@ -10,10 +10,8 @@ namespace CaptoneProject_IOTS_BOs.DTO.ActivityLogDTO
 {
     public class CreateActivityLogDTO
     {
-        public int EntityId {set; get;}
-        public int EntityType { set; get; }
         public string Title { set; get; }
-        public string Contents { set; get; }
+        public string Content { set; get; }
         public string? MetaData { set; get; }
 
     }

@@ -5,9 +5,11 @@ using CaptoneProject_IOTS_BOs.DTO.OrderDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.RefundDTO;
 using CaptoneProject_IOTS_BOs.DTO.VNPayDTO;
+using CaptoneProject_IOTS_Service.Services.Implement;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Client;
 using System.ComponentModel.DataAnnotations;
@@ -20,10 +22,11 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
     public class OrderController : MyBaseController.MyBaseController
     {
         private readonly IOrderService _orderService;
-
-        public OrderController(IOrderService orderService)
+        private readonly IActivityLogService activityLogService;
+        public OrderController(IOrderService orderService, IActivityLogService activityLogService)
         {
             _orderService = orderService;
+            this.activityLogService = activityLogService;
         }
 
         [HttpPost("create-order")]
@@ -41,6 +44,11 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
         public async Task<IActionResult> CheckOrderSuccess([FromBody] VNPayRequestDTO dto)
         {
             var result = await _orderService.CheckOrderSuccessfull(null, dto);
+
+            if (result.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Created new order");
+            }
 
             if (!result.IsSuccess)
                 return BadRequest(result);
@@ -91,6 +99,11 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
         {
             var result = await _orderService.UpdateOrderDetailToPacking(orderId);
 
+            if (result.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Updated order to packing with ID {orderId}");
+            }
+
             if (!result.IsSuccess)
                 return BadRequest(result);
 
@@ -101,6 +114,11 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
         public async Task<IActionResult> UpdateOrderDetailToDeliveringByStoreId(int orderId)
         {
             var result = await _orderService.UpdateOrderDetailToDelivering(orderId);
+
+            if (result.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Updated order to delivering with ID {orderId}");
+            }
 
             if (!result.IsSuccess)
                 return BadRequest(result);
@@ -113,6 +131,11 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
             [FromQuery][Required] int sellerId)
         {
             var result = await _orderService.UpdateOrderDetailToPendingToFeedback(orderId, sellerId);
+
+            if (result.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Updated order to delivered with ID {orderId} and seller ID {sellerId}");
+            }
 
             if (!result.IsSuccess)
                 return BadRequest(result);
@@ -138,6 +161,11 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
         {
             var res = await _orderService.UpdateOrderDetailToSuccess(orderId);
 
+            if (res.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Updated order to success with ID {orderId}");
+            }
+
             return GetActionResult(res);
         }
 
@@ -146,6 +174,11 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
             [FromBody] CreateRefundRequestDTO payload)
         {
             var res = await _orderService.UpdateOrderDetailToCancel(orderId, payload);
+
+            if (res.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Cancelled order with ID {orderId}");
+            }
 
             return GetActionResult(res);
         }

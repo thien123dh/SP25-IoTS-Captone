@@ -16,6 +16,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         public Task<ComboDetailsResponseDTO> GetComboDetailsById(int comboId);
 
         public Task<GenericResponseDTO<ComboDetailsResponseDTO>> CreateOrUpdateCombo(int? id, CreateUpdateComboDTO payload);
-   
+
+        public Task<ResponseDTO> ActivateOrDeactiveCombo(int comboId, bool isActivate);
     }
 }
