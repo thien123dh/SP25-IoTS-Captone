@@ -11,7 +11,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
     public interface IMessageService
     {
         public Task<List<RecentChatDTO>> GetRecentChats();
-        public Task<List<MessageDTO>> GetMessagesBetweenUsers(int receiverId);
+        public Task<List<MessageGetBeweenUserDTO>> GetMessagesBetweenUsers(int receiverId);
         public Task<MessageDTO> CreateMessage(CreateMessageDTO dto);
     }
 }

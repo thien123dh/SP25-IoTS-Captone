@@ -21,4 +21,15 @@ namespace CaptoneProject_IOTS_BOs.DTO.MessageDTO
         public DateTime CreatedDate { get; set; }
     }
 
+    public class MessageGetBeweenUserDTO
+    {
+        public int Id { get; set; }
+        public string name { get; set; }
+        public string imagUrl { get; set; }
+        public string Content { get; set; }
+        public int? CreatedBy { get; set; }
+        public int? ReceiverId { get; set; }
+        public DateTime CreatedDate { get; set; }
+    }
+
 }

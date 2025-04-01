@@ -23,7 +23,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         public MessageService(IUserServices userServices)
         {
             this._unitOfWork ??= new UnitOfWork();
-         
+
             this.userServices = userServices;
         }
         public async Task<List<RecentChatDTO>> GetRecentChats()
@@ -46,7 +46,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 .Include(m => m.CreatedByNavigation)
                     .ThenInclude(u => u.Stores)
                 .Include(m => m.Receiver)
-                    .ThenInclude(u => u.Stores) 
+                    .ThenInclude(u => u.Stores)
                 .ToListAsync();
 
             var chatList = new List<RecentChatDTO>();
@@ -111,7 +111,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             };
         }
 
-        public async Task<List<MessageDTO>> GetMessagesBetweenUsers(int receiverId)
+        public async Task<List<MessageGetBeweenUserDTO>> GetMessagesBetweenUsers(int receiverId)
         {
             var loginUser = userServices.GetLoginUser();
             if (loginUser == null)
@@ -119,23 +119,46 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var loginUserId = loginUser.Id;
 
+            // Lấy tất cả tin nhắn giữa loginUserId và receiverId
             var messages = await _unitOfWork.MessageRepository.GetAll()
                 .Where(m => (m.CreatedBy == loginUserId && m.ReceiverId == receiverId) ||
                             (m.CreatedBy == receiverId && m.ReceiverId == loginUserId))
-                .OrderByDescending(m => m.CreatedDate) 
+                .OrderBy(m => m.CreatedDate)
+                .Include(m => m.CreatedByNavigation)
+                    .ThenInclude(u => u.Stores)
+                .Include(m => m.Receiver)
+                    .ThenInclude(u => u.Stores)
                 .ToListAsync();
 
-            var messageList = messages.Select(m => new MessageDTO
+            var messageList = new List<MessageGetBeweenUserDTO>();
+
+            foreach (var m in messages)
             {
-                Id = m.Id,
-                CreatedBy = m.CreatedBy,
-                ReceiverId = m.ReceiverId,
-                Content = m.Content,
-                CreatedDate = m.CreatedDate
-            }).ToList();
+                bool isSender = m.CreatedBy == loginUserId;
+                var otherUser = isSender ? m.Receiver : m.CreatedByNavigation;
+
+                if (otherUser == null) continue;
+
+                bool isStore = await userServices.CheckUserRole(otherUser.Id, RoleEnum.STORE);
+
+                var storeInfo = otherUser.Stores?.FirstOrDefault();
+
+                string displayName = isStore ? storeInfo?.Name : otherUser.Fullname;
+                string imageUrl = isStore ? storeInfo?.ImageUrl : otherUser.ImageURL;
+
+                messageList.Add(new MessageGetBeweenUserDTO
+                {
+                    Id = m.Id,
+                    name = displayName ?? "",
+                    CreatedBy = m.CreatedBy,
+                    ReceiverId = m.ReceiverId,
+                    Content = m.Content,
+                    CreatedDate = m.CreatedDate,
+                    imagUrl = imageUrl ?? ""
+                });
+            }
 
             return messageList;
         }
-
     }
 }
