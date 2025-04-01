@@ -1,4 +1,5 @@
-﻿using CaptoneProject_IOTS_BOs.DTO.MessageDTO;
+﻿using CaptoneProject_IOTS_BOs.DTO.MaterialCategotyDTO;
+using CaptoneProject_IOTS_BOs.DTO.MessageDTO;
 using CaptoneProject_IOTS_BOs.DTO.OrderDTO;
 using CaptoneProject_IOTS_BOs.DTO.RabbitMQDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserDTO;
@@ -30,7 +31,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         {
             var loginUser = userServices.GetLoginUser();
             if (loginUser == null)
-                throw new Exception("You don't have permission to access");
+                throw new UnauthorizedAccessException("You don't have permission to access");
 
             var loginUserId = loginUser.Id;
 
@@ -80,7 +81,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         {
             var loginUser = userServices.GetLoginUser();
             if (loginUser == null)
-                throw new Exception("You don't have permission to access");
+                throw new UnauthorizedAccessException("You don't have permission to access");
 
             var loginUserId = loginUser.Id;
 
@@ -115,7 +116,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         {
             var loginUser = userServices.GetLoginUser();
             if (loginUser == null)
-                throw new Exception("You don't have permission to access");
+                throw new UnauthorizedAccessException("You don't have permission to access");
 
             var loginUserId = loginUser.Id;
 
@@ -132,30 +133,75 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var messageList = new List<MessageGetBeweenUserDTO>();
 
-            foreach (var m in messages)
+            if (messages.Any()) // Nếu đã có tin nhắn
             {
-                bool isSender = m.CreatedBy == loginUserId;
-                var otherUser = isSender ? m.Receiver : m.CreatedByNavigation;
-
-                if (otherUser == null) continue;
-
-                bool isStore = await userServices.CheckUserRole(otherUser.Id, RoleEnum.STORE);
-
-                var storeInfo = otherUser.Stores?.FirstOrDefault();
-
-                string displayName = isStore ? storeInfo?.Name : otherUser.Fullname;
-                string imageUrl = isStore ? storeInfo?.ImageUrl : otherUser.ImageURL;
-
-                messageList.Add(new MessageGetBeweenUserDTO
+                // Duyệt qua tất cả tin nhắn
+                foreach (var m in messages)
                 {
-                    Id = m.Id,
-                    name = displayName ?? "",
-                    CreatedBy = m.CreatedBy,
-                    ReceiverId = m.ReceiverId,
-                    Content = m.Content,
-                    CreatedDate = m.CreatedDate,
-                    imagUrl = imageUrl ?? ""
-                });
+                    bool isSender = m.CreatedBy == loginUserId;
+                    var otherUser = isSender ? m.Receiver : m.CreatedByNavigation;
+
+                    if (otherUser == null) continue;
+
+                    bool isStore = await userServices.CheckUserRole(otherUser.Id, RoleEnum.STORE);
+                    var storeInfo = otherUser.Stores?.FirstOrDefault();
+
+                    string displayName = isStore ? storeInfo?.Name : otherUser.Fullname;
+                    string imageUrl = isStore ? storeInfo?.ImageUrl : otherUser.ImageURL;
+
+                    messageList.Add(new MessageGetBeweenUserDTO
+                    {
+                        Id = m.Id,
+                        name = displayName ?? "",
+                        CreatedBy = m.CreatedBy,
+                        ReceiverId = m.ReceiverId,
+                        Content = m.Content,
+                        CreatedDate = m.CreatedDate,
+                        imagUrl = imageUrl ?? ""
+                    });
+                }
+            }
+            else
+            {
+                // Kiểm tra vai trò Store cho receiverId
+                var receiver = await _unitOfWork.UserRepository.GetUserById(receiverId);
+
+                if (receiver != null)
+                {
+                    bool isStore = await userServices.CheckUserRole(receiver.Id, RoleEnum.STORE);
+
+                    // Tiếp tục xử lý với receiver và isStore
+                    if (isStore)
+                    {
+                            messageList.Add(new MessageGetBeweenUserDTO
+                            {
+                                Id = 0,
+                                name = receiver.Stores?.FirstOrDefault().Name ?? "Unknown",
+                                CreatedBy = loginUserId,
+                                ReceiverId = receiverId, // Đây là StoreId
+                                Content = "Chưa có tin nhắn nào.",
+                                CreatedDate = DateTime.UtcNow,
+                                imagUrl = receiver.Stores?.FirstOrDefault().ImageUrl ?? ""
+                            });
+                    }
+                    else
+                    {
+                        // Xử lý với User (không phải Store)
+                        string displayName = receiver.Fullname ?? "Unknown";
+                        string imageUrl = receiver.ImageURL ?? "";
+
+                        messageList.Add(new MessageGetBeweenUserDTO
+                        {
+                            Id = 0,
+                            name = displayName,
+                            CreatedBy = loginUserId,
+                            ReceiverId = receiverId,
+                            Content = "Chưa có tin nhắn nào.",
+                            CreatedDate = DateTime.UtcNow,
+                            imagUrl = imageUrl
+                        });
+                    }
+                }
             }
 
             return messageList;
