@@ -47,6 +47,5 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
 
             return user;
         }
-
     }
 }
