@@ -98,6 +98,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (sender == null || receiver == null)
                 throw new Exception("Sender or Receiver does not exist.");
 
+            bool isLoginUserStore = await userServices.CheckUserRole(loginUserId, RoleEnum.STORE);
+            bool isReceiverStore = await userServices.CheckUserRole(dto.ReceiverId, RoleEnum.STORE);
+
+            if (isLoginUserStore == isReceiverStore)
+            {
+                return ResponseService<MessageDTO>.BadRequest("Both users cannot be stores or both be normal users.");
+            }
+
             var newMessage = new Message
             {
                 Content = dto.Content,
@@ -125,7 +133,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 IsSuccess = true
             };
         }
-    
+
 
         public async Task<GenericResponseDTO<List<MessageGetBeweenUserDTO>>> GetMessagesBetweenUsers(int receiverId)
         {
@@ -134,6 +142,18 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 return ResponseService<List<MessageGetBeweenUserDTO>>.Unauthorize("You don't have permission to access");
 
             var loginUserId = loginUser.Id;
+
+            var receiver = await _unitOfWork.UserRepository.GetUserById(receiverId);
+            if (receiver == null)
+                return ResponseService<List<MessageGetBeweenUserDTO>>.NotFound("Receiver not found");
+
+            bool isLoginUserStore = await userServices.CheckUserRole(loginUserId, RoleEnum.STORE);
+            bool isReceiverStore = await userServices.CheckUserRole(receiverId, RoleEnum.STORE);
+
+            if (isLoginUserStore == isReceiverStore)
+            {
+                return ResponseService<List<MessageGetBeweenUserDTO>>.BadRequest("Both users cannot be stores or both be normal users.");
+            }
 
             var messages = await _unitOfWork.MessageRepository.GetAll()
                 .Where(m => (m.CreatedBy == loginUserId && m.ReceiverId == receiverId) ||
@@ -147,7 +167,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var messageList = new List<MessageGetBeweenUserDTO>();
 
-            if (messages.Any()) 
+            if (messages.Any())
             {
                 foreach (var m in messages)
                 {
@@ -176,46 +196,21 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
             else
             {
-                // Kiểm tra vai trò Store cho receiverId
-                var receiver = await _unitOfWork.UserRepository.GetUserById(receiverId);
+                string displayName = isReceiverStore ? receiver.Stores?.FirstOrDefault()?.Name ?? "Unknown" : receiver.Fullname ?? "Unknown";
+                string imageUrl = isReceiverStore ? receiver.Stores?.FirstOrDefault()?.ImageUrl ?? "" : receiver.ImageURL ?? "";
 
-                if (receiver != null)
+                messageList.Add(new MessageGetBeweenUserDTO
                 {
-                    bool isStore = await userServices.CheckUserRole(receiver.Id, RoleEnum.STORE);
-
-                    // Tiếp tục xử lý với receiver và isStore
-                    if (isStore)
-                    {
-                            messageList.Add(new MessageGetBeweenUserDTO
-                            {
-                                Id = 0,
-                                name = receiver.Stores?.FirstOrDefault().Name ?? "Unknown",
-                                CreatedBy = loginUserId,
-                                ReceiverId = receiverId,
-                                Content = "",
-                                CreatedDate = DateTime.UtcNow,
-                                imagUrl = receiver.Stores?.FirstOrDefault().ImageUrl ?? ""
-                            });
-                    }
-                    else
-                    {
-                        // Xử lý với User (không phải Store)
-                        string displayName = receiver.Fullname ?? "Unknown";
-                        string imageUrl = receiver.ImageURL ?? "";
-
-                        messageList.Add(new MessageGetBeweenUserDTO
-                        {
-                            Id = 0,
-                            name = displayName,
-                            CreatedBy = loginUserId,
-                            ReceiverId = receiverId,
-                            Content = "",
-                            CreatedDate = DateTime.UtcNow,
-                            imagUrl = imageUrl
-                        });
-                    }
-                }
+                    Id = 0,
+                    name = displayName,
+                    CreatedBy = loginUserId,
+                    ReceiverId = receiverId,
+                    Content = "",
+                    CreatedDate = DateTime.UtcNow,
+                    imagUrl = imageUrl
+                });
             }
+
             return new GenericResponseDTO<List<MessageGetBeweenUserDTO>>()
             {
                 Data = messageList,
@@ -223,5 +218,32 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 IsSuccess = true
             };
         }
+
+        public async Task<GenericResponseDTO<bool>> RevokeMessage(int messageId)
+        {
+            var loginUser = userServices.GetLoginUser();
+            if (loginUser == null)
+                return ResponseService<bool>.Unauthorize("You don't have permission to access");
+
+            var message = await _unitOfWork.MessageRepository.GetByIdAsync(messageId);
+            if (message == null)
+                return ResponseService<bool>.NotFound("Message not found");
+
+            // Chỉ cho phép người gửi thu hồi tin nhắn
+            if (message.CreatedBy != loginUser.Id)
+                return ResponseService<bool>.BadRequest("You can only revoke your own messages");
+
+            // Cập nhật trạng thái thành 2 (Thu hồi)
+            message.Status = 2;
+            _unitOfWork.MessageRepository.Update(message);
+
+            return new GenericResponseDTO<bool>()
+            {
+                Data = true,
+                Message = "Message revoked successfully",
+                IsSuccess = true
+            };
+        }
+
     }
 }
