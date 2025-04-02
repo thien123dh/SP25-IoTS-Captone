@@ -14,5 +14,6 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         public Task<GenericResponseDTO<List<RecentChatDTO>>> GetRecentChats();
         public Task<GenericResponseDTO<List<MessageGetBeweenUserDTO>>> GetMessagesBetweenUsers(int receiverId);
         public Task<GenericResponseDTO<MessageDTO>> CreateMessage(CreateMessageDTO dto);
+        public Task<GenericResponseDTO<bool>> RevokeMessage(int messageId);
     }
 }

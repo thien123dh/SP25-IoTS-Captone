@@ -41,5 +41,12 @@ namespace CaptoneProject_IOTS_API.Controllers.MessageController
             await _chatHub.Clients.User(payload.ReceiverId.ToString()).SendAsync("ReceiveMessage", chats);
             return Ok(chats);
         }
+
+        [HttpDelete("revoke-message")]
+        public async Task<IActionResult> RevokeMessage([FromQuery] int receiverId)
+        {
+            var chats = await _messageService.RevokeMessage(receiverId);
+            return Ok(chats);
+        }
     }
 }
