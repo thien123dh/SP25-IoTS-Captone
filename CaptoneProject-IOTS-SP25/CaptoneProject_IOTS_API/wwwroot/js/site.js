@@ -22,11 +22,11 @@
         let tr = '';
         try {
             const response = await $.ajax({
-                url: '/api/Message/GetMessages?userId=' + userId + '&receiverId=' + receiverId,
+                url: '/api/Message/GetMessages?receiverId=' + receiverId,
                 method: 'GET',
-                dataType: 'json',  // Đảm bảo kiểu dữ liệu trả về là JSON
+                dataType: 'json', 
             });
-            console.log(response);  // Log kết quả để kiểm tra
+            console.log(response);
 
             $.each(response, (k, v) => {
                 tr += `
