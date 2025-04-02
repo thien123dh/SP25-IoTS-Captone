@@ -67,3 +67,32 @@
         }
     });
 });
+
+
+async function revokeMessage(messageId) {
+    const token = localStorage.getItem("jwtToken");
+    if (!token) {
+        alert("Bạn chưa đăng nhập!");
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/messages/revoke/${messageId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            alert("Tin nhắn đã được thu hồi!");
+            // Cập nhật UI
+        } else {
+            alert(data.message || "Không thể thu hồi tin nhắn!");
+        }
+    } catch (error) {
+        console.error("Error revoking message:", error);
+    }
+}

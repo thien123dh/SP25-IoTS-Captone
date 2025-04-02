@@ -12,6 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using RabbitMQ.Client;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using static Org.BouncyCastle.Math.EC.ECCurve;
 
@@ -129,7 +130,10 @@ builder.Services.AddScoped<IEnvironmentService>(provider =>
 });
 
 //SignaIR Real-time
-builder.Services.AddSignalR();
+builder.Services.AddSignalR().AddJsonProtocol(options =>
+{
+    options.PayloadSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+});
 
 builder.Services.AddCors(options =>
 {
