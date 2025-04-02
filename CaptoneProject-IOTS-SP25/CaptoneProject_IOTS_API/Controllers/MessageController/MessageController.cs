@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace CaptoneProject_IOTS_API.Controllers.MessageController
 {
-    [Route("api/[controller]")]
+    [Route("api/Message")]
     [ApiController]
     public class MessageController : ControllerBase
     {
@@ -27,7 +27,7 @@ namespace CaptoneProject_IOTS_API.Controllers.MessageController
             return Ok(chats);
         }
 
-        [HttpGet("get-all-chats-sender-reciver")]
+        [HttpGet("GetMessages")]
         public async Task<IActionResult> GetAllRecentChats([FromQuery] int receiverId)
         {
             var chats = await _messageService.GetMessagesBetweenUsers(receiverId);
@@ -42,10 +42,11 @@ namespace CaptoneProject_IOTS_API.Controllers.MessageController
             return Ok(chats);
         }
 
-        [HttpDelete("revoke-message")]
-        public async Task<IActionResult> RevokeMessage([FromQuery] int receiverId)
+
+        [HttpDelete("revoke/${messageId}")]
+        public async Task<IActionResult> RevokeMessage([FromQuery] int messageId)
         {
-            var chats = await _messageService.RevokeMessage(receiverId);
+            var chats = await _messageService.RevokeMessage(messageId);
             return Ok(chats);
         }
     }
