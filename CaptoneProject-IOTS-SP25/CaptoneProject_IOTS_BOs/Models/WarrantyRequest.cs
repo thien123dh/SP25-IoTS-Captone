@@ -28,6 +28,9 @@ namespace CaptoneProject_IOTS_BOs.Models
         [ForeignKey(nameof(User))]
         public int CreatedBy { set; get; }
 
+        [ForeignKey(nameof(CreatedBy))]
+        public virtual User CreatedByNavigation { set; get; }
+
         public DateTime CreatedDate { set; get; } = DateTime.Now;
 
         public DateTime ActionDate { set; get; } = DateTime.Now;

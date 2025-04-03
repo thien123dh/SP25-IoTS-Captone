@@ -27,6 +27,9 @@ namespace CaptoneProject_IOTS_BOs.DTO.WarrantyRequestDTO
         public string VideoUrl { set; get; }
         public string ContactNumber { set; get; }
         public int CreatedBy { set; get; }
+        public string? CreatedByEmail { set; get; }
+
+        public string? CreatedByFullName { set; get; }
         public DateTime CreatedDate { set; get; }
         public DateTime ActionDate { set; get; }
         public StoreDetailsResponseDTO? StoreInfo { set; get; }
