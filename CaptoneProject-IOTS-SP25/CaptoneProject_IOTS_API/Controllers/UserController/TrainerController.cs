@@ -5,6 +5,7 @@ using CaptoneProject_IOTS_BOs.DTO.UserDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
 using CaptoneProject_IOTS_Service.Services.Implement;
 using CaptoneProject_IOTS_Service.Services.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
@@ -82,7 +83,8 @@ namespace CaptoneProject_IOTS_API.Controllers.UserController
         }
 
         [HttpGet("get-trainer-business-license/{trainerId}")]
-        public async Task<IActionResult> GetBusinessLicenseByStoreId(int trainerId)
+        [Authorize]
+        public async Task<IActionResult> GetBusinessLicenseByTrainerId(int trainerId)
         {
             var res = await trainerService.GetTrainerBusinessLicenseByTrainerId(trainerId);
 

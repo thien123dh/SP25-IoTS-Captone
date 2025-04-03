@@ -1376,6 +1376,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 var order = _unitOfWork.OrderRepository.GetById(orderId);
 
+                if (order.OrderBy != loginUserId)
+                    return ResponseService<object>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
+
                 var numberOfCancelled = _unitOfWork.OrderRepository
                     .Search(item => item.OrderStatusId == (int)OrderStatusEnum.REFUNDED 
                     && item.OrderBy == loginUserId 
@@ -1386,18 +1389,27 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
 
                 var orderItems = _unitOfWork.OrderDetailRepository.Search(
-                    item => item.OrderId == orderId && item.SellerId == loginUserId
+                    item => item.OrderId == orderId
                 ).Include(item => item.IotsDevice)
                 .Include(item => item.Combo).ToList();
 
                 if (order == null)
                     return ResponseService<List<OrderResponseToStoreDTO>>.NotFound("Your Order Status must be pending before cancelled.");
 
-                foreach (var item in orderItems)
-                {
-                    item.OrderItemStatus = (int)OrderItemStatusEnum.CANCELLED;
-                    item.UpdatedDate = DateTime.Now;
-                }
+                var saveOrderItems = orderItems?.Select(
+                    item =>
+                    {
+                        item.OrderItemStatus = (int)OrderItemStatusEnum.CANCELLED;
+                        item.UpdatedDate = DateTime.Now;
+
+                        return item;
+                    }
+                ).ToList();
+                //foreach (var item in orderItems)
+                //{
+                //    item.OrderItemStatus = (int)OrderItemStatusEnum.CANCELLED;
+                //    item.UpdatedDate = DateTime.Now;
+                //}
 
                 order.OrderStatusId = (int)OrderStatusEnum.REFUNDED;
                 order.UpdatedDate = DateTime.Now;
@@ -1429,12 +1441,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 if (comboList != null)
                     await _unitOfWork.ComboRepository.UpdateAsync(comboList);
 
-                await _unitOfWork.OrderDetailRepository.UpdateAsync(orderItems);
+                await _unitOfWork.OrderDetailRepository.UpdateAsync(saveOrderItems);
 
                 var refundRequest = new RefundRequest
                 {
                     AccountName = request.AccountName,
                     AccountNumber = request.AccountNumber,
+                    BankName = request.BankName,
+                    ContactNumber = request.ContactNumber,
                     ActionBy = loginUserId,
                     ActionDate = DateTime.Now,
                     CreatedBy = loginUserId,
@@ -1453,7 +1467,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
             catch (Exception ex)
             {
-                return ResponseService<List<OrderResponseToStoreDTO>>.BadRequest("Cannot get orders. Please try again.");
+                return ResponseService<List<OrderResponseToStoreDTO>>.BadRequest("Cannot cancel orders. Please try again.");
             }
         }
     }
