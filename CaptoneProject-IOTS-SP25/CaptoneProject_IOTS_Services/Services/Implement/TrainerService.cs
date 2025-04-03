@@ -118,9 +118,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         {
             var loginUserId = _userService.GetLoginUserId();
 
-            var isAdminOrManager = await _userService.CheckLoginUserRole(RoleEnum.ADMIN) || await _userService.CheckLoginUserRole(RoleEnum.STAFF);
+            var isAdminOrStaff = await _userService.CheckLoginUserRole(RoleEnum.ADMIN) || await _userService.CheckLoginUserRole(RoleEnum.STAFF);
 
-            if (!isAdminOrManager
+            if (!isAdminOrStaff
                 &&
                 loginUserId != trainerId)
             {
