@@ -124,6 +124,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (store != null)
                 res.StoreInfo = await storeService.BuildToStoreDetailsResponseDTO(store);
 
+            res.CreatedByEmail = source.CreatedByNavigation.Email;
+            res.CreatedByFullName = source.CreatedByNavigation.Fullname;
             return res;
         }
 
@@ -138,6 +140,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     .ThenInclude(o => o.IotsDevice)
                     .Include(item => item.OrderItem)
                     .ThenInclude(o => o.Combo)
+                    .Include(item => item.CreatedByNavigation)
                     .SingleOrDefault(item => item.Id == id);
 
             if (warranty == null)
@@ -159,8 +162,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var role = (int)userServices.GetRole();
 
             Expression<Func<WarrantyRequest, bool>> func = item => false;
-
-            if (role == (int)RoleEnum.CUSTOMER)
+            if (role == (int)RoleEnum.ADMIN || role == (int)RoleEnum.MANAGER)
+            {
+                func = item => (statusFilter == null || item.Status == (int)statusFilter);
+            }
+            else if (role == (int)RoleEnum.CUSTOMER)
             {
                 func = item => item.CreatedBy == loginUserId && (statusFilter == null || item.Status == (int)statusFilter);
             }
@@ -172,7 +178,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var pagination = unitOfWork.WarrantyRequestRepository.GetPaginate(
                 filter: func,
                 orderBy: ob => ob.OrderByDescending(item => item.CreatedDate),
-                includeProperties: "OrderItem,OrderItem.IotsDevice,OrderItem.Lab,OrderItem.Combo",
+                includeProperties: "OrderItem,OrderItem.IotsDevice,OrderItem.Lab,OrderItem.Combo,CreatedByNavigation",
                 pageIndex: request.PageIndex,
                 pageSize: request.PageSize
             );
