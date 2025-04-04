@@ -106,7 +106,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                         if (feedback?.Rating <= MIN_REPORT_RATING)
                         {
-                            item.OrderItemStatus = (int)OrderItemStatusEnum.CANCELLED;
+                            item.OrderItemStatus = (int)OrderItemStatusEnum.SUCCESS_ORDER;
 
                             var title = (item.ProductType == (int)ProductTypeEnum.LAB) ?
                                         "{Email} send a report to playlist of a trainer '{TrainerEmail}'"

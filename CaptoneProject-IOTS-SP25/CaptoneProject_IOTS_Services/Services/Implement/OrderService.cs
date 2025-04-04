@@ -463,6 +463,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             foreach (var item in selectedItems)
             {
                 var trackingId = createShipping.FirstOrDefault(s => s.ShopOwnerId == item.SellerId)?.TrackingId;
+
                 var orderDetail = new OrderItem
                 {
                     OrderId = createTransactionPayment.Id,
