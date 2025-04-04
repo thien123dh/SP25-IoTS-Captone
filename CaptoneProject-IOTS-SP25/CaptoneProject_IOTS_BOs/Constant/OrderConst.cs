@@ -21,6 +21,7 @@ namespace CaptoneProject_IOTS_BOs.Constant
         DELEVERED = 4,
         PENDING_TO_FEEDBACK = 5,
         SUCCESS_ORDER = 6,
-        CANCELLED = 7
+        CANCELLED = 7,
+        BAD_FEEDBACK = 8
     }
 }

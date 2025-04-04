@@ -14,7 +14,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
 {
     public interface IReportService
     {
-        public Task<ResponseDTO> GetReportPagination(PaginationRequest request);
+        public Task<ResponseDTO> GetReportPagination(int? filterStatus, PaginationRequest request);
 
         public Task<ResponseDTO> ApproveOrRejectReport(int reportId, bool isApprove);
     }

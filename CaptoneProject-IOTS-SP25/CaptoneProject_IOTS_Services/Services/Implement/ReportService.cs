@@ -19,6 +19,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static CaptoneProject_IOTS_BOs.Constant.EntityTypeConst;
 using static CaptoneProject_IOTS_BOs.Constant.ProductConst;
+using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
 
 namespace CaptoneProject_IOTS_Service.Services.Implement
 {
@@ -81,7 +82,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         Amount = totalAmount,
                     };
 
+                    orderItem.OrderItemStatus = (int)OrderItemStatusEnum.SUCCESS_ORDER;
+
                     report = unitOfWork.ReportRepository.Update(report);
+
+                    unitOfWork.OrderDetailRepository.Update(orderItem);
 
                     _ = walletService.UpdateUserWalletWithTransactionAsync([updateWalletModel]);
 
@@ -101,7 +106,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     var sellerId = orderItem?.SellerId;
 
                     if (sellerId == null)
-                        return ResponseService<object>.NotFound("Seller cannot be found.");
+                        return ResponseService<object>.NotFound("Seller cannot be found");
 
                     Notifications notifications = new Notifications
                     {
@@ -119,11 +124,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         ReportId = reportId
                     });
                 }
-            } catch
+            }
+            catch
             {
                 return ResponseService<object>.BadRequest("You cannot approve or reject the Report. Please try again");
             }
-            
+
         }
 
         public ReportResponseDTO BuildReportResponseDTO(Report report, Store? store = null, User? createdBy = null, OrderItem? orderItem = null)
@@ -141,10 +147,30 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return res;
         }
 
-        public async Task<ResponseDTO> GetReportPagination(PaginationRequest request)
+        public async Task<ResponseDTO> GetReportPagination(int? filterStatus, PaginationRequest request)
         {
+            var loginUserId = userServices.GetLoginUserId();
+            var role = userServices.GetRole();
+
+            var adminOrStaffRoles = new List<int> { (int)RoleEnum.ADMIN, (int)RoleEnum.STAFF };
+
+            Expression<Func<Report, bool>> func = item => false;
+
+            if (adminOrStaffRoles.Contains((int)role))
+            {
+                func = item => (filterStatus == null || item.Status == filterStatus);
+            }
+            else if (role == (int)RoleEnum.CUSTOMER)
+            {
+                func = item => (filterStatus == null || item.Status == filterStatus) && item.CreatedBy == loginUserId;
+            }
+            else
+            {
+                return ResponseService<object>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
+            }
+
             var pagination = unitOfWork.ReportRepository.GetPaginate(
-                //filter: ,
+                filter: func,
                 orderBy: ob => ob.OrderByDescending(item => item.CreatedDate),
                 includeProperties: "OrderItem,CreatedByNavigation",
                 pageIndex: request.PageIndex,
@@ -168,9 +194,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return ResponseService<object>.OK(res);
         }
 
-        private Report BuildReport(RatingRequestDTO source, 
-            User? loginUser = null, 
-            string? productName = null, 
+        private Report BuildReport(RatingRequestDTO source,
+            User? loginUser = null,
+            string? productName = null,
             string? productType = null)
         {
             var model = GenericMapper<RatingRequestDTO, Report>.MapTo(source);

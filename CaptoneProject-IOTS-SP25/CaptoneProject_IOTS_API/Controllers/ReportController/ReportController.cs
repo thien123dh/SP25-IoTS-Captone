@@ -1,4 +1,5 @@
-﻿using CaptoneProject_IOTS_BOs.DTO.FeedbackDTO;
+﻿using CaptoneProject_IOTS_BOs.Constant;
+using CaptoneProject_IOTS_BOs.DTO.FeedbackDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
@@ -22,10 +23,10 @@ namespace CaptoneProject_IOTS_API.Controllers.FeedbackController
         [HttpPost]
         [Route("get-pagination")]
         public async Task<IActionResult> GetReportPagination(
-            [FromBody] PaginationRequest payload
-        )
+            [FromBody] PaginationRequest payload,
+            [FromQuery] ReportStatusEnum? statusFilter)
         {
-            var res = await ratingService.GetReportPagination(payload);
+            var res = await ratingService.GetReportPagination((int?)statusFilter, payload).ConfigureAwait(false);
 
             return GetActionResult(res);
         }

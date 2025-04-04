@@ -168,7 +168,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 _ = unitOfWork.FeedbackRepository.CreateAsync(feedbackList);
 
                 if (reports != null)
+                {
                     _ = unitOfWork.ReportRepository.CreateAsync(reports);
+                }
+                    
 
                 return ResponseService<object>.OK(
                     new
