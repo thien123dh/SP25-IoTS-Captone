@@ -94,6 +94,19 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
             return Ok(result);
         }
 
+        [HttpPost("create-cash-payment-order")]
+        public async Task<IActionResult> UpdateOrderDetailToPackingByStoreId([FromBody] OrderRequestDTO payload)
+        {
+            var result = await _orderService.CreateCashPaymentOrder(payload).ConfigureAwait(false);
+
+            if (result.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Created new cash payment order");
+            }
+
+            return GetActionResult(result);
+        }
+
         [HttpPost("order-status/packing/{orderId}")]
         public async Task<IActionResult> UpdateOrderDetailToPackingByStoreId(int orderId)
         {
