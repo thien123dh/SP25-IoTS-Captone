@@ -381,6 +381,262 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             };
         }
 
+        public async Task<ResponseDTO> CreateCashPaymentOrder(OrderRequestDTO payload)
+        {
+            var loginUser = userServices.GetLoginUser();
+            if (loginUser == null || !await userServices.CheckLoginUserRole(RoleEnum.CUSTOMER))
+                return ResponseService<object>.Unauthorize("You don't have permission to access");
+
+            var loginUserId = loginUser.Id;
+            var selectedItems = await _unitOfWork.CartRepository
+                .GetQueryable((int)loginUserId)
+                .Where(item => item.CreatedBy == loginUserId && item.IsSelected)
+                .Include(item => item.IosDeviceNavigation)
+                .Include(item => item.ComboNavigation)
+                .Include(item => item.LabNavigation)
+                .ToListAsync();
+
+            string address = payload.Address, contactPhone = payload.ContactNumber, notes = payload.Notes;
+            int provinceId = payload.ProvinceId, districtId = payload.DistrictId, wardId = payload.WardId, addressId = payload.AddressId;
+            string deliver_option = payload.deliver_option;
+
+            var shippingFees = await _ghtkService.GetShippingFeeAsync(new ShippingFeeRequest
+            {
+                ProvinceId = provinceId,
+                DistrictId = districtId,
+                WardId = wardId,
+                AddressId = addressId,
+                Address = address,
+                deliver_option = deliver_option
+            });
+
+            var createShipping = await _ghtkService.CreateShipmentAsync(new ShippingRequest
+            {
+                ProvinceId = provinceId,
+                DistrictId = districtId,
+                WardId = wardId,
+                AddressId = addressId,
+                Address = address,
+                ContactNumber = contactPhone,
+                note = notes
+            });
+
+            var totalShippingFee = shippingFees.FirstOrDefault(f => f.ShopOwnerId == -1)?.Fee ?? 0m;
+            decimal totalProductPrice = selectedItems.Sum(
+                item =>
+                {
+                    decimal productPrice = item?.IosDeviceNavigation?.Price ?? item?.ComboNavigation?.Price ?? item?.LabNavigation?.Price ?? 0;
+
+                    decimal totalAmount = productPrice * (item?.Quantity ?? 0);
+
+                    return totalAmount;
+                }
+            );
+
+            decimal totalAmount = totalProductPrice + totalShippingFee;
+
+            TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            DateTime vietnamTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
+
+            var createTransactionPayment = new Orders
+            {
+                ApplicationSerialNumber = GetApplicationSerialNumberOrder(loginUserId),
+                OrderBy = loginUserId,
+                TotalPrice = totalAmount,
+                Address = address,
+                ProvinceId = provinceId,
+                DistrictId = districtId,
+                WardId = wardId,
+                AddressId = addressId,
+                ContactNumber = contactPhone,
+                Notes = notes,
+                CreateDate = vietnamTime,
+                CreatedBy = loginUserId,
+                UpdatedBy = loginUserId,
+                ShippingFee = totalShippingFee,
+                OrderStatusId = (int)OrderStatusEnum.CASH_PAYMENT
+            };
+            var orderResponse = _unitOfWork.OrderRepository.Create(createTransactionPayment);
+
+            var saveOrderItems = new List<OrderItem>();
+
+            foreach (var item in selectedItems)
+            {
+                var trackingId = createShipping.FirstOrDefault(s => s.ShopOwnerId == item.SellerId)?.TrackingId;
+                var orderDetail = new OrderItem
+                {
+                    OrderId = createTransactionPayment.Id,
+                    SellerId = item.SellerId,
+                    OrderBy = loginUserId,
+                    Quantity = item.Quantity,
+                    ProductType = item.IosDeviceNavigation != null ? (int)ProductTypeEnum.IOT_DEVICE :
+                                  item.ComboNavigation != null ? (int)ProductTypeEnum.COMBO :
+                                  item.LabNavigation != null ? (int)ProductTypeEnum.LAB : throw new Exception("Invalid product type"),
+                    IosDeviceId = item.IosDeviceNavigation?.Id,
+                    ComboId = item.ComboNavigation?.Id,
+                    LabId = item.LabNavigation?.Id,
+                    Price = item.IosDeviceNavigation?.Price ?? item.ComboNavigation?.Price ?? item.LabNavigation?.Price ?? 0m,
+                    OrderItemStatus = (int)OrderItemStatusEnum.PENDING,
+                    TxnRef = "",
+                    TrackingId = trackingId,
+                    WarrantyEndDate = DateTime.Now.AddMonths(item?.IosDeviceNavigation?.WarrantyMonth ?? item?.ComboNavigation?.WarrantyMonth ?? 0)
+                };
+
+                _unitOfWork.OrderDetailRepository.Create(orderDetail);
+
+                saveOrderItems.Add(orderDetail);
+
+                if (item?.IosDeviceNavigation != null)
+                {
+                    var device = await _unitOfWork.IotsDeviceRepository.GetByIdAsync(item.IosDeviceNavigation.Id);
+                    if (device != null)
+                    {
+                        device.Quantity -= item.Quantity;
+                        if (device.Quantity < 0)
+                            device.Quantity = 0; // Đảm bảo không bị âm
+
+                        _unitOfWork.IotsDeviceRepository.Update(device);
+                    }
+                }
+
+                if (item?.ComboNavigation != null)
+                {
+                    var combo = await _unitOfWork.ComboRepository.GetByIdAsync(item.ComboNavigation.Id);
+                    if (combo != null)
+                    {
+                        combo.Quantity -= item.Quantity;
+
+                        if (combo.Quantity < 0)
+                            combo.Quantity = 0;
+
+                        _unitOfWork.ComboRepository.Update(combo);
+                    }
+                }
+
+                if (item?.LabNavigation != null)
+                {
+                    var lab = await _unitOfWork.LabRepository.GetByIdAsync(item.LabNavigation.Id);
+                    if (lab != null)
+                    {
+                        orderDetail.OrderItemStatus = (int)OrderItemStatusEnum.PENDING_TO_FEEDBACK;
+                        _unitOfWork.OrderDetailRepository.Update(orderDetail);
+                    }
+                }
+            }
+
+            var orderReturnPaymentDTO = new OrderReturnPaymentDTO
+            {
+                PaymentUrl = "The order has been successfully paid.",
+                ApplicationSerialNumber = createTransactionPayment.ApplicationSerialNumber,
+                TotalPrice = createTransactionPayment.TotalPrice,
+                ProvinceId = createTransactionPayment.ProvinceId,
+                DistrictId = createTransactionPayment.DistrictId,
+                WardId = createTransactionPayment.WardId,
+                AddressId = createTransactionPayment.AddressId,
+                Address = createTransactionPayment.Address,
+                ContactNumber = createTransactionPayment.ContactNumber,
+                Notes = createTransactionPayment?.Notes ?? "",
+                CreateDate = createTransactionPayment?.CreateDate ?? DateTime.Now,
+                OrderStatusId = createTransactionPayment.OrderStatusId
+            };
+
+            var provinces = await _ghtkService.SyncProvincesAsync();
+            var province = provinces.FirstOrDefault(p => p.Id == createTransactionPayment.ProvinceId);
+            orderReturnPaymentDTO.ProvinceName = province?.Name ?? "Not found";
+
+            var districts = await _ghtkService.SyncDistrictsAsync(createTransactionPayment.ProvinceId);
+            var district = districts.FirstOrDefault(d => d.Id == createTransactionPayment.DistrictId);
+            orderReturnPaymentDTO.DistrictName = district?.Name ?? "Not found";
+
+            var wards = await _ghtkService.SyncWardsAsync(createTransactionPayment.DistrictId);
+            var ward = wards.FirstOrDefault(w => w.Id == createTransactionPayment.WardId);
+            orderReturnPaymentDTO.WardName = ward?.Name ?? "Not found";
+
+            var list_address = await _ghtkService.SyncAddressAsync(createTransactionPayment.WardId);
+            var addressName = list_address.FirstOrDefault(w => w.Id == createTransactionPayment.AddressId);
+            orderReturnPaymentDTO.AddressName = addressName?.Name ?? "Not found";
+
+            var productBillList = selectedItems.Select(item => new ProductBillDTO
+            {
+                Img = item.IosDeviceNavigation?.ImageUrl ?? item.ComboNavigation?.ImageUrl ?? item.LabNavigation?.ImageUrl ?? "https://photos.google.com/share/AF1QipOAm47U_r0mYVWWJxwxSLvEmX4pvf5A16824osh1cd76-QUAV0cie7Z4uoL-zvefg/photo/AF1QipPy0TZ1bvUJYlEuL5HC2ZTct16AVQh1IRbINQMq?key=YnZpSm1hTmtJUGhDa2E4Q2M0aHZDU0Jxd2F4MWhn",
+                Name = item.IosDeviceNavigation?.Name ?? item.ComboNavigation?.Name ?? item.LabNavigation?.Title ?? "Product",
+                Quantity = item.Quantity,
+                Price = item.IosDeviceNavigation?.Price ?? item.ComboNavigation?.Price ?? item.LabNavigation?.Price ?? 0m,
+            }).ToList();
+
+            string provinceNameCustomer = province.Name;
+            string districtNameCustomer = district.Name;
+            string wardNameCustomer = ward.Name;
+            string addressNameCustomer = addressName.Name;
+
+
+            await _emailServices.SendInvoiceEmailAsync(
+                loginUser.Email,
+                createTransactionPayment.ApplicationSerialNumber,
+                "IoT Materials Trading Platform",
+                $"FPT University",
+                "IoTs.admin@iots.com",
+                loginUser.Fullname,
+                provinceNameCustomer,
+                districtNameCustomer,
+                wardNameCustomer,
+                addressNameCustomer,
+                productBillList,
+                totalProductPrice,
+                totalShippingFee,
+                totalAmount
+            );
+
+            await _unitOfWork.CartRepository.RemoveAsync(selectedItems);
+            await _unitOfWork.CartRepository.SaveAsync();
+
+            var customerNotification = new Notifications
+            {
+                EntityId = orderResponse.Id,
+                EntityType = (int)EntityTypeConst.EntityTypeEnum.ORDER,
+                CreatedDate = DateTime.Now,
+                ReceiverId = loginUserId,
+                Content = $"Your Order has been created successfully. Please go to the order history to check",
+                Title = $"Your Order has been created successfully. Please go to the order history to check"
+            };
+
+            var storeNotifications = new List<Notifications>();
+
+            //Create notification and transaction
+            try
+            {
+                if (saveOrderItems != null)
+                    storeNotifications = saveOrderItems?.Select(item => item.SellerId)?.Distinct()?.ToList()?.Select(
+                        sellerId =>
+                        {
+                            return new Notifications
+                            {
+                                EntityId = orderResponse.Id,
+                                EntityType = (int)EntityTypeConst.EntityTypeEnum.ORDER,
+                                Content = $"You have new order. Please go to order history to check",
+                                Title = $"You have new order. Please go to order history to check",
+                                ReceiverId = sellerId
+                            };
+                        }
+                    )?.ToList();
+
+                _ = _unitOfWork.NotificationRepository.Create(customerNotification);
+
+                if (storeNotifications != null)
+                    _ = _unitOfWork.NotificationRepository.CreateAsync(storeNotifications);
+            }
+            catch
+            {
+
+            }
+
+            return new GenericResponseDTO<OrderReturnPaymentDTO>
+            {
+                IsSuccess = true,
+                Data = orderReturnPaymentDTO
+            };
+        }
+
 
         public async Task<GenericResponseDTO<OrderReturnPaymentVNPayDTO>> CreateOrder(int? id, OrderRequestDTO payload, string returnUrl)
         {
