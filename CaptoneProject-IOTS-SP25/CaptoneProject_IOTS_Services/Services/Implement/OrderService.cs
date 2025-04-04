@@ -462,6 +462,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             foreach (var item in selectedItems)
             {
                 var trackingId = createShipping.FirstOrDefault(s => s.ShopOwnerId == item.SellerId)?.TrackingId;
+
                 var orderDetail = new OrderItem
                 {
                     OrderId = createTransactionPayment.Id,
@@ -492,7 +493,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     {
                         device.Quantity -= item.Quantity;
                         if (device.Quantity < 0)
-                            device.Quantity = 0; // Đảm bảo không bị âm
+                            device.Quantity = 0; 
 
                         _unitOfWork.IotsDeviceRepository.Update(device);
                     }

@@ -16,7 +16,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.FeedbackDTO
 
         public string Comment { set; get; }
 
-        [Range(1, 5)]
+        [Range(0.5, 5)]
         public decimal Rating { set; get; }
     }
 
