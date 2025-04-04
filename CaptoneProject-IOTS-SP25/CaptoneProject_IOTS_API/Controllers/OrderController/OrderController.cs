@@ -97,7 +97,7 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
         [HttpPost("create-cash-payment-order")]
         public async Task<IActionResult> UpdateOrderDetailToPackingByStoreId([FromBody] OrderRequestDTO payload)
         {
-            var result = await _orderService.CreateCashPaymentOrder(payload).ConfigureAwait(false);
+            var result = await _orderService.CreateCashPaymentOrder(payload);
 
             if (result.IsSuccess)
             {

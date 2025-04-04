@@ -630,11 +630,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             }
 
-            return new GenericResponseDTO<OrderReturnPaymentDTO>
-            {
-                IsSuccess = true,
-                Data = orderReturnPaymentDTO
-            };
+            return ResponseService<object>.OK(orderReturnPaymentDTO);
         }
 
 
