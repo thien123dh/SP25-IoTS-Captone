@@ -208,8 +208,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     {
                         EntityId = item.UserId,
                         EntityType = (int)EntityTypeConst.EntityTypeEnum.USER,
-                        Title = $"You have received {item.Amount} gold from success orders",
-                        Content = $"You have received {item.Amount} gold from success orders",
+                        Title = $"You have received {item.Amount} gold",
+                        Content = $"You have received {item.Amount} gold",
                         ReceiverId = item.UserId
                     }
                 ).ToList();

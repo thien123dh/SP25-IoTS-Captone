@@ -104,9 +104,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     {
                         var feedback = feedbackList.FirstOrDefault(f => f.OrderItemId == item.Id);
 
-                        if (feedback?.Rating <= MIN_REPORT_RATING)
+                        if (feedback?.Rating <= MIN_REPORT_RATING) //Create report
                         {
-                            item.OrderItemStatus = (int)OrderItemStatusEnum.SUCCESS_ORDER;
+                            item.OrderItemStatus = (int)OrderItemStatusEnum.BAD_FEEDBACK;
 
                             var title = (item.ProductType == (int)ProductTypeEnum.LAB) ?
                                         "{Email} send a report to playlist of a trainer '{TrainerEmail}'"

@@ -34,7 +34,8 @@ namespace CaptoneProject_IOTS_BOs.Constant
             WARRANTY_REQUEST = 8,
             ORDER = 9,
             CASHOUT_REQUEST = 10,
-            REFUND_REQUEST = 11
+            REFUND_REQUEST = 11,
+            REPORT = 12
         }
     }
 

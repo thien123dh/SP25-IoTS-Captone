@@ -6,7 +6,6 @@ using CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.RefundDTO;
 using CaptoneProject_IOTS_BOs.DTO.VNPayDTO;
-using CaptoneProject_IOTS_BOs.Migrations;
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
@@ -410,7 +409,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 deliver_option = deliver_option
             });
 
-            var createShipping = await _ghtkService.CreateShipmentAsync(new ShippingRequest
+            var createShipping = await _ghtkService.CreateShipmentHasShipCodAsync(new ShippingRequest
             {
                 ProvinceId = provinceId,
                 DistrictId = districtId,
@@ -494,7 +493,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     {
                         device.Quantity -= item.Quantity;
                         if (device.Quantity < 0)
-                            device.Quantity = 0; // Đảm bảo không bị âm
+                            device.Quantity = 0; 
 
                         _unitOfWork.IotsDeviceRepository.Update(device);
                     }
