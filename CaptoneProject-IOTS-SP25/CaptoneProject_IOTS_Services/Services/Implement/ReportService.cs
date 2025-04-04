@@ -39,7 +39,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         public async Task<ResponseDTO> ApproveOrRejectReport(int reportId, bool isApprove)
         {
             var report = unitOfWork.ReportRepository.Search(
-                item => item.Id == item.Id && item.Status == (int)ReportStatusEnum.PENDING_TO_HANDLING)
+                item => item.Id == reportId && item.Status == (int)ReportStatusEnum.PENDING_TO_HANDLING)
                 ?.Include(item => item.OrderItem)
                 ?.ThenInclude(o => o.IotsDevice)
                 ?.Include(item => item.OrderItem)
@@ -59,8 +59,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 {
                     report.Status = (int)ReportStatusEnum.COMPLETED;
 
-                    var totalAmount = ((report?.OrderItem?.Price ?? 0) * (report?.OrderItem?.Quantity ?? 0) * ((decimal)ApplicationConst.FEE_PER_PRODUCT / 100))
-                                                / 1000; //Convert to golds
+                    var totalAmount = ((report?.OrderItem?.Price ?? 0) * (report?.OrderItem?.Quantity ?? 0));
+
+                    totalAmount = (totalAmount - totalAmount * ((decimal)ApplicationConst.FEE_PER_PRODUCT / 100)) / 1000; 
 
                     var sellerId = orderItem?.SellerId;
 
