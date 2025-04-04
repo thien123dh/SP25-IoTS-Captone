@@ -409,7 +409,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 deliver_option = deliver_option
             });
 
-            var createShipping = await _ghtkService.CreateShipmentAsync(new ShippingRequest
+            var createShipping = await _ghtkService.CreateShipmentHasShipCodAsync(new ShippingRequest
             {
                 ProvinceId = provinceId,
                 DistrictId = districtId,
