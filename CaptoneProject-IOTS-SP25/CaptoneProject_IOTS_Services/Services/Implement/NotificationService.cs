@@ -78,7 +78,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 .ToList();
 
             var unReadNotifications = unitOfWork.NotificationRepository
-                .Search(item => item.ReceiverId == loginUserId && item.IsRead)
+                .Search(item => item.ReceiverId == loginUserId && !item.IsRead)
                 .ToList();
 
             unReadNotifications = unReadNotifications.Select(item =>
