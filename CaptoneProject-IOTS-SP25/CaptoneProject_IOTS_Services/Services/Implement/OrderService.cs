@@ -916,10 +916,15 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 .Where(i => i.OrderItemStatus == (int)OrderItemStatusEnum.PENDING_TO_FEEDBACK)
                 .Select(i => i.SellerId).Count();
 
+            var badFeedbackNumber = query
+                .Where(i => i.OrderItemStatus == (int)OrderItemStatusEnum.BAD_FEEDBACK)
+                .Select(i => i.SellerId).Count();
+
             res.TotalCount = totalCount;
             res.PendingNumber = pendingNumber;
             res.PendingToFeedbackNumber = pendingToFeedbackNumber;
             res.DeliveringNumber = deliveringNumber;
+            res.BadFeedbackNumber = badFeedbackNumber;
 
             return res;
         }
@@ -1044,9 +1049,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 {
                     var res = BuildToOrderResponseDTO(mapper, order, orderItemFunc);
 
-                    var orderDetailsGrouped = order.OrderItems
+                    var orderItems = order.OrderItems
                     .Where(orderItemFunc)
                     .Where(orderItem => orderItemStatusFilter == null || orderItem.OrderItemStatus == (int)orderItemStatusFilter)
+                    .ToList();
+                    
+                    res.TotalPrice = (orderItems?.Sum(o => (decimal)o.Price * o.Quantity) ?? 0) + (res?.ShippingFee ?? 0);
+
+                    var orderDetailsGrouped = orderItems?
                     .GroupBy(od => od.SellerId)
                     .Select(group =>
                     {
@@ -1079,7 +1089,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                             SellerRole = trainer != null ? (int)RoleEnum.TRAINER : (int)RoleEnum.STORE,
                             TrackingId = trackingId,
                             OrderItemStatus = orderItemStatusId,
-                            TotalAmount = group.Sum(oi => oi.Price * oi.Quantity),
+                            TotalAmount = group?.Sum(oi => oi.Price * oi.Quantity) ?? 0,
                             Items = items?.ToList()
                         };
 
@@ -1140,10 +1150,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 {
                     var res = BuildToOrderResponseDTO(mapper, order, orderItemFunc);
 
-                    var orderDetailsGrouped = order.OrderItems
+                    var orderItems = order.OrderItems
                     .Where(orderItemFunc)
                     .Where(orderItem => orderItemStatusFilter == null || orderItem.OrderItemStatus == (int)orderItemStatusFilter)
-                    .GroupBy(od => od.SellerId)
+                    .ToList();
+
+                    res.TotalPrice = (orderItems?.Sum(o => (decimal)o.Price * o.Quantity) ?? 0) + (res?.ShippingFee ?? 0);
+
+                    var orderDetailsGrouped = orderItems?.GroupBy(od => od.SellerId)
                     .Select(group =>
                     {
                         var od = group?.FirstOrDefault();
