@@ -1232,7 +1232,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         {
             var loginUserId = userServices.GetLoginUserId();
 
-            if (loginUserId == null || !await userServices.CheckLoginUserRole(RoleEnum.STORE))
+            var role = userServices.GetRole();
+
+            var storeTrainerRoles = new List<int> { (int)RoleEnum.STORE, (int)RoleEnum.TRAINER };
+
+            if (loginUserId == null || role == null || !storeTrainerRoles.Contains((int)role))
                 return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.Unauthorize("You don't have permission to access");
 
             Expression<Func<Orders, bool>> func =
