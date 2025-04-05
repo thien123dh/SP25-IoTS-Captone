@@ -15,9 +15,11 @@ namespace CaptoneProject_IOTS_API.Controllers.FeedbackController
     public class ReportController : MyBaseController.MyBaseController
     {
         private readonly IReportService ratingService;
-        public ReportController(IReportService ratingService)
+        private readonly IActivityLogService activityLogService;
+        public ReportController(IReportService ratingService, IActivityLogService activityLog)
         {
             this.ratingService = ratingService;
+            this.activityLogService = activityLog;
         }
 
         [HttpPost]
@@ -37,6 +39,11 @@ namespace CaptoneProject_IOTS_API.Controllers.FeedbackController
         {
             var res = await ratingService.ApproveOrRejectReport(reportId, true);
 
+            if (res.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Approved Report ID {reportId}");
+            }
+
             return GetActionResult(res);
         }
 
@@ -45,6 +52,11 @@ namespace CaptoneProject_IOTS_API.Controllers.FeedbackController
         public async Task<IActionResult> RejectReport(int reportId)
         {
             var res = await ratingService.ApproveOrRejectReport(reportId, false);
+
+            if (res.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Rejected Report ID {reportId}");
+            }
 
             return GetActionResult(res);
         }
