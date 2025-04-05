@@ -36,6 +36,8 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderDTO
 
         public int PendingToFeedbackNumber { set; get; }
 
+        public int BadFeedbackNumber { set; get; }
+
         public List<OrderItemsGroupResponseDTO>? OrderDetailsGrouped { get; set; }
     }
 }
