@@ -58,7 +58,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 .Replace("{CurrentDateTime}", currentDateTime);
         }
 
-
         public async Task<GenericResponseDTO<OrderReturnPaymentDTO>> CheckOrderSuccessfull(int? id, VNPayRequestDTO dto)
         {
             var loginUser = userServices.GetLoginUser();
@@ -394,6 +393,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 .Include(item => item.ComboNavigation)
                 .Include(item => item.LabNavigation)
                 .ToListAsync();
+
+            //Including any labs?
+            //if (selectedItems.Any(item => item.LabId != null))
+            //{
+            //    return ResponseService<object>.BadRequest("You are not allow to use cash payment method to buy lab. Please using Online Payment");
+            //}
 
             string address = payload.Address, contactPhone = payload.ContactNumber, notes = payload.Notes;
             int provinceId = payload.ProvinceId, districtId = payload.DistrictId, wardId = payload.WardId, addressId = payload.AddressId;
@@ -1626,7 +1631,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
-        public async Task<ResponseDTO> UpdateOrderDetailToCancel(int orderId, CreateRefundRequestDTO request)
+        public async Task<ResponseDTO> UpdateOnlinePaymentOrderDetailToCancel(int orderId, CreateRefundRequestDTO request)
         {
             try
             {
@@ -1637,14 +1642,19 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 if (role != (int)RoleEnum.CUSTOMER)
                     return ResponseService<List<OrderResponseToStoreDTO>>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
 
+                var order = _unitOfWork.OrderRepository.GetById(orderId);
+
+                if (order.OrderStatusId != (int)OrderStatusEnum.SUCCESS_TO_ORDER)
+                {
+                    return ResponseService<object>.BadRequest("The Order is not VnPay payment Orders. Please try again");
+                }
+
                 var isNotAllPending = _unitOfWork.OrderDetailRepository
                         .Search(item => item.OrderId == orderId)
                         .Any(item => item.OrderItemStatus != (int)OrderItemStatusEnum.PENDING);
 
                 if (isNotAllPending)
                     return ResponseService<List<OrderResponseToStoreDTO>>.BadRequest("Some orders was packing or delivering by store. You cannot cancel the order now");
-
-                var order = _unitOfWork.OrderRepository.GetById(orderId);
 
                 if (order.OrderBy != loginUserId)
                     return ResponseService<object>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
@@ -1728,6 +1738,104 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 };
 
                 _ = _unitOfWork.RefundRequestRepository.Create(refundRequest);
+
+                return ResponseService<object>.OK(new
+                {
+                    OrderId = orderId,
+                    OrderItemStatus = (int)OrderItemStatusEnum.CANCELLED
+                });
+            }
+            catch (Exception ex)
+            {
+                return ResponseService<List<OrderResponseToStoreDTO>>.BadRequest("Cannot cancel orders. Please try again.");
+            }
+        }
+
+        public async Task<ResponseDTO> UpdateCashpaymentOrderDetailToCancel(int orderId)
+        {
+            try
+            {
+                var loginUserId = (int)userServices.GetLoginUserId();
+
+                var role = userServices.GetRole();
+
+                if (role != (int)RoleEnum.CUSTOMER)
+                    return ResponseService<List<OrderResponseToStoreDTO>>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
+
+                var order = _unitOfWork.OrderRepository.GetById(orderId);
+
+                if (order.OrderStatusId != (int)OrderStatusEnum.CASH_PAYMENT)
+                {
+                    return ResponseService<object>.BadRequest("The Order is not Cash Payment Order. Please try again");
+                }
+
+                var isNotAllPending = _unitOfWork.OrderDetailRepository
+                        .Search(item => item.OrderId == orderId)
+                        .Any(item => item.OrderItemStatus != (int)OrderItemStatusEnum.PENDING);
+
+                if (isNotAllPending)
+                    return ResponseService<List<OrderResponseToStoreDTO>>.BadRequest("Some orders was packing or delivering by store. You cannot cancel the order now");
+
+                if (order.OrderBy != loginUserId)
+                    return ResponseService<object>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
+
+                var numberOfCancelled = _unitOfWork.OrderRepository
+                    .Search(item => item.OrderStatusId == (int)OrderStatusEnum.CANCELLED
+                    && item.OrderBy == loginUserId
+                    && item.CreateDate.Date == DateTime.Now.Date).Count();
+
+                if (numberOfCancelled > MAX_CANCELLED_PER_DAYS)
+                    return ResponseService<List<OrderResponseToStoreDTO>>.BadRequest($"You cannot cancel more than {MAX_CANCELLED_PER_DAYS} orders per day");
+
+                var orderItems = _unitOfWork.OrderDetailRepository.Search(
+                    item => item.OrderId == orderId
+                ).Include(item => item.IotsDevice)
+                .Include(item => item.Combo).ToList();
+
+                if (order == null)
+                    return ResponseService<List<OrderResponseToStoreDTO>>.NotFound("Your Order Status must be pending before cancelled.");
+
+                var saveOrderItems = orderItems?.Select(
+                    item =>
+                    {
+                        item.OrderItemStatus = (int)OrderItemStatusEnum.CANCELLED;
+                        item.UpdatedDate = DateTime.Now;
+
+                        return item;
+                    }
+                ).ToList();
+
+                order.OrderStatusId = (int)OrderStatusEnum.CANCELLED;
+                order.UpdatedDate = DateTime.Now;
+                order.UpdatedBy = loginUserId;
+
+                order = _unitOfWork.OrderRepository.Update(order);
+
+                var deviceList = orderItems?
+                    .Where(item => item.IotsDevice != null)?
+                    .Select(item =>
+                    {
+                        item.IotsDevice.Quantity += item.Quantity;
+
+                        return item.IotsDevice;
+                    })?.ToList();
+
+                var comboList = orderItems?
+                    .Where(item => item.Combo != null)?
+                    .Select(item =>
+                    {
+                        item.Combo.Quantity += item.Quantity;
+
+                        return item.Combo;
+                    })?.ToList();
+
+                if (deviceList != null)
+                    await _unitOfWork.IotsDeviceRepository.UpdateAsync(deviceList);
+
+                if (comboList != null)
+                    await _unitOfWork.ComboRepository.UpdateAsync(comboList);
+
+                await _unitOfWork.OrderDetailRepository.UpdateAsync(saveOrderItems);
 
                 return ResponseService<object>.OK(new
                 {
