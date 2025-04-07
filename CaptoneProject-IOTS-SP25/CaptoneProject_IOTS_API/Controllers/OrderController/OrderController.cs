@@ -186,7 +186,20 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
         public async Task<IActionResult> UpdateOrderItemToCancelled(int orderId,
             [FromBody] CreateRefundRequestDTO payload)
         {
-            var res = await _orderService.UpdateOrderDetailToCancel(orderId, payload);
+            var res = await _orderService.UpdateOnlinePaymentOrderDetailToCancel(orderId, payload);
+
+            if (res.IsSuccess)
+            {
+                _ = activityLogService.CreateActivityLog($"Cancelled order with ID {orderId}");
+            }
+
+            return GetActionResult(res);
+        }
+
+        [HttpPost("order-status/cash-payment/cancelled/{orderId}")]
+        public async Task<IActionResult> UpdateOrderItemToCancelled(int orderId)
+        {
+            var res = await _orderService.UpdateCashpaymentOrderDetailToCancel(orderId);
 
             if (res.IsSuccess)
             {
