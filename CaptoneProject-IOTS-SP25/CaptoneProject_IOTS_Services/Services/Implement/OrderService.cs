@@ -1650,7 +1650,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     return ResponseService<object>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
 
                 var numberOfCancelled = _unitOfWork.OrderRepository
-                    .Search(item => item.OrderStatusId == (int)OrderStatusEnum.REFUNDED 
+                    .Search(item => item.OrderStatusId == (int)OrderStatusEnum.CANCELLED 
                     && item.OrderBy == loginUserId 
                     && item.CreateDate.Date == DateTime.Now.Date).Count();
 
@@ -1681,7 +1681,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 //    item.UpdatedDate = DateTime.Now;
                 //}
 
-                order.OrderStatusId = (int)OrderStatusEnum.REFUNDED;
+                order.OrderStatusId = (int)OrderStatusEnum.CANCELLED;
                 order.UpdatedDate = DateTime.Now;
                 order.UpdatedBy = loginUserId;
 

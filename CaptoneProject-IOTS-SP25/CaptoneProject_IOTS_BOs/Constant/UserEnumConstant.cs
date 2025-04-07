@@ -20,6 +20,16 @@ namespace CaptoneProject_IOTS_BOs.Constant
             STORE = 6
         }
 
+        public static class RoleConst
+        {
+            public const string ADMIN = "1";
+            public const string STAFF = "2";
+            public const string MANAGER = "3";
+            public const string TRAINER = "4";
+            public const string CUSTOMER = "5";
+            public const string STORE = "6";
+
+        }
         public enum UserStatusEnum
         {
             INACTIVE = 0,
