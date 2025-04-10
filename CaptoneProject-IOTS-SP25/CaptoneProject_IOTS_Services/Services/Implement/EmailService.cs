@@ -82,7 +82,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         public EmailTemplate GetStaffManagerTemplate(string password, string redirectUrl, string To)
         {
-            string htmlTemplate = verifyOtpTemplate;
+            string htmlTemplate = staffManagerTemplate;
 
             string emailBody = htmlTemplate
                 .Replace("{Password}", password)
