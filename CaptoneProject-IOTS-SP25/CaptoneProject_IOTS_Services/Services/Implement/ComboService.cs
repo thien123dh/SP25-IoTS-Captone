@@ -48,16 +48,16 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         public async Task<PaginationResponseDTO<ComboItemDTO>> GetPaginationCombos(PaginationRequest request)
         {
             int? loginUserId = userServices.GetLoginUserId();
-            var isStore = await userServices.CheckLoginUserRole(RoleEnum.STORE);
-            var isAnonymousOrCustomer = (loginUserId == null) || await userServices.CheckLoginUserRole(RoleEnum.CUSTOMER);
+            var role = userServices.GetRole();
 
-            int? loginStoreId = isStore && loginUserId != null ? unitOfWork?.StoreRepository?.GetByUserId((int)loginUserId)?.Id : null;
+            var isStore = role == (int)RoleEnum.STORE;
+            var isAdminOrManager = (role == (int)RoleEnum.ADMIN || role == (int)RoleEnum.MANAGER);
+            var isAnonymousOrCustomerOrTrainer = (loginUserId == null) || role == (int)RoleEnum.CUSTOMER || (role == (int)RoleEnum.TRAINER);
 
             var pagination = unitOfWork?.ComboRepository.GetPaginate(
                 filter: item => (item.Name.Contains(request.SearchKeyword))
-                    && ((isStore && item.StoreId == loginStoreId) || !isStore)
-                    && ((isAnonymousOrCustomer && item.IsActive > 0) || !isAnonymousOrCustomer),
-                orderBy: ob => ob.OrderByDescending(item => item.Rating).OrderByDescending(item => item.CreatedDate),
+                    && ((isAdminOrManager) || (isStore && item.CreatedBy == loginUserId) || (isAnonymousOrCustomerOrTrainer && item.IsActive > 0)),
+                orderBy: ob => ob.OrderByDescending(item => item.CreatedDate),
                 includeProperties: "StoreNavigation",
                 pageIndex: request.PageIndex,
                 pageSize: request.PageSize
