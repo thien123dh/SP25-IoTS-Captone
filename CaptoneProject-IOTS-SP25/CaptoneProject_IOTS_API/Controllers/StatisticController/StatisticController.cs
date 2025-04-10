@@ -20,7 +20,7 @@ namespace CaptoneProject_IOTS_API.Controllers.DashboardController
 
         [HttpPost]
         [Route("admin/get")]
-        [Authorize(Roles = RoleConst.ADMIN)]
+        //[Authorize(Roles = RoleConst.ADMIN)]
         public async Task<IActionResult> GetAdminStatistic([FromBody] StatisticRequest payload)
         {
             var res = await _statisticService.GetAdminStatistic(payload).ConfigureAwait(false);
