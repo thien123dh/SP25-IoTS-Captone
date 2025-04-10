@@ -12,6 +12,7 @@ using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using MailKit.Net.Imap;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OtpNet;
 using System;
 using System.Collections.Generic;
@@ -36,6 +37,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly IUserServices _userServices;
         private readonly IEnvironmentService environmentService;
         private readonly INotificationService notificationService;
+
+        private readonly string loginUrl = "https://fe-capstone-io-ts.vercel.app/login";
         public UserRequestService
         (
             UserRequestRepository userRequestRepository,
@@ -67,6 +70,22 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             //return otp.Trim();
             return "123456";
+        }
+
+        public async Task<bool> SendStaffManagerEmail(string email, string password)
+        {
+            try
+            {
+                var emailTemplate = _emailService.GetStaffManagerTemplate(password, loginUrl, email);
+
+                _ = _emailService.SendEmailAsync(email, emailTemplate.Subject, emailTemplate.Body);
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         public async Task<GenericResponseDTO<UserRequestResponseDTO>> CreateOrUpdateUserRequest(UserRequestRequestDTO payload)
@@ -115,9 +134,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 
                 try
                 {
-                    var emailTemplate = _emailService.GetStaffManagerOtpEmailTemplate(userRequest.OtpCode, link, userRequest.Email);
+                    var emailTemplate = _emailService.GetVerifyOtpTemplate(userRequest.OtpCode, link, userRequest.Email);
 
-                    _emailService.SendEmailAsync(userRequest.Email, emailTemplate.Subject, emailTemplate.Body);
+                    _ = _emailService.SendEmailAsync(userRequest.Email, emailTemplate.Subject, emailTemplate.Body);
                 } catch (Exception ex)
                 {
 
