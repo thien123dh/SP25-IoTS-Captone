@@ -238,7 +238,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (loginUserId == null)
                 return ResponseService<object>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
 
-            Expression<Func<Lab, bool>> trainerFilter = item => item.CreatedBy == item.CreatedBy;
+            Expression<Func<Lab, bool>> trainerFilter = item => item.CreatedBy == loginUserId;
 
             var res = await GetLabPagination(
                 filterRequest,
