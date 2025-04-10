@@ -8,6 +8,7 @@ using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
@@ -29,7 +30,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         }
 
         public async Task<StatisticDto> GetStatisticBy(
-            StatisticRequest request,
+            StatisticRequestRange request,
             Expression<Func<User, bool>> userFilter,
             Expression<Func<IotsDevice, bool>> deviceFilter,
             Expression<Func<Combo, bool>> comboFilter,
@@ -38,26 +39,22 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         {
             var userQuery = unitOfWork.UserRepository.Search(userFilter)
                             .Include(u => u.UserRoles)
-                            .Where(item => (request.StartDate <= item.CreatedDate && item.CreatedDate <= request.EndDate) && item.IsActive == 1);
+                            .Where(item => item.IsActive == 1);
             var totalActiveUsers = userQuery.Count();
 
             var totalStores = userQuery.Where(u => u.UserRoles != null && u.UserRoles.Any(ur => ur.RoleId == (int)RoleEnum.STORE)).Count();
             var totalTrainers = userQuery.Where(u => u.UserRoles != null && u.UserRoles.Any(ur => ur.RoleId == (int)RoleEnum.TRAINER)).Count();
             var totalCustomers = userQuery.Where(u => u.UserRoles != null && u.UserRoles.Any(ur => ur.RoleId == (int)RoleEnum.CUSTOMER)).Count();
 
-            var totalDevices = unitOfWork.IotsDeviceRepository.Search(deviceFilter)
-                            .Where(item => (request.StartDate <= item.CreatedDate && item.CreatedDate <= request.EndDate) && item.IsActive == 1)
-                            .Count();
+            var deviceQuery = unitOfWork.IotsDeviceRepository.Search(deviceFilter)
+                            .Where(item => (request.StartDate <= item.CreatedDate && item.CreatedDate <= request.EndDate) && item.IsActive == 1);
 
-            var totalCombos = unitOfWork.ComboRepository.Search(comboFilter)
-                            .Where(item => (request.StartDate <= item.CreatedDate && item.CreatedDate <= request.EndDate) && item.IsActive == 1)
-                            .Count();
+            var comboQuery = unitOfWork.ComboRepository.Search(comboFilter)
+                            .Where(item => (request.StartDate <= item.CreatedDate && item.CreatedDate <= request.EndDate) && item.IsActive == 1);
 
             var labQuery = unitOfWork.LabRepository.Search(labFilter)
                             .Where(item => (request.StartDate <= item.CreatedDate && item.CreatedDate <= request.EndDate));
 
-            var totalLabs = labQuery.Count();
-            var totalPendingToApproveLabs = labQuery.Where(item => item.Status == (int)LabStatusEnum.PENDING_TO_APPROVE).Count();
             var totalActiveLabs = labQuery.Where(item => item.Status == (int)LabStatusEnum.APPROVED).Count();
             var totalRejectedLabs = labQuery.Where(item => item.Status == (int)LabStatusEnum.REJECTED).Count();
 
@@ -65,7 +62,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                             .Include(item => item.OrderItems)
                             .Where(item => (request.StartDate <= item.CreateDate && item.CreateDate <= request.EndDate));
 
-            var totalOrders  = orderQuery.Count();
+            var totalOrders = orderQuery.Count();
             var totalCashpaymentOrders = orderQuery.Where(item => item.OrderStatusId == (int)OrderStatusEnum.CASH_PAYMENT).Count();
             var totalVnpayOrders = orderQuery.Where(item => item.OrderStatusId == (int)OrderStatusEnum.SUCCESS_TO_ORDER).Count();
             var totalCancelledOrders = orderQuery.Where(item => item.OrderStatusId == (int)OrderStatusEnum.CANCELLED).Count();
@@ -76,31 +73,51 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 .Where(item => item.OrderItems.Any(oi => oi.OrderItemStatus == (int)OrderItemStatusEnum.BAD_FEEDBACK))
                 .Count();
 
-            return new StatisticDto
+            var res = new StatisticDto
             {
                 TotalActiveUsers = totalActiveUsers,
                 TotalCustomerUsers = totalCustomers,
                 TotalStoreUsers = totalStores,
                 TotalTrainerUsers = totalTrainers,
-                TotalActiveCombos = totalCombos,
-                TotalActiveDevices = totalDevices,
-                TotalLabs = totalLabs,
-                TotalActiveLabs = totalLabs,
-                TotalPendingToApproveLabs = totalPendingToApproveLabs,
-                TotalRejectedLabs = totalRejectedLabs,
                 TotalCashpaymentOrders = totalCashpaymentOrders,
                 TotalSuccessOrders = totalSuccessOrders,
                 TotalOrders = totalOrders,
                 TotalCancelledOrders = totalCancelledOrders,
                 TotalVnPayOrders = totalVnpayOrders,
-                TotalIncludedBadFeedbackOrders = totalBadFeedbackOrders
+                TotalIncludedBadFeedbackOrders = totalBadFeedbackOrders,
+                TotalActiveDevices = deviceQuery.Count(),
+                TotalActiveCombos = comboQuery.Count(),
+                TotalActiveLabs = labQuery.Count(),
+                StartDate = request.StartDate,
+                EndDate = request.EndDate,
             };
+
+            foreach (var time in request.TimeList)
+            {
+                var devices = deviceQuery.Where(d => time.StartDate.Date <= ((DateTime)d.CreatedDate).Date && ((DateTime)d.CreatedDate).Date <= time.EndDate.Date).Count();
+                var combos = comboQuery.Where(d => time.StartDate.Date <= ((DateTime)d.CreatedDate).Date && ((DateTime)d.CreatedDate).Date <= time.EndDate.Date).Count();
+                var labs = labQuery.Where(d => time.StartDate.Date <= ((DateTime)d.CreatedDate).Date && ((DateTime)d.CreatedDate).Date <= time.EndDate.Date).Count();
+
+                res.StatisticProducts.Add(new DtoStatisticProduct
+                {
+                    Devices = devices,
+                    Combos = combos,
+                    Labs = labs,
+                    Time = time.Time,
+                    StartDate = time.StartDate,
+                    EndDate = time.EndDate
+                });
+            }
+
+            return res;
         }
 
         public async Task<ResponseDTO> GetAdminStatistic(StatisticRequest request)
         {
+            var requestRange = BuildToStatisticRequestRange(request);
+
             var result = await GetStatisticBy(
-                request,
+                requestRange,
                 user => true,
                 device => true,
                 combo => true,
@@ -109,7 +126,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             ).ConfigureAwait(false);
 
             var sumOrderItems = (unitOfWork.OrderDetailRepository.Search(
-                item => (request.StartDate <= item.Order.CreateDate && item.Order.CreateDate <= request.EndDate) &&
+                item => (requestRange.StartDate <= item.Order.CreateDate && item.Order.CreateDate <= requestRange.EndDate) &&
                             item.OrderItemStatus == (int)OrderItemStatusEnum.SUCCESS_ORDER)
                 .Include(item => item.Order)
                 .Sum(item => item.Price / 1000 * item.Quantity));
@@ -117,7 +134,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var totalOrderRevenue = (sumOrderItems * ((decimal)ApplicationConst.FEE_PER_PRODUCT / 100));
 
             var packageRevenue = unitOfWork.AccountMembershipPackageRepository.Search(
-                item => request.StartDate <= item.LastPaymentDate && item.LastPaymentDate <= request.EndDate
+                item => requestRange.StartDate <= item.LastPaymentDate && item.LastPaymentDate <= requestRange.EndDate
             ).Sum(item => item.Fee);
 
             var totalRevenue = totalOrderRevenue + packageRevenue;
@@ -131,8 +148,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         {
             var loginUserId = userServices.GetLoginUserId();
 
+            var requestRange = BuildToStatisticRequestRange(request);
+
+
             var result = await GetStatisticBy(
-                request,
+                requestRange,
                 user => false,
                 device => device.CreatedBy == loginUserId,
                 combo => combo.CreatedBy == loginUserId,
@@ -141,8 +161,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             ).ConfigureAwait(false);
 
             var sumOrderItems = (unitOfWork.OrderDetailRepository.Search(
-                item => (request.StartDate <= item.Order.CreateDate && item.Order.CreateDate <= request.EndDate) &&
-                            item.OrderItemStatus == (int)OrderItemStatusEnum.SUCCESS_ORDER && 
+                item => (requestRange.StartDate <= item.Order.CreateDate && item.Order.CreateDate <= requestRange.EndDate) &&
+                            item.OrderItemStatus == (int)OrderItemStatusEnum.SUCCESS_ORDER &&
                             item.SellerId == loginUserId)
                 .Include(item => item.Order)
                 .Sum(item => item.Price / 1000 * item.Quantity));
@@ -157,9 +177,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         public async Task<ResponseDTO> GetTrainerStatistic(StatisticRequest request)
         {
             var loginUserId = userServices.GetLoginUserId();
-           
+
+            var requestRange = BuildToStatisticRequestRange(request);
+
             var result = await GetStatisticBy(
-                request,
+                requestRange,
                 user => false,
                 device => false,
                 combo => false,
@@ -168,7 +190,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             ).ConfigureAwait(false);
 
             var sumOrderItems = (unitOfWork.OrderDetailRepository.Search(
-                item => (request.StartDate <= item.Order.CreateDate && item.Order.CreateDate <= request.EndDate) &&
+                item => (requestRange.StartDate <= item.Order.CreateDate && item.Order.CreateDate <= requestRange.EndDate) &&
                             item.OrderItemStatus == (int)OrderItemStatusEnum.SUCCESS_ORDER &&
                             item.SellerId == loginUserId)
                 .Include(item => item.Order)
@@ -179,6 +201,76 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             result.TotalRevenue = revenue;
 
             return ResponseService<object>.OK(result);
+        }
+
+        public StatisticRequestRange BuildToStatisticRequestRange(StatisticRequest request)
+        {
+            var year = request.Year;
+            var month = request.Month;
+
+            var res = new StatisticRequestRange();
+
+            if (request.Month == null)
+            {
+                int currentYear = request.Year;
+                DateTime startDate = new DateTime(currentYear, 1, 1);
+                DateTime endDate = new DateTime(currentYear, 12, 31);
+
+                res = new StatisticRequestRange
+                {
+                    EndDate = endDate,
+                    StartDate = startDate
+                };
+
+                //12 months
+                for (int i = 1; i <= 12; ++i)
+                {
+                    res.TimeList.Add(BuildToDtoTimesStartEndDate(currentYear, i));
+                }
+
+                return res;
+            }
+
+
+            DateTime firstDay = new DateTime(year, (int)month, 1);
+            DateTime lastDay = new DateTime(year, (int)month, DateTime.DaysInMonth(year, (int)month));
+
+            res = new StatisticRequestRange
+            {
+                EndDate = lastDay,
+                StartDate = firstDay,
+            };
+
+            int daysInMonth = DateTime.DaysInMonth(year, (int)month);
+            DateTime currentDate = new DateTime(year, (int)month, 1);
+
+            for (int day = 1; day <= daysInMonth; day++)
+            {
+                var dateName = currentDate.ToString("yyyy-MM-dd");
+                res.TimeList.Add(new DtoTimesStartEndDate
+                {
+                    StartDate = currentDate,
+                    EndDate = currentDate,
+                    Time = dateName,
+                });
+                currentDate = currentDate.AddDays(1);
+            }
+
+            return res;
+        }
+
+        public DtoTimesStartEndDate BuildToDtoTimesStartEndDate(int year, int month)
+        {
+            DateTime firstDayOfMonth = new DateTime(year, (int)month, 1);
+            DateTime lastDayOfMonth = new DateTime(year, (int)month, DateTime.DaysInMonth(year, (int)month));
+            string monthName = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName((int)month);
+
+            return new DtoTimesStartEndDate
+            {
+                StartDate = firstDayOfMonth,
+                EndDate = lastDayOfMonth,
+                Time = monthName
+            };
         }
     }
 }
