@@ -23,5 +23,6 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         Task<GenericResponseDTO<UserRequestDetailsResponseDTO>> GetUserRequestDetailsByUserId(int userId);
         Task<GenericResponseDTO<UserRequestDetailsResponseDTO>> ApproveOrRejectRequestStatus(int requestId, string? remark, int isApprove);
         Task<GenericResponseDTO<UserRequest>> DeleteUserRequestById(int id);
+        Task<bool> SendStaffManagerEmail(string email, string password);
     }
 }

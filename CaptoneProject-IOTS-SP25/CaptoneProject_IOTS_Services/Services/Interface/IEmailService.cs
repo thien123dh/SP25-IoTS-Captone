@@ -11,8 +11,10 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
     public interface IEmailService
     {
         Task SendEmailAsync(string to, string subject, string body);
+        
+        EmailTemplate GetStaffManagerTemplate(string password, string redirectUrl, string To);
 
-        EmailTemplate GetStaffManagerOtpEmailTemplate(string otp, string redirectUrl, string To);
+        EmailTemplate GetVerifyOtpTemplate(string otp, string redirectUrl, string To);
 
         Task SendInvoiceEmailAsync(string to, string invoiceId, string senderName, string senderAddress, string senderEmail,
                                         string receiverName, string receiverProvince, string receiverDictricts, string receiverWards, string receiverAddress, List<ProductBillDTO> products, decimal totalProductPrice, decimal totalFee, decimal totalAmount);
