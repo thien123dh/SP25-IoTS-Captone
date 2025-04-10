@@ -292,7 +292,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             //Set Data
             user.Email = payload.Email;
-            user.Fullname = payload.Fullname;
+            user.Fullname = payload?.Fullname ?? "";
             user.Username = payload.Email;
             user.Phone = payload.Phone;
             user.Address = payload.Address;
