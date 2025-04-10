@@ -13,9 +13,10 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         Task<ResponseDTO> GetComboLabsPagination(int comboId, PaginationRequest paginationRequest);
         Task<ResponseDTO> GetLabPagination(LabFilterRequestDTO filterRequest,
                             PaginationRequest paginationRequest,
-                            Expression<Func<Lab, bool>>? additionalFunc = null);
+                            Expression<Func<Lab, bool>> additionalFunc);
         Task<ResponseDTO> GetCustomerManagementLabsPagination(PaginationRequest paginationRequest);
         Task<ResponseDTO> GetTrainerManagementLabsPagination(LabFilterRequestDTO filterRequest, PaginationRequest paginationRequest);
+        Task<ResponseDTO> GetManagerAdminManagementLabsPagination(PaginationRequest paginationRequest);
 
         Task<ResponseDTO> GetStoreManagementLabsPagination(int? comboId, PaginationRequest paginationRequest);
 
