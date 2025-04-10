@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
 
 namespace CaptoneProject_IOTS_API.Controllers.LabController
 {
@@ -62,9 +63,9 @@ namespace CaptoneProject_IOTS_API.Controllers.LabController
 
         [HttpPost("admin-manager-management/get-lab-pagination")]
         [Authorize]
-        public async Task<IActionResult> GetLabsPaginationAdminOrManagerManagement([FromBody] GenericPaginationRequest<LabFilterRequestDTO> payload)
+        public async Task<IActionResult> GetLabsPaginationAdminOrManagerManagement([FromBody] PaginationRequest payload)
         {
-            var res = await labService.GetLabPagination(payload.AdvancedFilter, payload.PaginationRequest);
+            var res = await labService.GetManagerAdminManagementLabsPagination(payload);
 
             return GetActionResult(res);
         }
