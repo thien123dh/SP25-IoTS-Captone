@@ -23,7 +23,7 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
             var user = await _dbSet
                 .Include(x => x.UserRoles)
                 .ThenInclude(ur => ur.Role)
-                .FirstOrDefaultAsync(x => x.Email == email);
+                .FirstOrDefaultAsync(x => x.Email == email || x.Phone == email);
             return user;
         }
 
