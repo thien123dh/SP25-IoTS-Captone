@@ -142,9 +142,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
         public async Task<ResponseDTO> GetLabPagination(LabFilterRequestDTO filterRequest,
                             PaginationRequest paginationRequest,
-                            Expression<Func<Lab, bool>> additionalFunc = null)
+                            Expression<Func<Lab, bool>> additionalFunc)
         {
             var loginUserId = userServices.GetLoginUserId();
+            var role = userServices.GetRole();
 
             Expression<Func<Lab, bool>> defaultFilter = item => (
                     (filterRequest.StoreId == null || filterRequest.StoreId == (int)item.ComboNavigation.StoreId)
@@ -226,6 +227,23 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 StoreId = store?.Id,
                 ComboId = comboId
+            }, paginationRequest, storeFilter);
+
+            return res;
+        }
+
+        public async Task<ResponseDTO> GetManagerAdminManagementLabsPagination(PaginationRequest paginationRequest)
+        {
+            var loginUserId = userServices.GetLoginUserId();
+            var role = userServices.GetRole();
+
+            if (loginUserId == null || (role != (int)RoleEnum.ADMIN && role != (int)RoleEnum.MANAGER))
+                return ResponseService<object>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
+
+            Expression<Func<Lab, bool>> storeFilter = item => true;
+
+            var res = await GetLabPagination(new LabFilterRequestDTO
+            {
             }, paginationRequest, storeFilter);
 
             return res;
