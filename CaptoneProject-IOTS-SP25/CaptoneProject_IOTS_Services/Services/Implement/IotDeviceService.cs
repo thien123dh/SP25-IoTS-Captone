@@ -210,19 +210,19 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         public async Task<GenericResponseDTO<PaginationResponseDTO<IotDeviceItem>>> GetPagination(int? filterStoreId, int? categoryFilterId, IotDeviceTypeEnum? deviceTypeFilter, PaginationRequest payload)
         {
             int? loginUserId = userServices.GetLoginUserId();
-            var isStore = await userServices.CheckLoginUserRole(RoleEnum.STORE);
-            var isAnonymousOrCustomer = (loginUserId == null) || await userServices.CheckLoginUserRole(RoleEnum.CUSTOMER);
+            var role = userServices.GetRole();
 
-            int? loginStoreId = isStore && loginUserId != null ? unitOfWork?.StoreRepository?.GetByUserId((int)loginUserId)?.Id : null;
+            var isStore = role == (int)RoleEnum.STORE;
+            var isAdminOrManager = (role == (int)RoleEnum.ADMIN || role == (int)RoleEnum.MANAGER);
+            var isAnonymousOrCustomer = (loginUserId == null) || role == (int)RoleEnum.CUSTOMER;
 
             var res = unitOfWork?.IotsDeviceRepository.GetPaginate(
-                filter: item => (item.Name.Contains(payload.SearchKeyword))
-                    && ((isStore && item.StoreId == loginStoreId) || !isStore)
-                    && ((isAnonymousOrCustomer && item.IsActive > 0) || !isAnonymousOrCustomer)
+                filter: item => item.Name.Contains(payload.SearchKeyword)
                     && (filterStoreId == null || filterStoreId == item.StoreId)
                     && ((categoryFilterId == null) || (item.CategoryId == categoryFilterId))
-                    && (deviceTypeFilter == null || (int)deviceTypeFilter == item.DeviceType),
-                orderBy: ob => ob.OrderByDescending(item => item.Rating),
+                    && (deviceTypeFilter == null || (int)deviceTypeFilter == item.DeviceType)
+                    && (isAdminOrManager || (isStore && item.CreatedBy == loginUserId) || (isAnonymousOrCustomer && item.IsActive > 0)),
+                orderBy: ob => ob.OrderByDescending(item => item.CreatedDate),
                 includeProperties: "StoreNavigation,Category",
                 pageIndex: payload.PageIndex,
                 pageSize: payload.PageSize
