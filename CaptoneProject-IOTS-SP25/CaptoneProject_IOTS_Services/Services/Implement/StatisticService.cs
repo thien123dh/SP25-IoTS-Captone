@@ -35,7 +35,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             Expression<Func<IotsDevice, bool>> deviceFilter,
             Expression<Func<Combo, bool>> comboFilter,
             Expression<Func<Lab, bool>> labFilter,
-            Expression<Func<Orders, bool>> orderFilter)
+            Expression<Func<Orders, bool>> orderFilter,
+            Expression<Func<Feedback, bool>> feedbackFilter)
         {
             var userQuery = unitOfWork.UserRepository.Search(userFilter)
                             .Include(u => u.UserRoles)
@@ -61,6 +62,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var orderQuery = unitOfWork.OrderRepository.Search(orderFilter)
                             .Include(item => item.OrderItems)
                             .Where(item => (request.StartDate <= item.CreateDate && item.CreateDate <= request.EndDate));
+
+            var feedbackQuery = unitOfWork.FeedbackRepository.Search(feedbackFilter)
+                            .Include(item => item.OrderItem)
+                            .Where(item => (request.StartDate <= item.CreatedDate && item.CreatedDate <= request.EndDate));
 
             var totalOrders = orderQuery.Count();
             var totalCashpaymentOrders = orderQuery.Where(item => item.OrderStatusId == (int)OrderStatusEnum.CASH_PAYMENT).Count();
@@ -88,6 +93,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 TotalActiveDevices = deviceQuery.Count(),
                 TotalActiveCombos = comboQuery.Count(),
                 TotalActiveLabs = labQuery.Count(),
+                TotalFeedbacks = feedbackQuery.Count(),
                 StartDate = request.StartDate,
                 EndDate = request.EndDate,
             };
@@ -122,7 +128,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 device => true,
                 combo => true,
                 lab => true,
-                order => true
+                order => true,
+                feedback => true
             ).ConfigureAwait(false);
 
             var sumOrderItems = (unitOfWork.OrderDetailRepository.Search(
@@ -157,7 +164,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 device => device.CreatedBy == loginUserId,
                 combo => combo.CreatedBy == loginUserId,
                 lab => false,
-                order => order.OrderItems.Any(oi => oi.SellerId == loginUserId)
+                order => order.OrderItems.Any(oi => oi.SellerId == loginUserId),
+                feedback => feedback.OrderItem.SellerId == loginUserId
             ).ConfigureAwait(false);
 
             var sumOrderItems = (unitOfWork.OrderDetailRepository.Search(
@@ -186,7 +194,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 device => false,
                 combo => false,
                 lab => lab.CreatedBy == loginUserId,
-                order => order.OrderItems.Any(oi => oi.SellerId == loginUserId)
+                order => order.OrderItems.Any(oi => oi.SellerId == loginUserId),
+                f => f.OrderItem.SellerId == loginUserId
             ).ConfigureAwait(false);
 
             var sumOrderItems = (unitOfWork.OrderDetailRepository.Search(

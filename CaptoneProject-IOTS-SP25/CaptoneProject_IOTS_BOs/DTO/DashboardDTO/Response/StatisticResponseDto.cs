@@ -27,9 +27,9 @@ namespace CaptoneProject_IOTS_BOs.DTO.DashboardDTO.Response
         public int TotalCustomerUsers { set; get; }
         public int TotalActiveDevices { set; get; }
         public int TotalActiveCombos { set; get; }
-
         public int TotalActiveLabs { set; get; }
         public List<DtoStatisticProduct> StatisticProducts { set; get; } = new List<DtoStatisticProduct>();
+        public int TotalFeedbacks { set; get; }
         public int TotalOrders { set; get; }
         public int TotalVnPayOrders { set; get; }
         public int TotalIncludedBadFeedbackOrders { set; get; }
