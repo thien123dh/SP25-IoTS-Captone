@@ -60,5 +60,7 @@ namespace CaptoneProject_IOTS_BOs.Models
 
         [Range(0, 10)]
         public int OrderItemStatus { set; get; } = 1;
+
+        public string? PhysicalSerialNumbers { set; get; }
     }
 }

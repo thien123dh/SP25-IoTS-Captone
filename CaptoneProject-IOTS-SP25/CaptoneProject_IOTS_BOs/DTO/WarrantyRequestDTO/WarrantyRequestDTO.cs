@@ -14,8 +14,8 @@ namespace CaptoneProject_IOTS_BOs.DTO.WarrantyRequestDTO
         public int Id { set; get; }
         public string Description { set; get; }
         public int OrderItemId { set; get; }
-
         public int OrderId { set; get; }
+        public string? OrderCode { set; get; }
         public int ProductId { set; get; }
 
         public int ProductType { set; get; }

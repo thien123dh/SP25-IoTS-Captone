@@ -12,6 +12,7 @@ using CaptoneProject_IOTS_Service.Services.Interface;
 using MailKit.Search;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using System.Data;
 using System.Linq.Expressions;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -33,11 +34,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly IWalletService walletService;
         private readonly IActivityLogService activityLogService;
 
-        public OrderService(IUserServices userServices, 
-            IVNPayService vnpayServices, 
-            IGHTKService ghtkService, 
-            IEmailService emailServices, 
-            IWalletService walletService, 
+        public OrderService(IUserServices userServices,
+            IVNPayService vnpayServices,
+            IGHTKService ghtkService,
+            IEmailService emailServices,
+            IWalletService walletService,
             IActivityLogService activityLogService)
         {
             _unitOfWork ??= new UnitOfWork();
@@ -221,7 +222,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     if (device != null)
                     {
                         device.Quantity -= item.Quantity;
-                        if (device.Quantity < 0) 
+                        if (device.Quantity < 0)
                             device.Quantity = 0; // Đảm bảo không bị âm
 
                         _unitOfWork.IotsDeviceRepository.Update(device);
@@ -235,7 +236,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     {
                         combo.Quantity -= item.Quantity;
 
-                        if (combo.Quantity < 0) 
+                        if (combo.Quantity < 0)
                             combo.Quantity = 0;
 
                         _unitOfWork.ComboRepository.Update(combo);
@@ -330,7 +331,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             };
 
             var storeNotifications = new List<Notifications>();
-            
+
             //Create notification and transaction
             try
             {
@@ -367,7 +368,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 if (storeNotifications != null)
                     _ = _unitOfWork.NotificationRepository.CreateAsync(storeNotifications);
-            } catch
+            }
+            catch
             {
 
             }
@@ -498,7 +500,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     {
                         device.Quantity -= item.Quantity;
                         if (device.Quantity < 0)
-                            device.Quantity = 0; 
+                            device.Quantity = 0;
 
                         _unitOfWork.IotsDeviceRepository.Update(device);
                     }
@@ -987,6 +989,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 var store = storeList.FirstOrDefault(s => s.OwnerId == sellerId);
                 var trainer = od?.Lab?.CreatedByNavigation;
                 var orderItemStatusId = od.OrderItemStatus;
+                var warrantyMonths = od?.IotsDevice?.WarrantyMonth ?? od?.Combo?.WarrantyMonth ?? 0;
 
                 var items = group?.Select(od => new OrderItemResponseDTO
                 {
@@ -997,6 +1000,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     ImageUrl = od?.IotsDevice?.ImageUrl ?? od?.Combo?.ImageUrl ?? od?.Lab?.ImageUrl,
                     Quantity = od.Quantity,
                     Price = od.Price,
+                    WarrantyMonths = warrantyMonths,
                     OrderItemStatus = od.OrderItemStatus,
                     WarrantyEndDate = od.WarrantyEndDate
                 });
@@ -1029,6 +1033,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             try
             {
                 var loginUserId = userServices.GetLoginUserId();
+                var role = userServices.GetRole();
+
+                var isGlobalRole = role == (int)RoleEnum.ADMIN || role == (int)RoleEnum.MANAGER || role == (int)RoleEnum.STAFF;
 
                 var paginatedOrders = _unitOfWork.OrderRepository.GetPaginate(
                     filter: orderExpress,
@@ -1058,7 +1065,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     .Where(orderItemFunc)
                     .Where(orderItem => orderItemStatusFilter == null || orderItem.OrderItemStatus == (int)orderItemStatusFilter)
                     .ToList();
-                    
+
                     res.TotalPrice = (orderItems?.Sum(o => (decimal)o.Price * o.Quantity) ?? 0) + (res?.ShippingFee ?? 0);
 
                     var orderDetailsGrouped = orderItems?
@@ -1072,18 +1079,30 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         var store = storeList.FirstOrDefault(s => s.OwnerId == sellerId);
                         var trainer = od?.Lab?.CreatedByNavigation;
                         var orderItemStatusId = od.OrderItemStatus;
+                        var warrantySerialNumbers = od.SellerId == loginUserId || isGlobalRole ? od?.PhysicalSerialNumbers?.Split("|")?.ToList() : null;
+                        var warrantyMonths = od?.IotsDevice?.WarrantyMonth ?? od?.Combo?.WarrantyMonth ?? 0;
+                        var actionDate = od.UpdatedDate;
 
-                        var items = group?.Select(od => new OrderItemResponseDTO
+                        var items = group?.Select(od =>
                         {
-                            OrderItemId = od.Id,
-                            ProductId = od?.IosDeviceId ?? od?.LabId ?? od?.ComboId,
-                            NameProduct = od?.IotsDevice?.Name ?? od?.Combo?.Name ?? od?.Lab?.Title,
-                            ProductType = od.ProductType,
-                            ImageUrl = od?.IotsDevice?.ImageUrl ?? od?.Combo?.ImageUrl ?? od?.Lab?.ImageUrl,
-                            Quantity = od.Quantity,
-                            Price = od.Price,
-                            OrderItemStatus = od.OrderItemStatus,
-                            WarrantyEndDate = od.WarrantyEndDate
+                            var warrantySerialNumbers = od.SellerId == loginUserId || isGlobalRole ? od?.PhysicalSerialNumbers?.Split("|")?.ToList() : null;
+                            var warrantyMonths = od?.IotsDevice?.WarrantyMonth ?? od?.Combo?.WarrantyMonth ?? 0;
+
+                            return new OrderItemResponseDTO
+                            {
+                                OrderItemId = od.Id,
+                                ProductId = od?.IosDeviceId ?? od?.LabId ?? od?.ComboId,
+                                NameProduct = od?.IotsDevice?.Name ?? od?.Combo?.Name ?? od?.Lab?.Title,
+                                ProductType = od.ProductType,
+                                ImageUrl = od?.IotsDevice?.ImageUrl ?? od?.Combo?.ImageUrl ?? od?.Lab?.ImageUrl,
+                                Quantity = od.Quantity,
+                                Price = od.Price,
+                                OrderItemStatus = od.OrderItemStatus,
+                                WarrantyEndDate = od.WarrantyEndDate,
+                                WarrantyMonths = warrantyMonths,
+                                PhysicalSerialNumbers = warrantySerialNumbers,
+                                UpdatedDate = actionDate
+                            };
                         });
 
                         var res = new OrderItemsGroupResponseDTO
@@ -1130,10 +1149,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             try
             {
                 var loginUserId = userServices.GetLoginUserId();
+                var role = userServices.GetRole();
+                var isGlobalRole = role == (int)RoleEnum.ADMIN || role == (int)RoleEnum.MANAGER || role == (int)RoleEnum.STAFF;
 
                 var paginatedOrders = _unitOfWork.OrderRepository.GetPaginate(
-                    filter: orderExpress,
-                    orderBy: ob => ob.OrderByDescending(item => item.CreateDate),
+                filter: orderExpress,
+                orderBy: ob => ob.OrderByDescending(item => item.CreateDate),
                     includeProperties: "OrderItems,OrderItems.IotsDevice,OrderItems.Combo,OrderItems.Lab,OrderItems.Lab.CreatedByNavigation",
                     pageIndex: payload.PageIndex,
                     pageSize: payload.PageSize
@@ -1173,19 +1194,27 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         var trainer = od?.Lab?.CreatedByNavigation;
                         var orderItemStatusId = od.OrderItemStatus;
                         var actionDate = od.UpdatedDate;
-
-                        var items = group?.Select(od => new OrderItemResponseDTO
+                        
+                        var items = group?.Select(od =>
                         {
-                            OrderItemId = od.Id,
-                            ProductId = od?.IosDeviceId ?? od?.LabId ?? od?.ComboId,
-                            NameProduct = od?.IotsDevice?.Name ?? od?.Combo?.Name ?? od?.Lab?.Title,
-                            ProductType = od.ProductType,
-                            ImageUrl = od?.IotsDevice?.ImageUrl ?? od?.Combo?.ImageUrl ?? od?.Lab?.ImageUrl,
-                            Quantity = od.Quantity,
-                            Price = od.Price,
-                            OrderItemStatus = od.OrderItemStatus,
-                            WarrantyEndDate = od.WarrantyEndDate,
-                            UpdatedDate = actionDate
+                            var warrantySerialNumbers = od.SellerId == loginUserId || isGlobalRole ? od?.PhysicalSerialNumbers?.Split("|")?.ToList() : null;
+                            var warrantyMonths = od?.IotsDevice?.WarrantyMonth ?? od?.Combo?.WarrantyMonth ?? 0;
+
+                            return new OrderItemResponseDTO
+                            {
+                                OrderItemId = od.Id,
+                                ProductId = od?.IosDeviceId ?? od?.LabId ?? od?.ComboId,
+                                NameProduct = od?.IotsDevice?.Name ?? od?.Combo?.Name ?? od?.Lab?.Title,
+                                ProductType = od.ProductType,
+                                ImageUrl = od?.IotsDevice?.ImageUrl ?? od?.Combo?.ImageUrl ?? od?.Lab?.ImageUrl,
+                                Quantity = od.Quantity,
+                                Price = od.Price,
+                                OrderItemStatus = od.OrderItemStatus,
+                                WarrantyEndDate = od.WarrantyEndDate,
+                                WarrantyMonths = warrantyMonths,
+                                PhysicalSerialNumbers = warrantySerialNumbers,
+                                UpdatedDate = actionDate
+                            };
                         });
 
                         var res = new OrderItemsGroupResponseDTO
@@ -1233,7 +1262,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (loginUserId == null || !await userServices.CheckLoginUserRole(RoleEnum.CUSTOMER))
                 return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.Unauthorize("You don't have permission to access");
 
-            Expression<Func<Orders, bool>> func = item => item.OrderBy == (int)loginUserId && item.OrderItems.Any(o => orderItemStatusFilter == null || o.OrderItemStatus == (int)orderItemStatusFilter);
+            Expression<Func<Orders, bool>> func = item => item.OrderBy == (int)loginUserId && item.OrderItems.Any(o => orderItemStatusFilter == null || o.OrderItemStatus == (int)orderItemStatusFilter)
+                                                   && (item.ApplicationSerialNumber.Contains(payload.SearchKeyword));
 
             var pagination = await GetOrdersPagination(
                 payload,
@@ -1259,7 +1289,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.Unauthorize("You don't have permission to access");
 
             Expression<Func<Orders, bool>> func =
-                item => item.OrderItems.Any(item => item.SellerId == loginUserId && (orderItemStatusFilter == null || (int)orderItemStatusFilter == item.OrderItemStatus));
+                item => item.OrderItems.Any(item => item.SellerId == loginUserId && (orderItemStatusFilter == null || (int)orderItemStatusFilter == item.OrderItemStatus))
+                        && (item.ApplicationSerialNumber.Contains(payload.SearchKeyword));
 
             var pagination = await GetOrdersStoreAndTrainerPagination(
                 payload,
@@ -1281,7 +1312,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.Unauthorize("You don't have permission to access");
 
             Expression<Func<Orders, bool>> func =
-                item => (orderItemStatusFilter == null || item.OrderItems.Any(o => o.OrderItemStatus == (int)orderItemStatusFilter));
+                item => (orderItemStatusFilter == null || item.OrderItems.Any(o => o.OrderItemStatus == (int)orderItemStatusFilter))
+                        && (item.ApplicationSerialNumber.Contains(payload.SearchKeyword));
 
             var pagination = await GetOrdersPagination(
                 payload,
@@ -1452,7 +1484,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
-        public async Task<ResponseDTO> UpdateOrderDetailToPacking(int updateOrderId)
+        public async Task<ResponseDTO> UpdateOrderDetailToPacking(int updateOrderId,
+            CreateOrderWarrantyInfo request)
         {
             try
             {
@@ -1471,6 +1504,24 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     return ResponseService<List<OrderResponseToStoreDTO>>.BadRequest("Your Order Status must be pending before packing. Please try again");
 
                 var response = await UpdateSellerGroupOrderItemStatus(updateOrderId, OrderItemStatusEnum.PACKING);
+
+                if (request != null)
+                {
+                    var orderItemIds = request?.OrderProductInfo?.Select(item => item.OrderItemId).ToList();
+
+                    var orderItemsToUpdate = _unitOfWork.OrderDetailRepository
+                        .Search(item => (orderItemIds != null) && item.SellerId == loginUserId && item.OrderId == updateOrderId && orderItemIds.Any(o => o == item.Id)).ToList();
+
+                    foreach (var item in orderItemsToUpdate)
+                    {
+                        var serialNumbers = request?.OrderProductInfo?.Where(p => p.OrderItemId == item.Id);
+
+                        if (serialNumbers != null)
+                            item.PhysicalSerialNumbers = String.Join("|", serialNumbers);
+                    }
+
+                    await _unitOfWork.OrderDetailRepository.UpdateAsync(orderItemsToUpdate);
+                }
 
                 return response;
             }
@@ -1660,8 +1711,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     return ResponseService<object>.Unauthorize(ExceptionMessage.INVALID_PERMISSION);
 
                 var numberOfCancelled = _unitOfWork.OrderRepository
-                    .Search(item => item.OrderStatusId == (int)OrderStatusEnum.CANCELLED 
-                    && item.OrderBy == loginUserId 
+                    .Search(item => item.OrderStatusId == (int)OrderStatusEnum.CANCELLED
+                    && item.OrderBy == loginUserId
                     && item.CreateDate.Date == DateTime.Now.Date).Count();
 
                 if (numberOfCancelled > MAX_CANCELLED_PER_DAYS)
