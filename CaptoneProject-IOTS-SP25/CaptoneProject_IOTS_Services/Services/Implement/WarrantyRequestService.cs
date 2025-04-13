@@ -65,6 +65,16 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 var orderItem = unitOfWork.OrderDetailRepository.GetById(request.OrderItemId);
 
+                var order = unitOfWork.OrderRepository.GetById(request.OrderItemId);
+
+                var serialNumberList = orderItem?.PhysicalSerialNumbers?.Split("|");
+
+                var ValidPhysicalSerialNumber = serialNumberList?.Any(s => s == request.IdentifySerialNumber) ?? false;
+
+                if (!ValidPhysicalSerialNumber)
+                {
+                    return ResponseService<WarrantyRequestResponseDTO>.BadRequest($"The Product S/N {request.IdentifySerialNumber} cannot be found. Please contact to store");
+                }
                 if (orderItem == null)
                 {
                     return ResponseService<WarrantyRequestResponseDTO>.BadRequest("Order cannot be found. Please try again");
@@ -112,7 +122,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var res = GenericMapper<WarrantyRequest, WarrantyRequestResponseDTO>.MapTo(source);
 
             res.OrderId = source.OrderItem.OrderId;
-
+            res.OrderCode = source.OrderItem.Order?.ApplicationSerialNumber;
             res.ProductType = source.OrderItem.ProductType;
 
             var orderItem = source.OrderItem;
@@ -141,6 +151,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     .Include(item => item.OrderItem)
                     .ThenInclude(o => o.Combo)
                     .Include(item => item.CreatedByNavigation)
+                    .Include(item => item.OrderItem)
+                    .ThenInclude(item => item.Order)
                     .SingleOrDefault(item => item.Id == id);
 
             if (warranty == null)
@@ -178,7 +190,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var pagination = unitOfWork.WarrantyRequestRepository.GetPaginate(
                 filter: func,
                 orderBy: ob => ob.OrderByDescending(item => item.CreatedDate),
-                includeProperties: "OrderItem,OrderItem.IotsDevice,OrderItem.Lab,OrderItem.Combo,CreatedByNavigation",
+                includeProperties: "OrderItem,OrderItem.IotsDevice,OrderItem.Lab,OrderItem.Combo,CreatedByNavigation,OrderItem.Order",
                 pageIndex: request.PageIndex,
                 pageSize: request.PageSize
             );

@@ -24,9 +24,8 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         public Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetOrderByStoreOrTrainerPagination(PaginationRequest payload, OrderItemStatusEnum? orderItemStatusFilter = null);
         public Task<ResponseDTO> UpdateOnlinePaymentOrderDetailToCancel(int orderId, CreateRefundRequestDTO request);
         public Task<ResponseDTO> UpdateCashpaymentOrderDetailToCancel(int orderId);
-        public Task<ResponseDTO> UpdateOrderDetailToPacking(int updateOrderId);
+        public Task<ResponseDTO> UpdateOrderDetailToPacking(int updateOrderId, CreateOrderWarrantyInfo request);
         public Task<ResponseDTO> UpdateOrderDetailToDelivering(int updateOrderId);
-
         public Task<ResponseDTO> UpdateOrderDetailToSuccess(int updateOrderId);
         public Task<ResponseDTO> UpdateOrderDetailToPendingToFeedback(int updateOrderId, int sellerId);
         public Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetAdminOrdersPagination(PaginationRequest payload, OrderItemStatusEnum? orderItemStatusFilter = null);

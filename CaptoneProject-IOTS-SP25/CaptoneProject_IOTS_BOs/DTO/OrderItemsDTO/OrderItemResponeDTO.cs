@@ -40,8 +40,12 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO
 
         public DateTime? WarrantyEndDate { set; get; } = null;
 
+        public int WarrantyMonths { set; get; }
+
         public DateTime? UpdatedDate { set; get; }
         public int OrderItemStatus { set; get; } = 1;
+
+        public List<string>? PhysicalSerialNumbers { set; get; }
     }
 
     public class OrderItemsGroupResponseDTO
@@ -52,6 +56,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO
         public int SellerRole { set; get; }
         public virtual string SellerRoleName => this.SellerRole == (int)RoleEnum.STORE ? "Store" : "Trainer";
         public string TrackingId { get; set; }
+        public int WarrantyMonths { set; get; }
         public int? OrderItemStatus { set; get; }
         public decimal? TotalAmount { set; get; }
         public List<OrderItemResponseDTO>? Items { get; set; }

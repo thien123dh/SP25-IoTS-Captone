@@ -95,7 +95,7 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
         }
 
         [HttpPost("create-cash-payment-order")]
-        public async Task<IActionResult> UpdateOrderDetailToPackingByStoreId([FromBody] OrderRequestDTO payload)
+        public async Task<IActionResult> CreateCashPaymentOrder([FromBody] OrderRequestDTO payload)
         {
             var result = await _orderService.CreateCashPaymentOrder(payload);
 
@@ -108,9 +108,10 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
         }
 
         [HttpPost("order-status/packing/{orderId}")]
-        public async Task<IActionResult> UpdateOrderDetailToPackingByStoreId(int orderId)
+        public async Task<IActionResult> UpdateOrderDetailToPackingByStoreId(int orderId,
+            [FromBody] CreateOrderWarrantyInfo payload)
         {
-            var result = await _orderService.UpdateOrderDetailToPacking(orderId);
+            var result = await _orderService.UpdateOrderDetailToPacking(orderId, payload);
 
             if (result.IsSuccess)
             {
