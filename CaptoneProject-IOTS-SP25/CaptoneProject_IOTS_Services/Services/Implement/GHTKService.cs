@@ -22,6 +22,7 @@ using System.Threading.Tasks;
 using System.Web;
 using System.Linq;
 using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
+using static CaptoneProject_IOTS_BOs.Constant.ProductConst;
 
 namespace CaptoneProject_IOTS_Service.Services.Implement
 {
@@ -55,6 +56,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     .Where(item => item.CreatedBy == loginUserId && item.IsSelected)
                     .Include(item => item.IosDeviceNavigation)
                     .Include(item => item.ComboNavigation)
+                    .Where(item => item.ProductType != (int)ProductTypeEnum.LAB)
                     .ToListAsync();
 
                 if (selectedItems == null || !selectedItems.Any())
@@ -63,25 +65,25 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 }
 
                 ////////////////////////////////////////////////// Information Customer////////////////////////////////////////////////////////////////////////////
-                var provincesCustomer = await SyncProvincesAsync();
+                var provincesCustomer = await SyncProvincesAsync().ConfigureAwait(false);
                 var provinceCustomer = provincesCustomer.FirstOrDefault(p => p.Id == requestModel.ProvinceId);
                 if (provinceCustomer == null)
                     return new List<ShippingFeeResponse> { new ShippingFeeResponse { Message = "Invalid Province ID" } };
                 var ProvinceNameCustomer = provinceCustomer?.Name ?? "Not found";
 
-                var districtsCustomer = await SyncDistrictsAsync(requestModel.ProvinceId);
+                var districtsCustomer = await SyncDistrictsAsync(requestModel.ProvinceId).ConfigureAwait(false);
                 var districtCustomer = districtsCustomer.FirstOrDefault(d => d.Id == requestModel.DistrictId);
                 if (districtCustomer == null)
                     return new List<ShippingFeeResponse> { new ShippingFeeResponse { Message = "Invalid District ID" } };
                 var DistrictNameCustomer = districtCustomer?.Name ?? "Not found";
 
-                var wardsCustomer = await SyncWardsAsync(requestModel.DistrictId);
+                var wardsCustomer = await SyncWardsAsync(requestModel.DistrictId).ConfigureAwait(false);
                 var wardCustomer = wardsCustomer.FirstOrDefault(w => w.Id == requestModel.WardId);
                 if (wardCustomer == null)
                     return new List<ShippingFeeResponse> { new ShippingFeeResponse { Message = "Invalid Ward ID" } };
                 var WardNameCustomer = wardCustomer?.Name ?? "Not found";
 
-                var list_addressCustomer = await SyncAddressAsync(requestModel.WardId);
+                var list_addressCustomer = await SyncAddressAsync(requestModel.WardId).ConfigureAwait(false);
                 var addressNameCustomer = list_addressCustomer.FirstOrDefault(w => w.Id == requestModel.AddressId);
                 if (addressNameCustomer == null)
                     return new List<ShippingFeeResponse> { new ShippingFeeResponse { Message = "Invalid Address ID" } };
@@ -105,32 +107,42 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 List<ShippingFeeResponse> shippingFees = new List<ShippingFeeResponse>();
 
+                var ownerIds = groupedShops.Select(g => g.ShopOwner).ToList();
+
+                var storeList = _unitOfWork.StoreRepository
+                        .Search(s => (ownerIds != null) && (ownerIds.Any(id => id == s.OwnerId))).ToList();
+                        //.Select(s => new { s.Address, s.ProvinceId, s.DistrictId, s.AddressId, s.WardId, s.Name });
+                        //.FirstOrDefaultAsync();
+
                 foreach (var shopGroup in groupedShops)
                 {
                     var shopOwner = shopGroup.ShopOwner;
                     var totalWeight = shopGroup.TotalWeight * 1000;
                     var totalPrice = (int)shopGroup.TotalPrice;
-                    var shopAddress = await _unitOfWork.StoreRepository
-                        .GetQueryable()
-                        .Where(s => s.OwnerId == shopOwner)
-                        .Select(s => new { s.Address, s.ProvinceId, s.DistrictId, s.AddressId, s.WardId, s.Name })
-                        .FirstOrDefaultAsync();
+
+                    //var shopAddress = await _unitOfWork.StoreRepository
+                    //    .GetQueryable()
+                    //    .Where(s => s.OwnerId == shopOwner)
+                    //    .Select(s => new { s.Address, s.ProvinceId, s.DistrictId, s.AddressId, s.WardId, s.Name, s.OwnerId })
+                    //    .FirstOrDefaultAsync();
+
+                    var shopAddress = storeList.FirstOrDefault(s => s.OwnerId == shopOwner);
 
                     if (shopAddress == null) continue;
 
-                    var provincesStore = await SyncProvincesAsync();
+                    var provincesStore = await SyncProvincesAsync().ConfigureAwait(false);
                     var provinceStore = provincesStore.FirstOrDefault(p => p.Id == shopAddress.ProvinceId);
                     var ProvinceNameStore = provinceStore?.Name ?? "Not found";
 
-                    var districtsStore = await SyncDistrictsAsync(shopAddress.ProvinceId);
+                    var districtsStore = await SyncDistrictsAsync(shopAddress.ProvinceId).ConfigureAwait(false);
                     var districtStore = districtsStore.FirstOrDefault(d => d.Id == shopAddress.DistrictId);
                     var districtNameStore = districtStore?.Name ?? "Not found";
 
-                    var wardsStore = await SyncWardsAsync(shopAddress.DistrictId);
+                    var wardsStore = await SyncWardsAsync(shopAddress.DistrictId).ConfigureAwait(false);
                     var wardStore = wardsStore.FirstOrDefault(w => w.Id == shopAddress.WardId);
                     var wardnameStore = wardStore?.Name ?? "Not found";
 
-                    var addressesStore = await SyncAddressAsync(shopAddress.WardId);
+                    var addressesStore = await SyncAddressAsync(shopAddress.WardId).ConfigureAwait(false);
                     var addressStore = addressesStore.FirstOrDefault(w => w.Id == shopAddress.AddressId);
                     var addressNameStore = addressStore?.Name ?? "Not found";
 
@@ -152,7 +164,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
                     request.Headers.Add("Token", token);
 
-                    var response = await _httpClient.SendAsync(request);
+                    var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
+
+                    //Delay 1000s
+                    await Task.Delay(1000).ConfigureAwait(false);
+
                     if (!response.IsSuccessStatusCode)
                     {
                         shippingFees.Add(new ShippingFeeResponse { ShopOwnerId = shopOwner, Message = "Unable to get shipping fee" });

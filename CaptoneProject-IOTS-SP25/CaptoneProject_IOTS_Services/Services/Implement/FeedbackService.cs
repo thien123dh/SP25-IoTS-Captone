@@ -86,7 +86,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             if (!checkValidation.IsSuccess)
                 return checkValidation;
-
+            
             var sellerWalletUpdateRequest = new List<UpdateUserWalletRequestDTO>();
 
             Dictionary<int, decimal> sellerWalletUpdateRequestMap = new Dictionary<int, decimal>();
