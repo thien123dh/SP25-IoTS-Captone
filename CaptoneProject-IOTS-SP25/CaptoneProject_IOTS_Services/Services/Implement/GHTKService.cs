@@ -166,9 +166,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                     var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
 
-                    //Delay 1000s
-                    await Task.Delay(1000).ConfigureAwait(false);
-
                     if (!response.IsSuccessStatusCode)
                     {
                         shippingFees.Add(new ShippingFeeResponse { ShopOwnerId = shopOwner, Message = "Unable to get shipping fee" });
