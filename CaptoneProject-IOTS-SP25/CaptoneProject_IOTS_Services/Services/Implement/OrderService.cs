@@ -1067,6 +1067,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     .ToList();
 
                     res.TotalPrice = (orderItems?.Sum(o => (decimal)o.Price * o.Quantity) ?? 0) + (res?.ShippingFee ?? 0);
+                    res.SellerActualAmount = res.TotalPrice * ((decimal)90 / 100);
 
                     var orderDetailsGrouped = orderItems?
                     .GroupBy(od => od.SellerId)
@@ -1182,6 +1183,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     .ToList();
 
                     res.TotalPrice = (orderItems?.Sum(o => (decimal)o.Price * o.Quantity) ?? 0) + (res?.ShippingFee ?? 0);
+                    res.SellerActualAmount = res.TotalPrice * ((decimal)90 / 100);
 
                     var orderDetailsGrouped = orderItems?.GroupBy(od => od.SellerId)
                     .Select(group =>
@@ -1514,7 +1516,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                     foreach (var item in orderItemsToUpdate)
                     {
-                        var serialNumbers = request?.OrderProductInfo?.Where(p => p.OrderItemId == item.Id);
+                        var serialNumbers = request?.OrderProductInfo?.Where(p => p.OrderItemId == item.Id).ToList();
 
                         if (serialNumbers != null)
                             item.PhysicalSerialNumbers = String.Join("|", serialNumbers);

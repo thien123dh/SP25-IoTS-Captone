@@ -14,6 +14,7 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderDTO
 
         public decimal TotalPrice { set; get; } = 0;
 
+        public decimal SellerActualAmount { set; get; } = 0;
         public string Address { set; get; } = "";
 
         public string ContactNumber { set; get; } = "";
