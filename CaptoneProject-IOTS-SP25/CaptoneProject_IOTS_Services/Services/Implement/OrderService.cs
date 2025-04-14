@@ -201,7 +201,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     Quantity = item.Quantity,
                     ProductType = item.IosDeviceNavigation != null ? (int)ProductTypeEnum.IOT_DEVICE :
                                   item.ComboNavigation != null ? (int)ProductTypeEnum.COMBO :
-                                  item.LabNavigation != null ? (int)ProductTypeEnum.LAB : throw new Exception("Invalid product type"),
+                                  item.LabNavigation != null ? (int)ProductTypeEnum.LAB : 0,
                     IosDeviceId = item.IosDeviceNavigation?.Id,
                     ComboId = item.ComboNavigation?.Id,
                     LabId = item.LabNavigation?.Id,
@@ -1516,10 +1516,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                     foreach (var item in orderItemsToUpdate)
                     {
-                        var serialNumbers = request?.OrderProductInfo?.Where(p => p.OrderItemId == item.Id).ToList();
+                        var serialNumbers = request?.OrderProductInfo?.FirstOrDefault(p => p.OrderItemId == item.Id);
 
-                        if (serialNumbers != null)
-                            item.PhysicalSerialNumbers = String.Join("|", serialNumbers);
+                        if (serialNumbers?.PhysicalSerialNumber != null)
+                            item.PhysicalSerialNumbers = String.Join("|", serialNumbers.PhysicalSerialNumber);
                     }
 
                     await _unitOfWork.OrderDetailRepository.UpdateAsync(orderItemsToUpdate);
