@@ -13,6 +13,7 @@ using CaptoneProject_IOTS_Service.Services.Interface;
 using MailKit.Net.Imap;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.Identity.Client.AppConfig;
 using OtpNet;
 using System;
 using System.Collections.Generic;
@@ -101,7 +102,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             userRequest.Email = payload.Email;
             userRequest.RoleId = payload.RoleId;
 
-            if (payload.UserRequestStatus == (int) UserRequestConstant.UserRequestStatusEnum.PENDING_TO_VERIFY_OTP)
+            var isExistUser = userRepository.Search(u => u.IsActive == 1 && u.Email == payload.Email).Any();
+
+            if (isExistUser)
+            {
+                return ResponseService<UserRequestResponseDTO>.BadRequest("User Email already used. Please try another email");
+            }
+
+            if (payload.UserRequestStatus == (int)UserRequestConstant.UserRequestStatusEnum.PENDING_TO_VERIFY_OTP)
             {
                 string otp = GenerateOTP();
 
@@ -109,7 +117,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 userRequest.ExpiredDate = DateTime.Now.AddMinutes(OTP_EXPIRED_MINUTES);
             }
-
             if (userRequest.Id > 0) //Update
             {
                 userRequest.ActionDate = DateTime.Now;
