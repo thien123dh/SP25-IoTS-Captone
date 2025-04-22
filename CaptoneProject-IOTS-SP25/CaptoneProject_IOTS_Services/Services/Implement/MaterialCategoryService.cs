@@ -45,6 +45,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var loginUserId = loginUser.Id;
 
+            
 
             if (materialCategory == null)
                 return ResponseService<Object>.NotFound(ExceptionMessage.MATERIAL_CATEGORY_NOTFOUND);
@@ -60,11 +61,23 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 MaterialCategory? response;
 
-                if (id > 0) //Update
+                if (id > 0) // Update
+                {
                     response = _unitOfWork.MaterialCategoryRepository.Update(materialCategory);
-                else //Create
-                    response = _unitOfWork.MaterialCategoryRepository.Create(materialCategory);
+                }
+                else // Create
+                {
+                    // 👇 Check if a category with the same label already exists
+                    bool isDuplicate = _unitOfWork.MaterialCategoryRepository
+                        .Any(x => x.Label.ToLower() == payload.Label.ToLower());
 
+                    if (isDuplicate)
+                    {
+                        return ResponseService<Object>.BadRequest("Category label already exists");
+                    }
+
+                    response = _unitOfWork.MaterialCategoryRepository.Create(materialCategory);
+                }
                 return await GetByMaterialCategoryId(response.Id);
             }
             catch (Exception ex)
