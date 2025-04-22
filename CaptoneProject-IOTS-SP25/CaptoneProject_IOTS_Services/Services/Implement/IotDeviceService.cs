@@ -135,8 +135,20 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 if (id > 0) //Update
                     saveDevice = unitOfWork.IotsDeviceRepository.Update(saveDevice);
                 else
-                    saveDevice = unitOfWork.IotsDeviceRepository.Create(saveDevice);
+                {
+                    // Check duplicate label within the same store
+                    bool isDuplicate = unitOfWork.IotsDeviceRepository.Any(x =>
+                        x.StoreId == payload.StoreId &&
+                        x.Name.Trim().ToLower() == payload.Name.Trim().ToLower());
 
+                    if (isDuplicate)
+                    {
+                        return ResponseService<IotDeviceDetailsDTO>.BadRequest("IOT Devices already exists in this store.");
+                    }
+
+                    saveDevice = unitOfWork.IotsDeviceRepository.Create(saveDevice);
+                }
+                    
                 //Create or update attachments
                 var res = await attachmentsService.CreateOrUpdateAttachments(saveDevice.Id,
                     (int)EntityTypeEnum.IOT_DEVICE,

@@ -37,5 +37,10 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
                 .Where(device => device.CreatedBy == creatorId)
                 .ToListAsync();
         }
+
+        public bool Any(Expression<Func<IotsDevice, bool>> predicate)
+        {
+            return _dbSet.Any(predicate);
+        }
     }
 }
