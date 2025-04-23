@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -28,6 +29,11 @@ namespace CaptoneProject_IOTS_Repository.Repository.Implement
             return await _dbSet
                 .Where(combo => combo.CreatedBy == creatorId)
                 .ToListAsync();
+        }
+
+        public bool Any(Expression<Func<Combo, bool>> predicate)
+        {
+            return _dbSet.Any(predicate);
         }
     }
 }
