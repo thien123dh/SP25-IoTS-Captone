@@ -228,7 +228,19 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 if (id > 0) //Update
                     saveCombo = unitOfWork.ComboRepository.Update(saveCombo);
                 else
+                {
+                    // Check duplicate label within the same store
+                    bool isDuplicate = unitOfWork.IotsDeviceRepository.Any(x =>
+                        loginUserId == saveCombo.CreatedBy &&
+                        x.Name.Trim().ToLower() == payload.Name.Trim().ToLower());
+
+                    if (isDuplicate)
+                    {
+                        return ResponseService<ComboDetailsResponseDTO>.BadRequest("Combo already exists in this store.");
+                    }
                     saveCombo = unitOfWork.ComboRepository.Create(saveCombo);
+                }
+                    
 
                 var res = await attachmentsService.CreateOrUpdateAttachments(saveCombo.Id,
                     (int)EntityTypeEnum.IOT_DEVICE_COMBO,
