@@ -138,7 +138,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 {
                     // Check duplicate label within the same store
                     bool isDuplicate = unitOfWork.IotsDeviceRepository.Any(x =>
-                        x.StoreId == saveDevice.CreatedBy &&
+                        loginUserId == saveDevice.CreatedBy &&
                         x.Name.Trim().ToLower() == payload.Name.Trim().ToLower());
 
                     if (isDuplicate)
