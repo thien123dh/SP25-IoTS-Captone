@@ -178,9 +178,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             };
             if (vnp_ResponseCode == "00" && transactionStatus == "00")
             {
-                await _userService.UpdateUserStatus(userId, 1);
+                //await _userService.UpdateUserStatus(userId, 1);
                 await _walletService.CreateTransactionUserWallet(createTransactionPayment);
-
             }
             else
             {
