@@ -89,7 +89,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                     unitOfWork.OrderDetailRepository.Update(orderItem);
 
-                    _ = walletService.UpdateUserWalletWithTransactionAsync([updateWalletModel]);
+                    _ = walletService.UpdateUserWalletOrderTransactionAsync([updateWalletModel]);
 
                     _ = unitOfWork.NotificationRepository.Create(notifications);
 
