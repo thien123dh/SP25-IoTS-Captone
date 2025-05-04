@@ -76,7 +76,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 lab.ApplicationSerialNumber = GetApplicationSerialNumber((int)loginUserId, lab.SerialNumber);
 
                 var checkedExist = unitOfWork.LabRepository
-                    .Search(item => item.ApplicationSerialNumber == lab.ApplicationSerialNumber)
+                    .Search(item => item.ApplicationSerialNumber == lab.ApplicationSerialNumber && item.Id != labId)
                     .Any();
 
                 if (checkedExist)
