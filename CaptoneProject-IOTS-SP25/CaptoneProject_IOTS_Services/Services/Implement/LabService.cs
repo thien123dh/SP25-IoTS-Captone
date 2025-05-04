@@ -16,6 +16,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.OData.ModelBuilder;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using static CaptoneProject_IOTS_BOs.Constant.EntityTypeConst;
 using static CaptoneProject_IOTS_BOs.Constant.ProductConst;
@@ -279,6 +280,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             bool isStore = loginUserRoles?.Count(i => i.Id == (int)RoleEnum.STORE) > 0;
             bool isTrainer = loginUserRoles?.Count(i => i.Id == (int)RoleEnum.TRAINER) > 0;
             bool isCustomer = loginUserRoles?.Count(i => i.Id == (int)RoleEnum.CUSTOMER) > 0;
+            bool isAdminOrManager = loginUserRoles.Any(r => r.Id == (int)RoleEnum.ADMIN) || loginUserRoles.Any(r => r.Id == (int)RoleEnum.MANAGER);
 
             var lab = unitOfWork.LabRepository.GetById(labId);
 
@@ -302,6 +304,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 ).Any();
 
                 return doCustomerBuyLab;
+            }
+            else if (isAdminOrManager)
+            {
+                return true;
             }
 
             return false;
