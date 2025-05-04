@@ -1787,7 +1787,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     ActionDate = DateTime.Now,
                     CreatedBy = loginUserId,
                     CreatedDate = DateTime.Now,
-                    Amount = order.TotalPrice + (order?.ShippingFee ?? 0),
+                    Amount = order.TotalPrice,
                     OrderId = orderId
                 };
 

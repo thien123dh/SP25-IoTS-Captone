@@ -61,7 +61,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                     var totalAmount = ((report?.OrderItem?.Price ?? 0) * (report?.OrderItem?.Quantity ?? 0));
 
-                    totalAmount = (totalAmount - totalAmount * ((decimal)ApplicationConst.FEE_PER_PRODUCT / 100)) / 1000; 
+                    totalAmount = (totalAmount * (((decimal)100 - ApplicationConst.FEE_PER_PRODUCT) / 100)) / 1000; 
 
                     var sellerId = orderItem?.SellerId;
 

@@ -15,6 +15,8 @@ namespace CaptoneProject_IOTS_Service
     {
         public virtual AccountMembershipPackageRepository AccountMembershipPackageRepository => new AccountMembershipPackageRepository();
         public virtual UserRepository UserRepository => new UserRepository();
+
+        public virtual UserRequestRepository UserRequestRepository => new UserRequestRepository();
         public virtual MaterialCategoryRepository MaterialCategoryRepository => new MaterialCategoryRepository();
         public virtual MembershipPackageRepository MembershipPackageRepository => new MembershipPackageRepository();
         public virtual IotsDeviceRepository IotsDeviceRepository => new IotsDeviceRepository();

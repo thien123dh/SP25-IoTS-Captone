@@ -2,20 +2,13 @@
 using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.UserDTO;
-using CaptoneProject_IOTS_BOs.DTO.UserRequestDTO;
-using CaptoneProject_IOTS_BOs.DTO.WalletDTO;
 using CaptoneProject_IOTS_BOs.Models;
-using CaptoneProject_IOTS_Repository.Repository.Implement;
 using CaptoneProject_IOTS_Service.Mapper;
 using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using System.Net;
-using System.Security.Claims;
 using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
-using static CaptoneProject_IOTS_BOs.Constant.UserRequestConstant;
-using static CaptoneProject_IOTS_BOs.DTO.StoreDTO.StoreDTO;
 
 namespace CaptoneProject_IOTS_Service.Services.Implement
 {
@@ -88,7 +81,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             int? loginUserId = GetLoginUserId();
 
             if (loginUserId == null)
-                return 
+                return
                 new GenericResponseDTO<UserResponseDTO>
                 {
                     IsSuccess = false,
@@ -107,7 +100,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     Data = UserMapper.mapToUserResponse(user)
                 };
 
-                
+
         }
         public async Task<GenericResponseDTO<UserResponseDTO>> UpdateUserStatus(int userId, int isActive)
         {
@@ -185,6 +178,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             try
             {
                 var token = _tokenGenerator.GenerateToken(user);
+                var userRequest = unitOfWork.UserRequestRepository.Search(u => u.Email == user.Email).FirstOrDefault();
+
+                var userRequestStatus = userRequest?.Status ?? 0;
 
                 return ResponseService<Object>.OK(new
                 {
@@ -197,12 +193,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     user.Address,
                     user.Phone,
                     user.IsActive,
+                    userRequestStatus,
                 });
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return ResponseService<Object>.Unauthorize(ex.Message);
             }
-            
+
         }
 
         public async Task<GenericResponseDTO<UserDetailsResponseDTO>> GetUserDetailsById(int id)
@@ -280,7 +278,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return ResponseService<Object>
                 .OK(PaginationMapper<User, UserResponseDTO>.MapTo(UserMapper.mapToUserResponse, source: response));
         }
-        
+
         //set id = 0 to create new
         public async Task<GenericResponseDTO<UserResponseDTO>> CreateOrUpdateUser(int id, CreateUserDTO payload, int isActive)
         {
@@ -447,7 +445,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             try
             {
                 user = unitOfWork.UserRepository.Update(user);
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 return ResponseService<UserResponseDTO>.BadRequest("Cannot update user profile. Please try again");
             }
