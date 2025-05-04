@@ -17,6 +17,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
     public interface IOrderService
     {
         public Task<GenericResponseDTO<OrderReturnPaymentVNPayDTO>> CreateOrder(int? id, OrderRequestDTO payload, string returnUrl);
+        public Task<GenericResponseDTO<OrderReturnPaymentVNPayDTO>> CreateOrderByMobile(int? id, OrderRequestDTO payload);
         public Task<GenericResponseDTO<OrderReturnPaymentDTO>> CheckOrderSuccessfull(int? id, VNPayRequestDTO dto);
         public Task<ResponseDTO> CreateCashPaymentOrder(OrderRequestDTO payload);
         public Task<GenericResponseDTO<PaginationResponseDTO<OrderResponseDTO>>> GetOrdersByUserPagination(PaginationRequest payload, OrderItemStatusEnum? orderItemStatusFilter = null);

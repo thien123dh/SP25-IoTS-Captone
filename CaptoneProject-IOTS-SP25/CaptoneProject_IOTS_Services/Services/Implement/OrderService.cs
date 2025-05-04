@@ -1902,5 +1902,225 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 return ResponseService<List<OrderResponseToStoreDTO>>.BadRequest("Cannot cancel orders. Please try again.");
             }
         }
+
+        public async Task<GenericResponseDTO<OrderReturnPaymentVNPayDTO>> CreateOrderByMobile(int? id, OrderRequestDTO payload)
+        {
+            try
+            {
+                var loginUser = userServices.GetLoginUser();
+
+                if (loginUser == null || !await userServices.CheckLoginUserRole(RoleEnum.CUSTOMER))
+                    return ResponseService<OrderReturnPaymentVNPayDTO>.Unauthorize("You don't have permission to access");
+
+                var loginUserId = loginUser.Id;
+
+                var address = payload.Address;
+                var contactPhone = payload.ContactNumber;
+                var notes = payload.Notes;
+                if (address.Length > 70)
+                {
+                    throw new ArgumentException("Address cannot exceed 70 characters.");
+                }
+
+                if (!Regex.IsMatch(contactPhone, @"^0\d{9}$"))
+                {
+                    throw new ArgumentException("Contact phone must be a 10-digit number starting with 0.");
+                }
+
+                if (notes.Length > 100)
+                {
+                    throw new ArgumentException("Notes cannot exceed 100 characters.");
+                }
+
+                var provinces = await _ghtkService.SyncProvincesAsync();
+                var province = provinces.FirstOrDefault(p => p.Id == payload.ProvinceId);
+                if (province == null)
+                    return ResponseService<OrderReturnPaymentVNPayDTO>.BadRequest("Invalid Province ID");
+
+                var districts = await _ghtkService.SyncDistrictsAsync(payload.ProvinceId);
+                var district = districts.FirstOrDefault(d => d.Id == payload.DistrictId);
+                if (district == null)
+                    return ResponseService<OrderReturnPaymentVNPayDTO>.BadRequest("Invalid District ID");
+
+                var wards = await _ghtkService.SyncWardsAsync(payload.DistrictId);
+                var ward = wards.FirstOrDefault(w => w.Id == payload.WardId);
+                if (ward == null)
+                    return ResponseService<OrderReturnPaymentVNPayDTO>.BadRequest("Invalid Ward ID");
+
+                var addresses = await _ghtkService.SyncAddressAsync(payload.WardId);
+                var addressid = addresses.FirstOrDefault(w => w.Id == payload.AddressId);
+                if (addressid == null)
+                    return ResponseService<OrderReturnPaymentVNPayDTO>.BadRequest("Invalid Address ID");
+
+                // Get the list of selected products in the cart
+                var selectedItems = await _unitOfWork.CartRepository
+                    .GetQueryable((int)loginUserId)
+                    .Where(item => item.CreatedBy == loginUserId && item.IsSelected)
+                    .Include(item => item.IosDeviceNavigation)
+                    .Include(item => item.ComboNavigation)
+                    .Include(item => item.LabNavigation)
+                    .ToListAsync();
+
+                if (selectedItems == null || !selectedItems.Any())
+                {
+                    return new GenericResponseDTO<OrderReturnPaymentVNPayDTO>
+                    {
+                        IsSuccess = false,
+                        Message = "The cart is empty or no products have been selected.",
+                        Data = null
+                    };
+                }
+
+                var totalPrice = selectedItems.Sum(item =>
+                    (((item.IosDeviceNavigation?.Price ?? 0m) * item.Quantity) + ((item.ComboNavigation?.Price ?? 0m) * item.Quantity)
+                    + ((item.LabNavigation?.Price ?? 0m) * item.Quantity)
+                    )
+                );
+
+                if (totalPrice <= 0)
+                {
+                    return new GenericResponseDTO<OrderReturnPaymentVNPayDTO>
+                    {
+                        IsSuccess = false,
+                        Message = "Invalid order value.",
+                        Data = null
+                    };
+                }
+
+                foreach (var item in selectedItems)
+                {
+                    if (item.IosDeviceNavigation != null)
+                    {
+                        var device = await _unitOfWork.IotsDeviceRepository.GetByIdAsync(item.IosDeviceNavigation.Id);
+                        if (device == null || device.Quantity < item.Quantity)
+                        {
+                            return new GenericResponseDTO<OrderReturnPaymentVNPayDTO>
+                            {
+                                IsSuccess = false,
+                                Message = $"Product {device?.Name ?? "Unknown"} is out of stock.",
+                                Data = null
+                            };
+                        }
+                    }
+                    if (item.ComboNavigation != null)
+                    {
+                        var combo = await _unitOfWork.ComboRepository.GetByIdAsync(item.ComboNavigation.Id);
+                        if (combo == null || combo.Quantity < item.Quantity)
+                        {
+                            return new GenericResponseDTO<OrderReturnPaymentVNPayDTO>
+                            {
+                                IsSuccess = false,
+                                Message = $"Combo {combo?.Name ?? "Unknown"} is out of stock.",
+                                Data = null
+                            };
+                        }
+                    }
+                }
+
+                var shippingFees = await _ghtkService.GetShippingFeeAsync(new ShippingFeeRequest
+                {
+                    ProvinceId = payload.ProvinceId,
+                    DistrictId = payload.DistrictId,
+                    WardId = payload.WardId,
+                    AddressId = payload.AddressId,
+                    Address = payload.Address,
+                    deliver_option = payload.deliver_option
+                });
+
+                var totalShippingFee = shippingFees.FirstOrDefault(f => f.ShopOwnerId == -1)?.Fee ?? 0m;
+
+                var finalTotalPrice = totalPrice + totalShippingFee;
+
+                var orderInfo = new OrderInfo
+                {
+                    Address = address,
+                    ContactNumber = contactPhone,
+                    Notes = notes,
+                    ProvinceId = province.Id,
+                    DistrictId = district.Id,
+                    WardId = ward.Id,
+                    AddressId = addressid.Id,
+                    deliver_option = payload.deliver_option
+                };
+
+                string vnp_ReturnUrl = "https://fe-capstone-io-ts.vercel.app/checkout-process-order";
+                string vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
+                string vnp_TmnCode = "PJLU0FHO";
+                string vnp_HashSecret = "4RY7BQN7ED5YFS7YR4TS3YONAJPGYYFL";
+
+                // Convert orderInfo to JSON
+                string orderInfoJson = JsonConvert.SerializeObject(orderInfo);
+                Console.WriteLine("OrderInfo JSON: " + orderInfoJson);
+
+                // Encode to Base64
+                string encryptedOrderInfo = Convert.ToBase64String(Encoding.UTF8.GetBytes(orderInfoJson));
+                Console.WriteLine("Encoded OrderInfo (Base64): " + encryptedOrderInfo);
+                if (orderInfoJson.Length > 255) // VNPay may have a 255-character limit
+                {
+                    Console.WriteLine("OrderInfo is too long, needs to be shortened!");
+                }
+                // Decode back to verify
+                try
+                {
+                    string decodedOrderInfo = Encoding.UTF8.GetString(Convert.FromBase64String(encryptedOrderInfo));
+                    Console.WriteLine("Decoded OrderInfo: " + decodedOrderInfo);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error when decoding Base64: " + ex.Message);
+                }
+
+                if (string.IsNullOrEmpty(vnp_TmnCode) || string.IsNullOrEmpty(vnp_HashSecret))
+                {
+                    throw new Exception("Merchant code or secret key is missing.");
+                }
+
+                // Generate transaction reference number
+                var vnp_TxnRef = $"{loginUserId}{DateTime.Now:yyyyMMddHHmmssfff}{new Random().Next(1000, 9999)}";
+
+                long vnp_Amount = (long)(finalTotalPrice * 100);
+                if (finalTotalPrice <= 0)
+                {
+                    return new GenericResponseDTO<OrderReturnPaymentVNPayDTO>
+                    {
+                        IsSuccess = false,
+                        Message = "Invalid order value.",
+                        Data = null
+                    };
+                }
+
+                var vnpay = new VnPayLibrary();
+                vnpay.AddRequestData("vnp_Version", "2.1.0");
+                vnpay.AddRequestData("vnp_Command", "pay");
+                vnpay.AddRequestData("vnp_TmnCode", vnp_TmnCode);
+                vnpay.AddRequestData("vnp_Amount", vnp_Amount.ToString());
+                TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+                DateTime vietnamTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
+                vnpay.AddRequestData("vnp_CreateDate", vietnamTime.AddMinutes(-20).ToString("yyyyMMddHHmmss"));
+                vnpay.AddRequestData("vnp_CurrCode", "VND");
+                vnpay.AddRequestData("vnp_IpAddr", Utils.GetIpAddress());
+                vnpay.AddRequestData("vnp_Locale", "vn");
+                vnpay.AddRequestData("vnp_OrderInfo", encryptedOrderInfo);
+                vnpay.AddRequestData("vnp_OrderType", "order");
+                vnpay.AddRequestData("vnp_ReturnUrl", vnp_ReturnUrl);
+                vnpay.AddRequestData("vnp_TxnRef", vnp_TxnRef);
+                vnpay.AddRequestData("vnp_ExpireDate", vietnamTime.AddMinutes(5).ToString("yyyyMMddHHmmss"));
+                string paymentUrl = vnpay.CreateRequestUrl(vnp_Url, vnp_HashSecret);
+
+                return new GenericResponseDTO<OrderReturnPaymentVNPayDTO>
+                {
+                    IsSuccess = true,
+                    Message = "Order created successfully, please proceed with payment.",
+                    Data = new OrderReturnPaymentVNPayDTO
+                    {
+                        PaymentUrl = paymentUrl
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"An error occurred during payment: {ex.Message}");
+            }
+        }
     }
 }
