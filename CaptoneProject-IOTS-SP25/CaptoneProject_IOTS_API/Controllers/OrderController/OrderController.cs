@@ -40,6 +40,17 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
             return Ok(result);
         }
 
+        [HttpPost("create-order-by-mobile")]
+        public async Task<IActionResult> CreateOrderByMobile([FromBody] OrderRequestDTO payload)
+        {
+            var result = await _orderService.CreateOrderByMobile(null, payload);
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
         [HttpPost("check-order-success")]
         public async Task<IActionResult> CheckOrderSuccess([FromBody] VNPayRequestDTO dto)
         {
