@@ -163,7 +163,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 if (updatedOrderItems != null)
                     await unitOfWork.OrderDetailRepository.UpdateAsync(updatedOrderItems);
 
-                _ = walletService.UpdateUserWalletWithTransactionAsync(updateWalletRequest).ConfigureAwait(false);
+                _ = walletService.UpdateUserWalletOrderTransactionAsync(updateWalletRequest, order.ApplicationSerialNumber).ConfigureAwait(false);
 
                 _ = unitOfWork.FeedbackRepository.CreateAsync(feedbackList);
 

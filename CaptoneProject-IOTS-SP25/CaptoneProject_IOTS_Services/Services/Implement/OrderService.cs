@@ -1200,7 +1200,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         
                         var items = group?.Select(od =>
                         {
-                            var warrantySerialNumbers = od.SellerId == loginUserId || isGlobalRole ? od?.PhysicalSerialNumbers?.Split("|")?.ToList() : null;
+                            var warrantySerialNumbers = (od.SellerId == loginUserId || od.OrderId == loginUserId) || isGlobalRole ? od?.PhysicalSerialNumbers?.Split("|")?.ToList() : null;
                             var warrantyMonths = od?.IotsDevice?.WarrantyMonth ?? od?.Combo?.WarrantyMonth ?? 0;
 
                             return new OrderItemResponseDTO

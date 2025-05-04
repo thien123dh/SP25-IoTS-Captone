@@ -190,7 +190,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return ResponseService<Wallet>.OK(wallet);
         }
 
-        public async Task<ResponseDTO> UpdateUserWalletWithTransactionAsync(List<UpdateUserWalletRequestDTO> request)
+        public async Task<ResponseDTO> UpdateUserWalletOrderTransactionAsync(List<UpdateUserWalletRequestDTO> request, string? orderCode = null)
         {
             try
             {
@@ -236,7 +236,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                             Amount = item.Amount,
                             CurrentBallance = wallet?.Ballance,
                             Description = $"You have received {item.Amount} gold",
-                            TransactionType = TransactionTypeEnum.SUCCESS_ORDER,
+                            TransactionType = TransactionTypeEnum.SUCCESS_ORDER + (orderCode == null ? "" : " " + orderCode),
                             Status = "Success"
                         };
 
