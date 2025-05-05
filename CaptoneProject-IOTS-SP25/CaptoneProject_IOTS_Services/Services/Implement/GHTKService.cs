@@ -322,7 +322,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 foreach (var shopGroup in groupedShops)
                 {
                     var shopOwner = shopGroup.ShopOwner;
-                    var totalWeight = shopGroup.TotalWeight * 1000;
+                    var totalWeight = (int)shopGroup.TotalWeight;
                     var totalPrice = (int)shopGroup.TotalPrice;
 
                     var shopAddress = await _unitOfWork.StoreRepository
@@ -354,9 +354,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         products = shopGroup.Items.Select(item => new
                         {
                             name = $"SP{item.IosDeviceNavigation?.Name ?? item.ComboNavigation?.Name}",
-                            weight = $"{((item.IosDeviceNavigation?.Weight ?? item.ComboNavigation?.Weight) ?? 0)}",
-                            quantity = $"{item.Quantity}",
-                            price = $"{(int)(item.IosDeviceNavigation?.Price ?? item.ComboNavigation?.Price)}",
+                            weight = (int)totalWeight,
+                            quantity = (int)item.Quantity,
+                            price = (int)totalPrice,
                             product_code = $"SP{item.Id}"
                         }).ToList(),
                         order = new
