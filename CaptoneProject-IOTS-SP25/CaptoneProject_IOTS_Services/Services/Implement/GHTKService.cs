@@ -266,6 +266,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     .Where(item => item.CreatedBy == loginUserId && item.IsSelected)
                     .Include(item => item.IosDeviceNavigation)
                     .Include(item => item.ComboNavigation)
+                    .Where(item => item.ProductType != (int)ProductTypeEnum.LAB)
                     .ToListAsync();
 
                 if (selectedItems == null || !selectedItems.Any())
@@ -305,10 +306,13 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     {
                         ShopOwner = group.Key,
                         TotalWeight = group.Sum(item =>
-                        ((item.IosDeviceNavigation?.Weight ?? item.ComboNavigation?.Weight) ?? 0) * item.Quantity),
+                        {
+                            if (item.ComboNavigation != null)
+                                return 1 * item.Quantity;
+                            return (item.IosDeviceNavigation?.Weight ?? 0) * item.Quantity;
+                        }),
                         TotalPrice = group.Sum(item =>
-                        (((item.IosDeviceNavigation?.Price ?? item.ComboNavigation?.Price) ?? 0) * item.Quantity)
-                    ),
+                            ((item.IosDeviceNavigation?.Price ?? item.ComboNavigation?.Price) ?? 0) * item.Quantity),
                         Items = group.ToList()
                     })
                     .ToList();
