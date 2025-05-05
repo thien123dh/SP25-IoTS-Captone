@@ -309,7 +309,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         {
                             if (item.ComboNavigation != null)
                                 return 1 * item.Quantity;
-                            return (item.IosDeviceNavigation?.Weight ?? 0) * item.Quantity;
+                            return ((item.IosDeviceNavigation?.Weight ?? 0) * item.Quantity)*10;
                         }),
                         TotalPrice = group.Sum(item =>
                             ((item.IosDeviceNavigation?.Price ?? item.ComboNavigation?.Price) ?? 0) * item.Quantity),
@@ -322,7 +322,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 foreach (var shopGroup in groupedShops)
                 {
                     var shopOwner = shopGroup.ShopOwner;
-                    var totalWeight = (int)shopGroup.TotalWeight;
+                    var totalWeight = shopGroup.TotalWeight;
                     var totalPrice = (int)shopGroup.TotalPrice;
 
                     var shopAddress = await _unitOfWork.StoreRepository
@@ -354,7 +354,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         products = shopGroup.Items.Select(item => new
                         {
                             name = $"SP{item.IosDeviceNavigation?.Name ?? item.ComboNavigation?.Name}",
-                            weight = (int)totalWeight,
+                            weight = totalWeight,
                             quantity = (int)item.Quantity,
                             price = (int)totalPrice,
                             product_code = $"SP{item.Id}"
