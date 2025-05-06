@@ -382,6 +382,127 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             };
         }
 
+        public async Task<GenericResponseDTO<OrderReturnPaymentDTO>> CheckOrderSuccessfullByMobile(int? id, VNPayRequestDTO dto)
+        {
+            string vnpayData = dto.urlResponse.Split("?")[1];
+            VnPayLibrary vnpay = new VnPayLibrary();
+            foreach (string s in vnpayData.Split("&"))
+            {
+                var parts = s.Split("=");
+                if (parts.Length >= 2 && parts[0].StartsWith("vnp_"))
+                {
+                    vnpay.AddResponseData(parts[0], parts[1]);
+                }
+            }
+
+            string vnp_ResponseCode = vnpay.GetResponseData("vnp_ResponseCode");
+            string vnp_TransactionStatus = vnpay.GetResponseData("vnp_TransactionStatus");
+            string encodedOrderInfo = vnpay.GetResponseData("vnp_OrderInfo");
+            string txn_ref = vnpay.GetResponseData("vnp_TxnRef");
+
+            // Không cần kiểm tra quyền truy cập nữa, chỉ cần xử lý thanh toán
+            if (vnp_ResponseCode != "00" || vnp_TransactionStatus != "00")
+            {
+                return new GenericResponseDTO<OrderReturnPaymentDTO>
+                {
+                    IsSuccess = false,
+                    Message = "Payment Fails.",
+                    Data = null
+                };
+            }
+
+            // Xử lý dữ liệu orderInfo từ vnp_OrderInfo
+            string address = "", contactPhone = "", notes = "";
+            int provinceId = 0, districtId = 0, wardId = 0, addressId = 0;
+            string deliver_option = "";
+
+            if (!string.IsNullOrEmpty(encodedOrderInfo))
+            {
+                try
+                {
+                    string decodedUrl = HttpUtility.UrlDecode(encodedOrderInfo);
+                    byte[] data = Convert.FromBase64String(decodedUrl);
+                    string jsonString = Encoding.UTF8.GetString(data);
+                    var orderInfo = JsonConvert.DeserializeObject<OrderInfo>(jsonString);
+
+                    address = orderInfo?.Address ?? "";
+                    addressId = orderInfo?.AddressId ?? 0;
+                    contactPhone = orderInfo?.ContactNumber ?? "";
+                    notes = orderInfo?.Notes ?? "";
+                    provinceId = orderInfo?.ProvinceId ?? 0;
+                    districtId = orderInfo?.DistrictId ?? 0;
+                    wardId = orderInfo?.WardId ?? 0;
+                    deliver_option = orderInfo?.deliver_option ?? "";
+                }
+                catch (FormatException)
+                {
+                    Console.WriteLine("Invalid Base64 format for vnp_OrderInfo. Using raw value.");
+                }
+            }
+            decimal totalAmount = (Convert.ToInt64(vnpay.GetResponseData("vnp_Amount")) / 100);
+            TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            DateTime vietnamTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
+
+            // Tạo đơn hàng mới sau khi thanh toán thành công
+            var createTransactionPayment = new Orders
+            {
+                ApplicationSerialNumber = txn_ref,
+                OrderStatusId = (int)OrderStatusEnum.PENDING_TO_ORDER,
+                TotalPrice = totalAmount,
+                Address = address,
+                ProvinceId = provinceId,
+                DistrictId = districtId,
+                WardId = wardId,
+                AddressId = addressId,
+                ContactNumber = contactPhone,
+                Notes = notes,
+                CreateDate = vietnamTime,
+                CreatedBy = 4,
+                UpdatedBy = 4,
+                OrderBy = 4,
+            };
+
+            _unitOfWork.OrderRepository.Create(createTransactionPayment);
+            await _unitOfWork.OrderRepository.SaveAsync();
+            
+
+            var orderReturnPaymentDTO = new OrderReturnPaymentDTO
+            {
+                PaymentUrl = "The order has been successfully paid.",
+                ApplicationSerialNumber = createTransactionPayment.ApplicationSerialNumber,
+                TotalPrice = createTransactionPayment.TotalPrice,
+                Address = createTransactionPayment.Address,
+                ContactNumber = createTransactionPayment.ContactNumber,
+                Notes = createTransactionPayment.Notes,
+                CreateDate = createTransactionPayment.CreateDate,
+                OrderStatusId = createTransactionPayment.OrderStatusId
+            };
+
+            var provinces = await _ghtkService.SyncProvincesAsync();
+            var province = provinces.FirstOrDefault(p => p.Id == createTransactionPayment.ProvinceId);
+            orderReturnPaymentDTO.ProvinceName = province?.Name ?? "Not found";
+
+            var districts = await _ghtkService.SyncDistrictsAsync(createTransactionPayment.ProvinceId);
+            var district = districts.FirstOrDefault(d => d.Id == createTransactionPayment.DistrictId);
+            orderReturnPaymentDTO.DistrictName = district?.Name ?? "Not found";
+
+            var wards = await _ghtkService.SyncWardsAsync(createTransactionPayment.DistrictId);
+            var ward = wards.FirstOrDefault(w => w.Id == createTransactionPayment.WardId);
+            orderReturnPaymentDTO.WardName = ward?.Name ?? "Not found";
+
+            // Nếu địa chỉ có sẵn từ wardId, bạn có thể lấy tên địa chỉ như sau:
+            var list_address = await _ghtkService.SyncAddressAsync(createTransactionPayment.WardId);
+            var addressName = list_address.FirstOrDefault(w => w.Id == createTransactionPayment.AddressId);
+            orderReturnPaymentDTO.AddressName = addressName?.Name ?? "Not found";
+
+            return new GenericResponseDTO<OrderReturnPaymentDTO>
+            {
+                IsSuccess = true,
+                Data = orderReturnPaymentDTO
+            };
+        }
+
+
         public async Task<ResponseDTO> CreateCashPaymentOrder(OrderRequestDTO payload)
         {
             var loginUser = userServices.GetLoginUser();
@@ -2043,7 +2164,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     deliver_option = payload.deliver_option
                 };
 
-                string vnp_ReturnUrl = "https://fe-capstone-io-ts.vercel.app/checkout-process-order";
+                string vnp_ReturnUrl = "https://localhost:44346/checkout-process-order-by-mobile";
                 string vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
                 string vnp_TmnCode = "PJLU0FHO";
                 string vnp_HashSecret = "4RY7BQN7ED5YFS7YR4TS3YONAJPGYYFL";
