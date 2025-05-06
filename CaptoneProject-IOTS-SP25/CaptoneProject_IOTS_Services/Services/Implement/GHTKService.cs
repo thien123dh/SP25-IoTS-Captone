@@ -903,5 +903,391 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             }
         }
 
+        public async Task<List<ShipmentResponse>> CreateShipmentByMobileAsync(ShippingRequestByMobile requestModel)
+        {
+            try
+            {
+                var token = _configuration["GHTK:Token"];
+                var baseUrl = "https://services-staging.ghtklab.com";
+                var url = $"{baseUrl}/services/shipment/order/";
+
+                var loginUser = await _unitOfWork.UserRepository.GetUserById(requestModel.UserId);
+
+                var loginUserId = loginUser.Id;
+
+                // Lấy danh sách sản phẩm trong giỏ hàng theo từng store
+                var selectedItems = await _unitOfWork.CartRepository
+                    .GetQueryable((int)loginUserId)
+                    .Where(item => item.CreatedBy == loginUserId && item.IsSelected)
+                    .Include(item => item.IosDeviceNavigation)
+                    .Include(item => item.ComboNavigation)
+                    .Where(item => item.ProductType != (int)ProductTypeEnum.LAB)
+                    .ToListAsync();
+
+                if (selectedItems == null || !selectedItems.Any())
+                {
+                    return new List<ShipmentResponse> { new ShipmentResponse { Message = "The cart is empty or no products have been selected." } };
+                }
+
+                ////////////////////////////////////////////////// Information Customer////////////////////////////////////////////////////////////////////////////
+
+                var provincesCustomer = await SyncProvincesAsync();
+                var provinceCustomer = provincesCustomer.FirstOrDefault(p => p.Id == requestModel.ProvinceId);
+                if (provinceCustomer == null)
+                    return new List<ShipmentResponse> { new ShipmentResponse { Message = "Invalid Province ID" } };
+                var ProvinceNameCustomer = provinceCustomer?.Name ?? "Not found";
+
+                var districtsCustomer = await SyncDistrictsAsync(requestModel.ProvinceId);
+                var districtCustomer = districtsCustomer.FirstOrDefault(d => d.Id == requestModel.DistrictId);
+                if (districtCustomer == null)
+                    return new List<ShipmentResponse> { new ShipmentResponse { Message = "Invalid District ID" } };
+                var DistrictNameCustomer = districtCustomer?.Name ?? "Not found";
+
+                var wardsCustomer = await SyncWardsAsync(requestModel.DistrictId);
+                var wardCustomer = wardsCustomer.FirstOrDefault(w => w.Id == requestModel.WardId);
+                if (wardCustomer == null)
+                    return new List<ShipmentResponse> { new ShipmentResponse { Message = "Invalid WardId ID" } };
+                var WardNameCustomer = wardCustomer?.Name ?? "Not found";
+
+                var list_addressCustomer = await SyncAddressAsync(requestModel.WardId);
+                var addressNameCustomer = list_addressCustomer.FirstOrDefault(w => w.Id == requestModel.AddressId);
+                if (addressNameCustomer == null)
+                    return new List<ShipmentResponse> { new ShipmentResponse { Message = "Invalid Address ID" } };
+                var AddressNameCustomer = addressNameCustomer?.Name ?? "Not found";
+
+
+                var groupedShops = selectedItems.GroupBy(item => item.SellerId)
+                    .Select(group => new
+                    {
+                        ShopOwner = group.Key,
+                        TotalWeight = group.Sum(item =>
+                        {
+                            if (item.ComboNavigation != null)
+                                return 1 * item.Quantity;
+                            return ((item.IosDeviceNavigation?.Weight ?? 0) * item.Quantity) * 10;
+                        }),
+                        TotalPrice = group.Sum(item =>
+                            ((item.IosDeviceNavigation?.Price ?? item.ComboNavigation?.Price) ?? 0) * item.Quantity),
+                        Items = group.ToList()
+                    })
+                    .ToList();
+
+                List<ShipmentResponse> shipments = new List<ShipmentResponse>();
+
+                foreach (var shopGroup in groupedShops)
+                {
+                    var shopOwner = shopGroup.ShopOwner;
+                    var totalWeight = shopGroup.TotalWeight;
+                    var totalPrice = (int)shopGroup.TotalPrice;
+
+                    var shopAddress = await _unitOfWork.StoreRepository
+                        .GetQueryable()
+                        .Where(s => s.OwnerId == shopOwner)
+                        .Select(s => new { s.Address, s.ProvinceId, s.DistrictId, s.AddressId, s.WardId, s.Name, s.ContactNumber })
+                        .FirstOrDefaultAsync();
+
+                    if (shopAddress == null) continue;
+
+                    var provincesStore = await SyncProvincesAsync();
+                    var provinceStore = provincesStore.FirstOrDefault(p => p.Id == shopAddress.ProvinceId);
+                    var ProvinceNameStore = provinceStore?.Name ?? "Not found";
+
+                    var districtsStore = await SyncDistrictsAsync(shopAddress.ProvinceId);
+                    var districtStore = districtsStore.FirstOrDefault(d => d.Id == shopAddress.DistrictId);
+                    var districtNameStore = districtStore?.Name ?? "Not found";
+
+                    var wardsStore = await SyncWardsAsync(shopAddress.DistrictId);
+                    var wardStore = wardsStore.FirstOrDefault(w => w.Id == shopAddress.WardId);
+                    var wardnameStore = wardStore?.Name ?? "Not found";
+
+                    var addressesStore = await SyncAddressAsync(shopAddress.WardId);
+                    var addressStore = addressesStore.FirstOrDefault(w => w.Id == shopAddress.AddressId);
+                    var addressNameStore = addressStore?.Name ?? "Not found";
+
+                    var requestData = new
+                    {
+                        products = shopGroup.Items.Select(item => new
+                        {
+                            name = $"SP{item.IosDeviceNavigation?.Name ?? item.ComboNavigation?.Name}",
+                            weight = totalWeight,
+                            quantity = (int)item.Quantity,
+                            price = (int)totalPrice,
+                            product_code = $"SP{item.Id}"
+                        }).ToList(),
+                        order = new
+                        {
+                            id = $"{Guid.NewGuid()}",
+                            pick_name = $"{shopAddress.Name}",
+                            pick_address = $"{addressNameStore}",
+                            pick_province = $"{ProvinceNameStore}",
+                            pick_district = $"{districtNameStore}",
+                            pick_ward = $"{wardnameStore}",
+                            pick_tel = $"{shopAddress.ContactNumber}",
+
+                            name = $"{loginUser.Fullname}",
+                            address = $"{AddressNameCustomer}",
+                            province = $"{ProvinceNameCustomer}",
+                            district = $"{DistrictNameCustomer}",
+                            ward = $"{WardNameCustomer}",
+                            street = $"{requestModel.Address}",
+                            tel = $"{loginUser.Phone}",
+                            email = $"{loginUser.Email}",
+                            hamlet = "Khác",
+
+                            is_freeship = 1,
+                            pick_money = 0,
+                            note = $"{requestModel.note}",
+                            value = (int)totalPrice
+                        }
+                    };
+
+                    var jsonPayload = Newtonsoft.Json.JsonConvert.SerializeObject(requestData, Newtonsoft.Json.Formatting.Indented);
+
+                    Console.WriteLine($"Request Payload:\n{jsonPayload}");
+
+                    if (!_httpClient.DefaultRequestHeaders.Contains("Token"))
+                    {
+                        _httpClient.DefaultRequestHeaders.Add("Token", token);
+                    }
+
+                    var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+                    var response = await _httpClient.PostAsync(url, content);
+                    var responseContent = await response.Content.ReadAsStringAsync();
+
+                    Console.WriteLine($"GHTK API Response: {responseContent}");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var responseJson = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(responseContent);
+                        var trackingId = responseJson?.order?.tracking_id?.ToString() ?? "Unknown";
+
+                        shipments.Add(new ShipmentResponse
+                        {
+                            ShopOwnerId = shopOwner,
+                            Message = "Shipment created successfully",
+                            TrackingId = trackingId
+                        });
+                    }
+                    else
+                    {
+                        shipments.Add(new ShipmentResponse
+                        {
+                            ShopOwnerId = shopOwner,
+                            Message = $"Error: {response.StatusCode} - {responseContent}"
+                        });
+                    }
+                }
+
+                return shipments;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception: {ex.Message}");
+                return new List<ShipmentResponse> { new ShipmentResponse { Message = "System error" } };
+            }
+        }
+
+        public async Task<List<ShippingFeeResponse>> GetShippingFeeByMobileAsync(ShippingFeeRequestByMobile requestModel)
+        {
+            try
+            {
+                var loginUser = await _unitOfWork.UserRepository.GetUserById(requestModel.UserId);
+
+                var loginUserId = loginUser.Id;
+                // Get the list of selected products in the cart
+                var selectedItems = await _unitOfWork.CartRepository
+                    .GetQueryable((int)loginUserId)
+                    .Where(item => item.CreatedBy == loginUserId && item.IsSelected)
+                    .Include(item => item.IosDeviceNavigation)
+                    .Include(item => item.ComboNavigation)
+                    .Where(item => item.ProductType != (int)ProductTypeEnum.LAB)
+                    .ToListAsync();
+
+                if (selectedItems == null || !selectedItems.Any())
+                {
+                    return new List<ShippingFeeResponse> { new ShippingFeeResponse { Message = "The cart is empty or no products have been selected." } };
+                }
+
+                ////////////////////////////////////////////////// Information Customer////////////////////////////////////////////////////////////////////////////
+                var provincesCustomer = await SyncProvincesAsync().ConfigureAwait(false);
+                var provinceCustomer = provincesCustomer.FirstOrDefault(p => p.Id == requestModel.ProvinceId);
+                if (provinceCustomer == null)
+                    return new List<ShippingFeeResponse> { new ShippingFeeResponse { Message = "Invalid Province ID" } };
+                var ProvinceNameCustomer = provinceCustomer?.Name ?? "Not found";
+
+                var districtsCustomer = await SyncDistrictsAsync(requestModel.ProvinceId).ConfigureAwait(false);
+                var districtCustomer = districtsCustomer.FirstOrDefault(d => d.Id == requestModel.DistrictId);
+                if (districtCustomer == null)
+                    return new List<ShippingFeeResponse> { new ShippingFeeResponse { Message = "Invalid District ID" } };
+                var DistrictNameCustomer = districtCustomer?.Name ?? "Not found";
+
+                var wardsCustomer = await SyncWardsAsync(requestModel.DistrictId).ConfigureAwait(false);
+                var wardCustomer = wardsCustomer.FirstOrDefault(w => w.Id == requestModel.WardId);
+                if (wardCustomer == null)
+                    return new List<ShippingFeeResponse> { new ShippingFeeResponse { Message = "Invalid Ward ID" } };
+                var WardNameCustomer = wardCustomer?.Name ?? "Not found";
+
+                var list_addressCustomer = await SyncAddressAsync(requestModel.WardId).ConfigureAwait(false);
+                var addressNameCustomer = list_addressCustomer.FirstOrDefault(w => w.Id == requestModel.AddressId);
+                if (addressNameCustomer == null)
+                    return new List<ShippingFeeResponse> { new ShippingFeeResponse { Message = "Invalid Address ID" } };
+                var AddressNameCustomer = addressNameCustomer?.Name ?? "Not found";
+
+                var groupedShops = selectedItems.GroupBy(item => item.SellerId)
+                    .Select(group => new
+                    {
+                        ShopOwner = group.Key, // ID của shop
+                        TotalWeight = group.Sum(item =>
+                        ((item.IosDeviceNavigation?.Weight ?? item.ComboNavigation?.Weight) ?? 0) * item.Quantity),
+                        TotalPrice = group.Sum(item =>
+                        ((item.IosDeviceNavigation?.Price ?? item.ComboNavigation?.Price) ?? 0) * item.Quantity
+                    ),
+                        Items = group.ToList()
+                    })
+                    .ToList();
+
+                var token = _configuration["GHTK:Token"];
+                var baseUrl = "https://services-staging.ghtklab.com/services/shipment/fee";
+
+                List<ShippingFeeResponse> shippingFees = new List<ShippingFeeResponse>();
+
+                var ownerIds = groupedShops.Select(g => g.ShopOwner).ToList();
+
+                var storeList = _unitOfWork.StoreRepository
+                        .Search(s => (ownerIds != null) && (ownerIds.Any(id => id == s.OwnerId))).ToList();
+                //.Select(s => new { s.Address, s.ProvinceId, s.DistrictId, s.AddressId, s.WardId, s.Name });
+                //.FirstOrDefaultAsync();
+
+                foreach (var shopGroup in groupedShops)
+                {
+                    var shopOwner = shopGroup.ShopOwner;
+                    var totalWeight = shopGroup.TotalWeight * 1000;
+                    var totalPrice = (int)shopGroup.TotalPrice;
+
+                    //var shopAddress = await _unitOfWork.StoreRepository
+                    //    .GetQueryable()
+                    //    .Where(s => s.OwnerId == shopOwner)
+                    //    .Select(s => new { s.Address, s.ProvinceId, s.DistrictId, s.AddressId, s.WardId, s.Name, s.OwnerId })
+                    //    .FirstOrDefaultAsync();
+
+                    var shopAddress = storeList.FirstOrDefault(s => s.OwnerId == shopOwner);
+
+                    if (shopAddress == null) continue;
+
+                    var provincesStore = await SyncProvincesAsync().ConfigureAwait(false);
+                    var provinceStore = provincesStore.FirstOrDefault(p => p.Id == shopAddress.ProvinceId);
+                    var ProvinceNameStore = provinceStore?.Name ?? "Not found";
+
+                    var districtsStore = await SyncDistrictsAsync(shopAddress.ProvinceId).ConfigureAwait(false);
+                    var districtStore = districtsStore.FirstOrDefault(d => d.Id == shopAddress.DistrictId);
+                    var districtNameStore = districtStore?.Name ?? "Not found";
+
+                    var wardsStore = await SyncWardsAsync(shopAddress.DistrictId).ConfigureAwait(false);
+                    var wardStore = wardsStore.FirstOrDefault(w => w.Id == shopAddress.WardId);
+                    var wardnameStore = wardStore?.Name ?? "Not found";
+
+                    var addressesStore = await SyncAddressAsync(shopAddress.WardId).ConfigureAwait(false);
+                    var addressStore = addressesStore.FirstOrDefault(w => w.Id == shopAddress.AddressId);
+                    var addressNameStore = addressStore?.Name ?? "Not found";
+
+                    var fullAddressStore = $"{shopAddress.Address ?? ""}, {addressNameStore ?? ""}".Trim();
+
+                    var queryParams = $"?address={(requestModel.Address)}" +
+                                      $"&province={Uri.EscapeDataString(ProvinceNameCustomer)}" +
+                                      $"&district={Uri.EscapeDataString(DistrictNameCustomer)}" +
+                                      $"&address={Uri.EscapeDataString(AddressNameCustomer)}" +
+                                      $"&pick_province={Uri.EscapeDataString(ProvinceNameStore)}" +
+                                      $"&pick_district={Uri.EscapeDataString(districtNameStore)}" +
+                                      $"&pick_address={Uri.EscapeDataString(fullAddressStore)}" +
+                                      $"&weight={totalWeight}" +
+                                      $"&value={totalPrice}" +
+                                      $"&deliver_option={requestModel.deliver_option}";
+
+                    var requestUrl = baseUrl + queryParams;
+
+                    var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+                    request.Headers.Add("Token", token);
+
+                    var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        shippingFees.Add(new ShippingFeeResponse { ShopOwnerId = shopOwner, Message = "Unable to get shipping fee" });
+                        continue;
+                    }
+
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var feeData = JsonConvert.DeserializeObject<GHTKResponse>(responseContent);
+
+                    if (feeData?.Fee == null)
+                    {
+                        shippingFees.Add(new ShippingFeeResponse { ShopOwnerId = shopOwner, Message = "No shipping cost data available" });
+                        continue;
+                    }
+
+                    shippingFees.Add(new ShippingFeeResponse
+                    {
+                        ShopOwnerId = shopOwner,
+                        Fee = feeData.Fee.Fee,
+                        InsuranceFee = feeData.Fee.InsuranceFee,
+                        ShipFeeOnly = feeData.Fee.ShipFeeOnly,
+                        Message = $"Shipping Fee from Store {shopAddress.Name}"
+                    });
+                }
+
+                var totalFee = shippingFees.Sum(fee => fee.Fee);
+                var totalInsuranceFee = shippingFees.Sum(fee => fee.InsuranceFee);
+                var totalFeeOnly = shippingFees.Sum(fee => fee.ShipFeeOnly);
+
+                if (totalFee == 0)
+                {
+                    return new List<ShippingFeeResponse>
+                        {
+                            new ShippingFeeResponse
+                            {
+                            ShopOwnerId = -1,
+                            Fee = 50000,
+                            InsuranceFee = totalInsuranceFee,
+                            ShipFeeOnly = totalFeeOnly,
+                            Message = "Total Shipping Fee"
+                            }
+                        };
+                }
+                else if (totalFee == totalInsuranceFee)
+                {
+                    return new List<ShippingFeeResponse>
+                        {
+                            new ShippingFeeResponse
+                            {
+                            ShopOwnerId = -1,
+                            Fee = 50000 + totalInsuranceFee,
+                            InsuranceFee = totalInsuranceFee,
+                            ShipFeeOnly = totalFeeOnly,
+                            Message = "Total Shipping Fee"
+                            }
+                        };
+                }
+                else
+                {
+                    return new List<ShippingFeeResponse>
+                        {
+                            new ShippingFeeResponse
+                            {
+                            ShopOwnerId = -1,
+                            Fee = shippingFees.Sum(fee => fee.Fee),
+                            InsuranceFee = totalInsuranceFee,
+                            ShipFeeOnly = totalFeeOnly,
+                            Message = "Total Shipping Fee"
+                            }
+                        };
+                }
+            }
+
+
+            catch (Exception ex)
+            {
+                return new List<ShippingFeeResponse> { new ShippingFeeResponse { Message = "System error" } };
+            }
+        }
     }
 }
