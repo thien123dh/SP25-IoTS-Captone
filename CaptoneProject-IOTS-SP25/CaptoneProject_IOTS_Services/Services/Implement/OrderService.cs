@@ -400,21 +400,23 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             string encodedOrderInfo = vnpay.GetResponseData("vnp_OrderInfo");
             string txn_ref = vnpay.GetResponseData("vnp_TxnRef");
 
-            // Không cần kiểm tra quyền truy cập nữa, chỉ cần xử lý thanh toán
-            if (vnp_ResponseCode != "00" || vnp_TransactionStatus != "00")
+            string address = "", contactPhone = "", notes = "";
+            int provinceId = 0, districtId = 0, wardId = 0, addressId = 0, userId = 0;
+            string provinceName = "", districtName = "", wardName = "", fullAddress = "", deliver_option = "";
+
+            var existingOrderItem = await _unitOfWork.OrderDetailRepository
+            .GetQueryable()
+            .FirstOrDefaultAsync(oi => oi.TxnRef == txn_ref);
+
+            if (existingOrderItem != null)
             {
                 return new GenericResponseDTO<OrderReturnPaymentDTO>
                 {
                     IsSuccess = false,
-                    Message = "Payment Fails.",
+                    Message = "Payment exits.",
                     Data = null
                 };
             }
-
-            // Xử lý dữ liệu orderInfo từ vnp_OrderInfo
-            string address = "", contactPhone = "", notes = "";
-            int provinceId = 0, districtId = 0, wardId = 0, addressId = 0;
-            string deliver_option = "";
 
             if (!string.IsNullOrEmpty(encodedOrderInfo))
             {
@@ -423,8 +425,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     string decodedUrl = HttpUtility.UrlDecode(encodedOrderInfo);
                     byte[] data = Convert.FromBase64String(decodedUrl);
                     string jsonString = Encoding.UTF8.GetString(data);
-                    var orderInfo = JsonConvert.DeserializeObject<OrderInfo>(jsonString);
+                    var orderInfo = JsonConvert.DeserializeObject<OrderInfoByMobile>(jsonString);
 
+                    userId = orderInfo?.UserId ?? 4;
                     address = orderInfo?.Address ?? "";
                     addressId = orderInfo?.AddressId ?? 0;
                     contactPhone = orderInfo?.ContactNumber ?? "";
@@ -439,15 +442,59 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     Console.WriteLine("Invalid Base64 format for vnp_OrderInfo. Using raw value.");
                 }
             }
+
+            if (vnp_ResponseCode != "00" || vnp_TransactionStatus != "00")
+            {
+                return new GenericResponseDTO<OrderReturnPaymentDTO>
+                {
+                    IsSuccess = false,
+                    Message = "Payment Fails.",
+                    Data = null
+                };
+            }
+
+            var loginUser = await _unitOfWork.UserRepository.GetUserById(userId);
+            var loginUserId = userId;
+            var selectedItems = await _unitOfWork.CartRepository
+                .GetQueryable((int)loginUserId)
+                .Where(item => item.CreatedBy == loginUserId && item.IsSelected)
+                .Include(item => item.IosDeviceNavigation)
+                .Include(item => item.ComboNavigation)
+                .Include(item => item.LabNavigation)
+                .ToListAsync();
+
+            var shippingFees = await _ghtkService.GetShippingFeeByMobileAsync(new ShippingFeeRequestByMobile
+            {
+                UserId = loginUserId,
+                ProvinceId = provinceId,
+                DistrictId = districtId,
+                WardId = wardId,
+                AddressId = addressId,
+                Address = address,
+                deliver_option = deliver_option
+            });
+
+            var createShipping = await _ghtkService.CreateShipmentByMobileAsync(new ShippingRequestByMobile
+            {
+                UserId = loginUserId,
+                ProvinceId = provinceId,
+                DistrictId = districtId,
+                WardId = wardId,
+                AddressId = addressId,
+                Address = address,
+                ContactNumber = contactPhone,
+                note = notes
+            });
+
+            var totalShippingFee = shippingFees.FirstOrDefault(f => f.ShopOwnerId == -1)?.Fee ?? 0m;
+            decimal totalProductPrice = (Convert.ToInt64(vnpay.GetResponseData("vnp_Amount")) / 100 - totalShippingFee);
             decimal totalAmount = (Convert.ToInt64(vnpay.GetResponseData("vnp_Amount")) / 100);
             TimeZoneInfo vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
             DateTime vietnamTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
-
-            // Tạo đơn hàng mới sau khi thanh toán thành công
             var createTransactionPayment = new Orders
             {
-                ApplicationSerialNumber = txn_ref,
-                OrderStatusId = (int)OrderStatusEnum.PENDING_TO_ORDER,
+                ApplicationSerialNumber = GetApplicationSerialNumberOrder(loginUserId),
+                OrderBy = loginUserId,
                 TotalPrice = totalAmount,
                 Address = address,
                 ProvinceId = provinceId,
@@ -457,20 +504,89 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 ContactNumber = contactPhone,
                 Notes = notes,
                 CreateDate = vietnamTime,
-                CreatedBy = 4,
-                UpdatedBy = 4,
-                OrderBy = 4,
+                CreatedBy = loginUserId,
+                UpdatedBy = loginUserId,
+                ShippingFee = totalShippingFee,
+                OrderStatusId = (int)OrderStatusEnum.SUCCESS_TO_ORDER
             };
+            var orderResponse = _unitOfWork.OrderRepository.Create(createTransactionPayment);
 
-            _unitOfWork.OrderRepository.Create(createTransactionPayment);
-            await _unitOfWork.OrderRepository.SaveAsync();
-            
+            var saveOrderItems = new List<OrderItem>();
+
+            foreach (var item in selectedItems)
+            {
+                var trackingId = createShipping.FirstOrDefault(s => s.ShopOwnerId == item.SellerId)?.TrackingId;
+
+                var orderDetail = new OrderItem
+                {
+                    OrderId = createTransactionPayment.Id,
+                    SellerId = item.SellerId,
+                    OrderBy = loginUserId,
+                    Quantity = item.Quantity,
+                    ProductType = item.IosDeviceNavigation != null ? (int)ProductTypeEnum.IOT_DEVICE :
+                                  item.ComboNavigation != null ? (int)ProductTypeEnum.COMBO :
+                                  item.LabNavigation != null ? (int)ProductTypeEnum.LAB : 0,
+                    IosDeviceId = item.IosDeviceNavigation?.Id,
+                    ComboId = item.ComboNavigation?.Id,
+                    LabId = item.LabNavigation?.Id,
+                    Price = item.IosDeviceNavigation?.Price ?? item.ComboNavigation?.Price ?? item.LabNavigation?.Price ?? 0m,
+                    OrderItemStatus = (int)OrderItemStatusEnum.PENDING,
+                    TxnRef = vnpay.GetResponseData("vnp_TxnRef"),
+                    TrackingId = trackingId
+                    //WarrantyEndDate = DateTime.Now.AddMonths(item?.IosDeviceNavigation?.WarrantyMonth ?? item?.ComboNavigation?.WarrantyMonth ?? 0)
+                };
+
+                _unitOfWork.OrderDetailRepository.Create(orderDetail);
+
+                saveOrderItems.Add(orderDetail);
+
+                if (item.IosDeviceNavigation != null)
+                {
+                    var device = await _unitOfWork.IotsDeviceRepository.GetByIdAsync(item.IosDeviceNavigation.Id);
+                    if (device != null)
+                    {
+                        device.Quantity -= item.Quantity;
+                        if (device.Quantity < 0)
+                            device.Quantity = 0; // Đảm bảo không bị âm
+
+                        _unitOfWork.IotsDeviceRepository.Update(device);
+                    }
+                }
+
+                if (item.ComboNavigation != null)
+                {
+                    var combo = await _unitOfWork.ComboRepository.GetByIdAsync(item.ComboNavigation.Id);
+                    if (combo != null)
+                    {
+                        combo.Quantity -= item.Quantity;
+
+                        if (combo.Quantity < 0)
+                            combo.Quantity = 0;
+
+                        _unitOfWork.ComboRepository.Update(combo);
+                    }
+                }
+
+                if (item.LabNavigation != null)
+                {
+                    var lab = await _unitOfWork.LabRepository.GetByIdAsync(item.LabNavigation.Id);
+                    if (lab != null)
+                    {
+                        orderDetail.OrderItemStatus = (int)OrderItemStatusEnum.PENDING_TO_FEEDBACK;
+                        _unitOfWork.OrderDetailRepository.Update(orderDetail);
+                    }
+                }
+            }
 
             var orderReturnPaymentDTO = new OrderReturnPaymentDTO
             {
                 PaymentUrl = "The order has been successfully paid.",
                 ApplicationSerialNumber = createTransactionPayment.ApplicationSerialNumber,
                 TotalPrice = createTransactionPayment.TotalPrice,
+                ProvinceId = createTransactionPayment.ProvinceId,
+                DistrictId = createTransactionPayment.DistrictId,
+                WardId = createTransactionPayment.WardId,
+                AddressId = createTransactionPayment.AddressId,
                 Address = createTransactionPayment.Address,
                 ContactNumber = createTransactionPayment.ContactNumber,
                 Notes = createTransactionPayment.Notes,
@@ -490,10 +606,97 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var ward = wards.FirstOrDefault(w => w.Id == createTransactionPayment.WardId);
             orderReturnPaymentDTO.WardName = ward?.Name ?? "Not found";
 
-            // Nếu địa chỉ có sẵn từ wardId, bạn có thể lấy tên địa chỉ như sau:
             var list_address = await _ghtkService.SyncAddressAsync(createTransactionPayment.WardId);
             var addressName = list_address.FirstOrDefault(w => w.Id == createTransactionPayment.AddressId);
             orderReturnPaymentDTO.AddressName = addressName?.Name ?? "Not found";
+
+            var productBillList = selectedItems.Select(item => new ProductBillDTO
+            {
+                Img = item.IosDeviceNavigation?.ImageUrl ?? item.ComboNavigation?.ImageUrl ?? item.LabNavigation?.ImageUrl ?? "https://photos.google.com/share/AF1QipOAm47U_r0mYVWWJxwxSLvEmX4pvf5A16824osh1cd76-QUAV0cie7Z4uoL-zvefg/photo/AF1QipPy0TZ1bvUJYlEuL5HC2ZTct16AVQh1IRbINQMq?key=YnZpSm1hTmtJUGhDa2E4Q2M0aHZDU0Jxd2F4MWhn",
+                Name = item.IosDeviceNavigation?.Name ?? item.ComboNavigation?.Name ?? item.LabNavigation?.Title ?? "Product",
+                Quantity = item.Quantity,
+                Price = item.IosDeviceNavigation?.Price ?? item.ComboNavigation?.Price ?? item.LabNavigation?.Price ?? 0m,
+            }).ToList();
+
+            string provinceNameCustomer = province.Name;
+            string districtNameCustomer = district.Name;
+            string wardNameCustomer = ward.Name;
+            string addressNameCustomer = addressName.Name;
+
+
+            await _emailServices.SendInvoiceEmailAsync(
+                loginUser.Email,
+                createTransactionPayment.ApplicationSerialNumber,
+                "IoT Materials Trading Platform",
+                $"FPT University",
+                "IoTs.admin@iots.com",
+                loginUser.Fullname,
+                provinceNameCustomer,
+                districtNameCustomer,
+                wardNameCustomer,
+                addressNameCustomer,
+                productBillList,
+                totalProductPrice,
+                totalShippingFee,
+                totalAmount
+            );
+
+            await _unitOfWork.CartRepository.RemoveAsync(selectedItems);
+            await _unitOfWork.CartRepository.SaveAsync();
+
+            var customerNotification = new Notifications
+            {
+                EntityId = orderResponse.Id,
+                EntityType = (int)EntityTypeConst.EntityTypeEnum.ORDER,
+                CreatedDate = DateTime.Now,
+                ReceiverId = loginUserId,
+                Content = $"Your Order has been created successfully. Please go to the order history to check",
+                Title = $"Your Order has been created successfully. Please go to the order history to check"
+            };
+
+            var storeNotifications = new List<Notifications>();
+
+            //Create notification and transaction
+            try
+            {
+                if (saveOrderItems != null)
+                    storeNotifications = saveOrderItems?.Select(item => item.SellerId)?.Distinct()?.ToList()?.Select(
+                        sellerId =>
+                        {
+                            return new Notifications
+                            {
+                                EntityId = orderResponse.Id,
+                                EntityType = (int)EntityTypeConst.EntityTypeEnum.ORDER,
+                                Content = $"You have new order. Please go to order history to check",
+                                Title = $"You have new order. Please go to order history to check",
+                                ReceiverId = sellerId
+                            };
+                        }
+                    )?.ToList();
+
+                var transaction = new Transaction
+                {
+                    UserId = loginUserId,
+                    CreatedDate = DateTime.Now,
+                    Description = $"You have deposited {orderResponse.TotalPrice} VND into the system.",
+                    Amount = orderResponse.TotalPrice,
+                    CurrentBallance = -1,
+                    TransactionType = "Order",
+                    Status = "Success",
+                };
+
+                //Transaction and notification
+                _ = _unitOfWork.TransactionRepository.CreateAsync([transaction]);
+
+                _ = _unitOfWork.NotificationRepository.Create(customerNotification);
+
+                if (storeNotifications != null)
+                    _ = _unitOfWork.NotificationRepository.CreateAsync(storeNotifications);
+            }
+            catch
+            {
+
+            }
 
             return new GenericResponseDTO<OrderReturnPaymentDTO>
             {
@@ -1318,7 +1521,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         var trainer = od?.Lab?.CreatedByNavigation;
                         var orderItemStatusId = od.OrderItemStatus;
                         var actionDate = od.UpdatedDate;
-                        
+
                         var items = group?.Select(od =>
                         {
                             var warrantySerialNumbers = (od.SellerId == loginUserId || od.OrderId == loginUserId) || isGlobalRole ? od?.PhysicalSerialNumbers?.Split("|")?.ToList() : null;
@@ -2152,8 +2355,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 var finalTotalPrice = totalPrice + totalShippingFee;
 
-                var orderInfo = new OrderInfo
+                var orderInfo = new OrderInfoByMobile
                 {
+                    UserId = loginUserId,
                     Address = address,
                     ContactNumber = contactPhone,
                     Notes = notes,
@@ -2164,7 +2368,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     deliver_option = payload.deliver_option
                 };
 
-                string vnp_ReturnUrl = "https://fe-capstone-io-ts.vercel.app/checkout-process-order-by-mobile";
+                string vnp_ReturnUrl = "https://localhost:7038/checkout-process-order-by-mobile";
                 string vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
                 string vnp_TmnCode = "PJLU0FHO";
                 string vnp_HashSecret = "4RY7BQN7ED5YFS7YR4TS3YONAJPGYYFL";
