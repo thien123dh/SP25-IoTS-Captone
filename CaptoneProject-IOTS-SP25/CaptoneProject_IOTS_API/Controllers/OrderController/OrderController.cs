@@ -67,6 +67,18 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
             return Ok(result);
         }
 
+        [AllowAnonymous]
+        [HttpPost("check-order-success-by-mobile")]
+        public async Task<IActionResult> CheckOrderSuccessByMobile([FromBody] VNPayRequestDTO dto)
+        {
+            var result = await _orderService.CheckOrderSuccessfullByMobile(null, dto);
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
         [HttpPost("customer/get-pagination")]
         public async Task<IActionResult> GetOrderByUser(
             [FromQuery] OrderItemStatusEnum? orderItemStatusFilter,
