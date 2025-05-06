@@ -2368,7 +2368,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     deliver_option = payload.deliver_option
                 };
 
-                string vnp_ReturnUrl = "https://localhost:7038/checkout-process-order-by-mobile";
+                string vnp_ReturnUrl = "https://fe-capstone-io-ts.vercel.app/checkout-process-order-by-mobile";
                 string vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
                 string vnp_TmnCode = "PJLU0FHO";
                 string vnp_HashSecret = "4RY7BQN7ED5YFS7YR4TS3YONAJPGYYFL";
