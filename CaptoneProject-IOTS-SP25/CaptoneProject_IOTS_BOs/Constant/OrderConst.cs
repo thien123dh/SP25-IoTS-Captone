@@ -8,6 +8,7 @@ namespace CaptoneProject_IOTS_BOs.Constant
 {
     public enum OrderStatusEnum
     {
+        PENDING_TO_ORDER = 0,
         SUCCESS_TO_ORDER = 1,
         CANCELLED = 2,
         CASH_PAYMENT = 3
