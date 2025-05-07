@@ -12,6 +12,7 @@ namespace CaptoneProject_IOTS_BOs.Models
         public int Id { set; get; }
         public decimal Amount { set; get; }
         public int OrderId { set; get; }
+        public virtual Orders Order { set; get; }
         public string ContactNumber { set; get; }
 
         public string AccountName { set; get; }
