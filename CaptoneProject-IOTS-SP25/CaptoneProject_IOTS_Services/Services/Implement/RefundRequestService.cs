@@ -59,13 +59,13 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var loginUserId = userServices.GetLoginUserId();
             var refund = unitOfWork.RefundRequestRepository.GetById(requestId);
 
-            var order = unitOfWork.OrderRepository.GetById(refund.OrderId);
-
             if (refund == null)
                 return ResponseService<object>.NotFound("The refund request cannot be found. Please try again");
 
             if (refund.Status != (int)RefundRequestStatusEnum.PENDING_TO_HANDLE)
                 return ResponseService<object>.BadRequest("The refund request has been already handled. Please check again");
+
+            var order = unitOfWork.OrderRepository.GetById(refund.OrderId);
 
             refund.Status = (int)RefundRequestStatusEnum.HANDLED;
             refund.ActionDate = DateTime.Now;
