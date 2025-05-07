@@ -170,7 +170,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         {
             PaginationResponseDTO<MaterialCategory> res = _unitOfWork.MaterialCategoryRepository.GetPaginate(
                 filter: m => m.Label.Contains(searchKeyword) && m.IsActive > 0,
-                orderBy: null,
+                orderBy: ob => ob.OrderByDescending(c => c.Label),
                 includeProperties: "CreatedByNavigation",
                 pageIndex: 0,
                 pageSize: 500000
