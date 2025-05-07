@@ -1,7 +1,9 @@
 ﻿using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
+using CaptoneProject_IOTS_BOs.DTO.RefundDTO;
 using CaptoneProject_IOTS_BOs.Models;
+using CaptoneProject_IOTS_Service.Mapper;
 using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using System;
@@ -29,6 +31,15 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             this.activityLogService = activityLogService;
         }
 
+        private RefundRequestDTO BuildToRefundRequest(RefundRequest source)
+        {
+            var res = GenericMapper<RefundRequest, RefundRequestDTO>.MapTo(source);
+
+            res.OrderCode = source.Order.ApplicationSerialNumber;
+
+            return res;
+        }
+
         public async Task<ResponseDTO> GetPaginationRefundRequest(int? statusFilter, PaginationRequest request)
         {
             var loginUserId = userServices.GetLoginUserId();
@@ -45,13 +56,17 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var pagination = unitOfWork.RefundRequestRepository.GetPaginate(
                 filter: func,
-                includeProperties: "CreatedByNavigation,ActionByNavigation",
+                includeProperties: "CreatedByNavigation,ActionByNavigation,Order",
                 orderBy: ob => ob.OrderByDescending(item => item.CreatedDate),
                 pageIndex: request.PageIndex,
                 pageSize: request.PageSize
             );
 
-            return ResponseService<object>.OK(pagination);
+            var res = PaginationMapper<RefundRequest, RefundRequestDTO>.MapToByFunc(
+                item => BuildToRefundRequest(item), pagination
+            );
+
+            return ResponseService<object>.OK(res);
         }
 
         public async Task<ResponseDTO> UpdateStatusToHandled(int requestId)
