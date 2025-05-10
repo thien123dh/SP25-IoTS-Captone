@@ -47,5 +47,6 @@ namespace CaptoneProject_IOTS_Service
         public virtual RepositoryBase<CashoutRequest> CashoutRequestRepository => new RepositoryBase<CashoutRequest>();
         public virtual RepositoryBase<RefundRequest> RefundRequestRepository => new RepositoryBase<RefundRequest>();
 
+        public virtual GeneralSettingsRepository GeneralSettingsRepository => new GeneralSettingsRepository();
     }
 }

@@ -167,6 +167,21 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     TransactionType = "Register Membership Package",
                     UserId = user.Id,
                 });
+
+                Transaction appTrans = new Transaction
+                {
+                    Amount = accountMembershipPackage.Fee,
+                    CreatedDate = DateTime.Now,
+                    CurrentBallance = 0,
+                    Description = $"You have received {accountMembershipPackage.Fee} gold for Store/Trainer Registered",
+                    Status = "Success",
+                    TransactionType = "Register Membership Package",
+                    UserId = AdminConst.ADMIN_ID,
+                    IsApplication = 1
+                };
+
+                _ = unitOfWork.TransactionRepository.Create(appTrans);
+
             } catch
             {
                 return ResponseService<AccountMembershipPackage>.BadRequest("Cannot register membership package. Please try again");

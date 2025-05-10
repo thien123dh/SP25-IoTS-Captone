@@ -1,11 +1,8 @@
 ﻿using CaptoneProject_IOTS_BOs.Constant;
-using CaptoneProject_IOTS_BOs.DTO.FeedbackDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using static CaptoneProject_IOTS_BOs.Constant.ProductConst;
 
 namespace CaptoneProject_IOTS_API.Controllers.FeedbackController
 {

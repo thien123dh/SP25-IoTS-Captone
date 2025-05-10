@@ -1,7 +1,6 @@
 ﻿using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
-using CaptoneProject_IOTS_BOs.DTO.ProductDTO;
 using CaptoneProject_IOTS_BOs.DTO.RatingDTO;
 using CaptoneProject_IOTS_BOs.DTO.ReportDTO;
 using CaptoneProject_IOTS_BOs.DTO.WalletDTO;
@@ -10,15 +9,8 @@ using CaptoneProject_IOTS_Service.Mapper;
 using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 using static CaptoneProject_IOTS_BOs.Constant.EntityTypeConst;
-using static CaptoneProject_IOTS_BOs.Constant.ProductConst;
 using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
 
 namespace CaptoneProject_IOTS_Service.Services.Implement
@@ -29,11 +21,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly IUserServices userServices;
         private readonly IWalletService walletService;
         private readonly string REPORT_TITLE_PATTERN = "{UserEmail} send a report to {DeviceType} '{ProductName}'";
+        private readonly int APPLICATION_FEE;
         public ReportService(UnitOfWork unitOfWork, IUserServices userServices, IWalletService walletService)
         {
             this.unitOfWork = unitOfWork;
             this.userServices = userServices;
             this.walletService = walletService;
+
+            APPLICATION_FEE = unitOfWork?.GeneralSettingsRepository?.Search(item => true)?.FirstOrDefault()?.ApplicationFeePercent ?? 0;
         }
 
         public async Task<ResponseDTO> ApproveOrRejectReport(int reportId, bool isApprove)
@@ -46,6 +41,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 ?.ThenInclude(o => o.Combo)
                 ?.Include(item => item.OrderItem)
                 ?.ThenInclude(o => o.Lab)
+                ?.Include(o => o.OrderItem)
+                ?.ThenInclude(o => o.Order)
                 ?.FirstOrDefault();
 
             if (report == null)
@@ -61,7 +58,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                     var totalAmount = ((report?.OrderItem?.Price ?? 0) * (report?.OrderItem?.Quantity ?? 0));
 
-                    totalAmount = (totalAmount * (((decimal)100 - ApplicationConst.FEE_PER_PRODUCT) / 100)) / 1000; 
+                    totalAmount = (totalAmount * (((decimal)100 - APPLICATION_FEE) / 100)) / 1000;
+                    var appAmount = (totalAmount * ((APPLICATION_FEE) / 100)) / 1000;
 
                     var sellerId = orderItem?.SellerId;
 
@@ -91,7 +89,21 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                     _ = walletService.UpdateUserWalletOrderTransactionAsync([updateWalletModel]);
 
+                    Transaction appTrans = new Transaction
+                    {
+                        Amount = appAmount,
+                        CreatedDate = DateTime.Now,
+                        CurrentBallance = 0,
+                        Description = $"You have received {appAmount} gold for Success Order",
+                        Status = "Success",
+                        TransactionType = $"Order {orderItem.Order.ApplicationSerialNumber}",
+                        UserId = AdminConst.ADMIN_ID,
+                        IsApplication = 1
+                    };
+
                     _ = unitOfWork.NotificationRepository.Create(notifications);
+                    
+                    _ = unitOfWork.TransactionRepository.Create(appTrans);
 
                     return ResponseService<object>.OK(new
                     {

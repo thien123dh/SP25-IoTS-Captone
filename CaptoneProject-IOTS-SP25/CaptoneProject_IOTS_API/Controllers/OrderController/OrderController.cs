@@ -1,17 +1,11 @@
-﻿using Azure;
-using CaptoneProject_IOTS_BOs;
-using CaptoneProject_IOTS_BOs.Constant;
+﻿using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.OrderDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.RefundDTO;
 using CaptoneProject_IOTS_BOs.DTO.VNPayDTO;
-using CaptoneProject_IOTS_Service.Services.Implement;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Identity.Client;
 using System.ComponentModel.DataAnnotations;
 
 namespace CaptoneProject_IOTS_API.Controllers.OrderController
@@ -93,7 +87,7 @@ namespace CaptoneProject_IOTS_API.Controllers.OrderController
         }
 
         [HttpGet("{orderId}")]
-        public async Task<IActionResult> GetOrderDetails(int orderId, 
+        public async Task<IActionResult> GetOrderDetails(int orderId,
             [FromQuery] OrderItemStatusEnum? orderItemStatusFilter)
         {
             var response = await _orderService.GetOrdersDetailsByOrderId(orderId, orderItemStatusFilter);

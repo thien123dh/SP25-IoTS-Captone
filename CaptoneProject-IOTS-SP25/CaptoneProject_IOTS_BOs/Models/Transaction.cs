@@ -34,5 +34,7 @@ namespace CaptoneProject_IOTS_BOs.Models
         public decimal? CurrentBallance { set; get; }
         [JsonIgnore]
         public virtual User UserNavigation { set; get; }
+
+        public short IsApplication { set; get; } = 0;
     }
 }
