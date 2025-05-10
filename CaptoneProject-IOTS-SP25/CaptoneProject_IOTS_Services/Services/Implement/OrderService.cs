@@ -33,7 +33,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly int MAX_CANCELLED_PER_DAYS = 5;
         private readonly IWalletService walletService;
         private readonly IActivityLogService activityLogService;
-
+        private readonly int APPLICATION_FEE;
         public OrderService(IUserServices userServices,
             IVNPayService vnpayServices,
             IGHTKService ghtkService,
@@ -48,6 +48,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             this._emailServices = emailServices;
             this.walletService = walletService;
             this.activityLogService = activityLogService;
+
+            var generalSetting = _unitOfWork?.GeneralSettingsRepository?.Search(item => true)?.FirstOrDefault();
+
+            APPLICATION_FEE = generalSetting?.ApplicationFeePercent ?? 10;
+            AUTO_COMPLETE_DAYS = generalSetting?.OrderSuccessDays ?? 3;
         }
 
         private string GetApplicationSerialNumberOrder(int userID)
@@ -1068,7 +1073,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     .ToList();
 
                     res.TotalPrice = (orderItems?.Sum(o => (decimal)o.Price * o.Quantity) ?? 0) + (res?.ShippingFee ?? 0);
-                    res.SellerActualAmount = res.TotalPrice * ((decimal)90 / 100);
+                    res.SellerActualAmount = res.TotalPrice * ((decimal)(APPLICATION_FEE - 10) / 100);
 
                     var orderDetailsGrouped = orderItems?
                     .GroupBy(od => od.SellerId)
@@ -1184,7 +1189,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     .ToList();
 
                     res.TotalPrice = (orderItems?.Sum(o => (decimal)o.Price * o.Quantity) ?? 0) + (res?.ShippingFee ?? 0);
-                    res.SellerActualAmount = res.TotalPrice * ((decimal)90 / 100);
+                    res.SellerActualAmount = res.TotalPrice * ((decimal)(100 - APPLICATION_FEE) / 100);
 
                     var orderDetailsGrouped = orderItems?.GroupBy(od => od.SellerId)
                     .Select(group =>
@@ -1646,13 +1651,16 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 }
 
                 var response = await UpdateSellerGroupOrderItemStatus(orderId, OrderItemStatusEnum.SUCCESS_ORDER);
+                decimal appRevenue = 0;
 
                 if (response.IsSuccess)
                 {
                     decimal totalReceivedGolds = orderItems?.Sum(item =>
                     {
                         var amount = (decimal)(item.Price * item.Quantity);
-                        var fee = amount * ((decimal)ApplicationConst.FEE_PER_PRODUCT / 100);
+                        var fee = amount * (APPLICATION_FEE / 100);
+
+                        appRevenue += fee / 1000;
 
                         return (amount - fee) / 1000;
                     }) ?? 0;
@@ -1668,13 +1676,25 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         CurrentBallance = wallet.Ballance,
                         Description = $"You have received {totalReceivedGolds} gold for Success Order",
                         Status = "Success",
-                        TransactionType = "Order",
+                        TransactionType = $"Order {order.ApplicationSerialNumber}",
                         UserId = (int)loginUserId
+                    };
+
+                    Transaction appTrans = new Transaction
+                    {
+                        Amount = appRevenue,
+                        CreatedDate = DateTime.Now,
+                        CurrentBallance = wallet.Ballance,
+                        Description = $"You have received {appRevenue} gold for Success Order",
+                        Status = "Success",
+                        TransactionType = $"Order {order.ApplicationSerialNumber}",
+                        UserId = AdminConst.ADMIN_ID,
+                        IsApplication = 1
                     };
 
                     _ = _unitOfWork.WalletRepository.Update(wallet);
 
-                    _ = _unitOfWork.TransactionRepository.Create(trans);
+                    _ = _unitOfWork.TransactionRepository.CreateAsync(new List<Transaction> { trans, appTrans });
                 }
 
                 return response;

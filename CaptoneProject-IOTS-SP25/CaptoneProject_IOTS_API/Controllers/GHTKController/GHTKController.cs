@@ -8,11 +8,11 @@ namespace CaptoneProject_IOTS_API.Controllers.GHTKController
 {
     [Route("api/ghtk")]
     [ApiController]
-    public class GHTKController : ControllerBase
+    public class GeneralSettingsController : ControllerBase
     {
         private readonly IGHTKService _ghtkService;
 
-        public GHTKController(IGHTKService ghtkService)
+        public GeneralSettingsController(IGHTKService ghtkService)
         {
             _ghtkService = ghtkService;
         }
