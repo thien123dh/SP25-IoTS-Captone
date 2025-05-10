@@ -5,11 +5,13 @@ using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.ProductDTO;
 using CaptoneProject_IOTS_BOs.DTO.WalletDTO;
 using CaptoneProject_IOTS_BOs.Models;
+using CaptoneProject_IOTS_Repository.Repository.Implement;
 using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OData.UriParser.Aggregation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,13 +29,17 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         private readonly IUserServices userServices;
         private readonly int MIN_REPORT_RATING = 2;
         private readonly IWalletService walletService;
+        private readonly int APPLICATION_FEE;
         public FeedbackService(UnitOfWork unitOfWork, 
             IUserServices userServices, 
-            IWalletService walletService)
+            IWalletService walletService, 
+            IGeneralSettingsService generalSettingsService)
         {
             this.unitOfWork = unitOfWork;
             this.userServices = userServices;
             this.walletService = walletService;
+
+            APPLICATION_FEE = unitOfWork?.GeneralSettingsRepository?.GetAll()?.FirstOrDefault()?.ApplicationFeePercent ?? 10;
         }
 
         public ResponseDTO CheckOrderFeedbackValidation(
@@ -147,18 +153,34 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 var updateWalletRequest = new List<UpdateUserWalletRequestDTO>();
 
+                decimal appReceived = 0;
+
                 foreach (var userId in sellerWalletUpdateRequestMap.Keys)
                 {
                     var amount = sellerWalletUpdateRequestMap.GetValueOrDefault(userId);
+
+                    appReceived += (appReceived * ((decimal)APPLICATION_FEE) / 100 ) / 1000;
 
                     updateWalletRequest.Add(
                         new UpdateUserWalletRequestDTO
                         {
                             UserId = userId,
-                            Amount = (amount * (((decimal)100 - ApplicationConst.FEE_PER_PRODUCT) / 100)) / 1000
+                            Amount = (amount * (((decimal)100 - APPLICATION_FEE) / 100)) / 1000
                         }
                     );
                 }
+
+                Transaction appTrans = new Transaction
+                {
+                    Amount = appReceived,
+                    CreatedDate = DateTime.Now,
+                    CurrentBallance = 0,
+                    Description = $"You have received {appReceived} gold for Success Order",
+                    Status = "Success",
+                    TransactionType = "Order",
+                    UserId = AdminConst.ADMIN_ID,
+                    IsApplication = 1
+                };
 
                 if (updatedOrderItems != null)
                     await unitOfWork.OrderDetailRepository.UpdateAsync(updatedOrderItems);
@@ -167,6 +189,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 _ = unitOfWork.FeedbackRepository.CreateAsync(feedbackList);
 
+                if (appReceived > 0)
+                    _ = unitOfWork.TransactionRepository.Create(appTrans);
+                
                 if (reports != null)
                 {
                     _ = unitOfWork.ReportRepository.CreateAsync(reports);

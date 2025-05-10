@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using CaptoneProject_IOTS_BOs.DTO;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 
 namespace CaptoneProject_IOTS_BOs.Models;
@@ -27,6 +28,8 @@ public partial class IoTTraddingSystemContext : DbContext
     public virtual DbSet<LabAttachment> LabAttachments { set; get; }
     public virtual DbSet<Combo> Combos { set; get; }
     public virtual DbSet<IotsDevicesCombo> IotsDevicesCombos { set; get; }
+
+    public virtual DbSet<GeneralSettings> GeneralSettings { set; get; }
     public virtual DbSet<AccountMembershipPackage> AccountMembershipPackages { set; get; }
     public virtual DbSet<ActivityLog> ActivityLogs { get; set; }
     public virtual DbSet<Attachment> Attachments { set; get; }
@@ -96,6 +99,11 @@ public partial class IoTTraddingSystemContext : DbContext
         modelBuilder.Entity<RefundRequest>(entity =>
         {
             entity.ToTable(nameof(RefundRequest));
+        });
+
+        modelBuilder.Entity<GeneralSettings>(entity =>
+        {
+            entity.ToTable(nameof(GeneralSettings));
         });
 
         modelBuilder.Entity<WarrantyRequest>(entity =>

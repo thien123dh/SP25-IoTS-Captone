@@ -117,7 +117,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 Transaction transaction = new Transaction
                 {
-                    Amount = cashoutRequest.Amount,
+                    Amount = -cashoutRequest.Amount,
                     CreatedDate = DateTime.Now,
                     CurrentBallance = userWallet.Ballance,
                     TransactionType = "Cashout",

@@ -6,13 +6,8 @@ using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 using static CaptoneProject_IOTS_BOs.Constant.ProductConst;
 using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
 
@@ -22,11 +17,14 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
     {
         private readonly UnitOfWork unitOfWork;
         private readonly IUserServices userServices;
+        private readonly int APPLICATION_FEE;
 
         public StatisticService(UnitOfWork unitOfWork, IUserServices userServices)
         {
             this.unitOfWork = unitOfWork;
             this.userServices = userServices;
+
+            APPLICATION_FEE = this.unitOfWork.GeneralSettingsRepository.Search(item => true)?.FirstOrDefault()?.ApplicationFeePercent ?? 0;
         }
 
         public async Task<StatisticDto> GetStatisticBy(
@@ -138,13 +136,17 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 .Include(item => item.Order)
                 .Sum(item => item.Price / 1000 * item.Quantity));
 
-            var totalOrderRevenue = (sumOrderItems * ((decimal)ApplicationConst.FEE_PER_PRODUCT / 100));
+            var totalOrderRevenue = (sumOrderItems * (APPLICATION_FEE / 100));
 
             var packageRevenue = unitOfWork.AccountMembershipPackageRepository.Search(
                 item => requestRange.StartDate <= item.LastPaymentDate && item.LastPaymentDate <= requestRange.EndDate
             ).Sum(item => item.Fee);
 
             var totalRevenue = totalOrderRevenue + packageRevenue;
+            
+            var revenue = unitOfWork.TransactionRepository.Search(item => item.IsApplication > 0 && item.Amount > 0
+                && requestRange.StartDate <= item.CreatedDate && item.CreatedDate <= requestRange.EndDate
+            ).Sum(item => item.Amount);
 
             result.TotalRevenue = totalRevenue;
 
@@ -156,7 +158,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var loginUserId = userServices.GetLoginUserId();
 
             var requestRange = BuildToStatisticRequestRange(request);
-
 
             var result = await GetStatisticBy(
                 requestRange,
@@ -175,7 +176,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 .Include(item => item.Order)
                 .Sum(item => item.Price / 1000 * item.Quantity));
 
-            var revenue = sumOrderItems - (sumOrderItems * ((decimal)ApplicationConst.FEE_PER_PRODUCT / 100));
+            //var revenue = sumOrderItems * ((100 - APPLICATION_FEE) / 100);
+            var revenue = unitOfWork.TransactionRepository.Search(item => item.UserId == loginUserId && item.Amount > 0
+                && requestRange.StartDate <= item.CreatedDate && item.CreatedDate <= requestRange.EndDate
+            ).Sum(item => item.Amount);
 
             result.TotalRevenue = revenue;
 
@@ -205,8 +209,12 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 .Include(item => item.Order)
                 .Sum(item => item.Price / 1000 * item.Quantity));
 
-            var revenue = sumOrderItems * (sumOrderItems * ((decimal)ApplicationConst.FEE_PER_PRODUCT / 100));
+            //var revenue = sumOrderItems * ((decimal)(100 - APPLICATION_FEE) / 100);
 
+            var revenue = unitOfWork.TransactionRepository.Search(item => item.UserId == loginUserId && item.Amount > 0
+                && requestRange.StartDate <= item.CreatedDate && item.CreatedDate <= requestRange.EndDate
+            ).Sum(item => item.Amount);
+            
             result.TotalRevenue = revenue;
 
             return ResponseService<object>.OK(result);
