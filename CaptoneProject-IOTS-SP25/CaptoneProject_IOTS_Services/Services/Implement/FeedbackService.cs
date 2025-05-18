@@ -175,9 +175,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     Amount = appReceived,
                     CreatedDate = DateTime.Now,
                     CurrentBallance = 0,
-                    Description = $"You have received {appReceived} gold for Success Order",
+                    Description = $"You have received {appReceived} gold for Success Order {order.ApplicationSerialNumber} / Seller: {request.SellerId}",
                     Status = "Success",
-                    TransactionType = "Order",
+                    TransactionType = $"Order {order.ApplicationSerialNumber}",
                     UserId = AdminConst.ADMIN_ID,
                     IsApplication = 1
                 };

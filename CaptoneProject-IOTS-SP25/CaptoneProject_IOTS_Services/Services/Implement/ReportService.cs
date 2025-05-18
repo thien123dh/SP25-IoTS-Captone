@@ -81,11 +81,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         Amount = totalAmount,
                     };
 
-                    orderItem.OrderItemStatus = (int)OrderItemStatusEnum.SUCCESS_ORDER;
+                    //orderItem.OrderItemStatus = (int)OrderItemStatusEnum.SUCCESS_ORDER;
 
                     report = unitOfWork.ReportRepository.Update(report);
 
-                    unitOfWork.OrderDetailRepository.Update(orderItem);
+                    //unitOfWork.OrderDetailRepository.Update(orderItem);
 
                     _ = walletService.UpdateUserWalletOrderTransactionAsync([updateWalletModel]);
 
@@ -94,7 +94,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         Amount = appAmount,
                         CreatedDate = DateTime.Now,
                         CurrentBallance = 0,
-                        Description = $"You have received {appAmount} gold for Success Order",
+                        Description = $"You have received {appAmount} gold for Order {orderItem.Order.ApplicationSerialNumber} / Seller {orderItem.SellerId}",
                         Status = "Success",
                         TransactionType = $"Order {orderItem.Order.ApplicationSerialNumber}",
                         UserId = AdminConst.ADMIN_ID,
