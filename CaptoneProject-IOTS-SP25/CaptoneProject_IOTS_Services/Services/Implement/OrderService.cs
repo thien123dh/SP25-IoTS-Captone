@@ -1115,7 +1115,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                                 UpdatedDate = actionDate,
                                 ReportStatus = report?.Status
                             };
-
                         });
 
                         var res = new OrderItemsGroupResponseDTO
@@ -1217,7 +1216,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         {
                             var warrantySerialNumbers = (od.SellerId == loginUserId || od.OrderId == loginUserId) || isGlobalRole ? od?.PhysicalSerialNumbers?.Split("|")?.ToList() : null;
                             var warrantyMonths = od?.IotsDevice?.WarrantyMonth ?? od?.Combo?.WarrantyMonth ?? 0;
-                            var report = reports.FirstOrDefault(r => r.OrderItemId == od.Id);
+                            var report = reports?.FirstOrDefault(r => r.OrderItemId == od.Id);
 
                             return new OrderItemResponseDTO
                             {
@@ -1233,7 +1232,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                                 WarrantyMonths = warrantyMonths,
                                 PhysicalSerialNumbers = warrantySerialNumbers,
                                 UpdatedDate = actionDate,
-                                ReportStatus = report.Status
+                                ReportStatus = report?.Status
                             };
                         });
 
