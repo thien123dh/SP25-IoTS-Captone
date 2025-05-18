@@ -112,7 +112,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 }
                 else //Rejected flow
                 {
-                    report.Status = (int)ReportStatusEnum.HANDLING_FAILED;
+                    report.Status = (int)ReportStatusEnum.REFUNDED;
 
                     report = unitOfWork.ReportRepository.Update(report);
 

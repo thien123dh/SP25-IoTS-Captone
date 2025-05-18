@@ -82,7 +82,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             var order = unitOfWork.OrderRepository.GetById(refund.OrderId);
 
-            refund.Status = (int)RefundRequestStatusEnum.HANDLED;
+            refund.Status = (int)RefundRequestStatusEnum.REFUNDED;
             refund.ActionDate = DateTime.Now;
             refund.ActionBy = (int)loginUserId;
 
