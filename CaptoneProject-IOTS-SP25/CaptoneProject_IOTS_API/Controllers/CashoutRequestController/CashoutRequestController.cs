@@ -48,7 +48,7 @@ namespace CaptoneProject_IOTS_API.Controllers.CashoutRequestController
         }
 
         [HttpPut("approve/{id}")]
-        public async Task<IActionResult> CreateCashoutRequest(int id)
+        public async Task<IActionResult> ApproveCashoutRequest(int id)
         {
             var res = await cashoutService.ApproveOrRejectCashoutRequest(id, true);
 
