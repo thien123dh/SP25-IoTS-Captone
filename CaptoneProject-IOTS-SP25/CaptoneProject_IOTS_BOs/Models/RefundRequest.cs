@@ -26,7 +26,6 @@ namespace CaptoneProject_IOTS_BOs.Models
         public virtual User CreatedByNavigation { set; get; }
         public DateTime CreatedDate { set; get; }
 
-
         [ForeignKey(nameof(User))]
         public int ActionBy { set; get; }
 
@@ -34,6 +33,8 @@ namespace CaptoneProject_IOTS_BOs.Models
         public virtual User ActionByNavigation { set; get; }
 
         public DateTime ActionDate { set; get; }
+
+        public short Type { set; get; }
 
         public short Status { set; get; }
     }

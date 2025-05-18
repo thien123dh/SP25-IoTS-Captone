@@ -1042,7 +1042,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 var role = userServices.GetRole();
 
                 var isGlobalRole = role == (int)RoleEnum.ADMIN || role == (int)RoleEnum.MANAGER || role == (int)RoleEnum.STAFF;
-
                 var paginatedOrders = _unitOfWork.OrderRepository.GetPaginate(
                     filter: orderExpress,
                     orderBy: ob => ob.OrderByDescending(item => item.CreateDate),
@@ -1050,6 +1049,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     pageIndex: payload.PageIndex,
                     pageSize: payload.PageSize
                 );
+
+                var orderItemIds = paginatedOrders?.Data?.SelectMany(o => o.OrderItems).Select(oi => oi.Id).ToHashSet();
+
+                var reports = _unitOfWork.ReportRepository.Search(r => orderItemIds != null && orderItemIds.Contains(r.OrderItemId)).ToList();
 
                 if (paginatedOrders == null)
                     return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.NotFound("No orders found for this user.");
@@ -1094,6 +1097,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         {
                             var warrantySerialNumbers = od.SellerId == loginUserId || isGlobalRole ? od?.PhysicalSerialNumbers?.Split("|")?.ToList() : null;
                             var warrantyMonths = od?.IotsDevice?.WarrantyMonth ?? od?.Combo?.WarrantyMonth ?? 0;
+                            var report = reports?.FirstOrDefault(r => r.OrderItemId == od.Id);
 
                             return new OrderItemResponseDTO
                             {
@@ -1108,8 +1112,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                                 WarrantyEndDate = od.WarrantyEndDate,
                                 WarrantyMonths = warrantyMonths,
                                 PhysicalSerialNumbers = warrantySerialNumbers,
-                                UpdatedDate = actionDate
+                                UpdatedDate = actionDate,
+                                ReportStatus = report?.Status
                             };
+
                         });
 
                         var res = new OrderItemsGroupResponseDTO
@@ -1167,6 +1173,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     pageSize: payload.PageSize
                 );
 
+                var orderItemIds = paginatedOrders?.Data?.SelectMany(o => o.OrderItems).Select(oi => oi.Id).ToHashSet();
+
+                var reports = _unitOfWork.ReportRepository.Search(r => orderItemIds != null && orderItemIds.Contains(r.OrderItemId)).ToList();
+
                 if (paginatedOrders == null)
                     return ResponseService<PaginationResponseDTO<OrderResponseDTO>>.NotFound("No orders found for this user.");
 
@@ -1207,6 +1217,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         {
                             var warrantySerialNumbers = (od.SellerId == loginUserId || od.OrderId == loginUserId) || isGlobalRole ? od?.PhysicalSerialNumbers?.Split("|")?.ToList() : null;
                             var warrantyMonths = od?.IotsDevice?.WarrantyMonth ?? od?.Combo?.WarrantyMonth ?? 0;
+                            var report = reports.FirstOrDefault(r => r.OrderItemId == od.Id);
 
                             return new OrderItemResponseDTO
                             {
@@ -1221,7 +1232,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                                 WarrantyEndDate = od.WarrantyEndDate,
                                 WarrantyMonths = warrantyMonths,
                                 PhysicalSerialNumbers = warrantySerialNumbers,
-                                UpdatedDate = actionDate
+                                UpdatedDate = actionDate,
+                                ReportStatus = report.Status
                             };
                         });
 
