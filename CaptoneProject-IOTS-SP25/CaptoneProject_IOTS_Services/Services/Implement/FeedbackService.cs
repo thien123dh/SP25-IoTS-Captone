@@ -159,7 +159,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 {
                     var amount = sellerWalletUpdateRequestMap.GetValueOrDefault(userId);
 
-                    appReceived += (appReceived * ((decimal)APPLICATION_FEE) / 100 ) / 1000;
+                    appReceived += (amount * ((decimal)APPLICATION_FEE) / 100 ) / 1000;
 
                     updateWalletRequest.Add(
                         new UpdateUserWalletRequestDTO
