@@ -9,6 +9,6 @@ namespace CaptoneProject_IOTS_BOs.Constant
     public enum RefundRequestStatusEnum
     {
         PENDING_TO_HANDLE = 0,
-        HANDLED = 1
+        REFUNDED = 1
     }
 }

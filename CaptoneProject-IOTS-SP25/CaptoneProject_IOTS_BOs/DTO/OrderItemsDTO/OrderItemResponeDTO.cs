@@ -39,13 +39,11 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO
         public decimal Price { set; get; }
 
         public DateTime? WarrantyEndDate { set; get; } = null;
-
         public int WarrantyMonths { set; get; }
-
         public DateTime? UpdatedDate { set; get; }
         public int OrderItemStatus { set; get; } = 1;
-
         public List<string>? PhysicalSerialNumbers { set; get; }
+        public short? ReportStatus { set; get; }
     }
 
     public class OrderItemsGroupResponseDTO

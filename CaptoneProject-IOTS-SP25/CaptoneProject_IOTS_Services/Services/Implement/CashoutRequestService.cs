@@ -162,10 +162,15 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 item => item.CreatedBy == loginUserId && DateTime.Now.Date == item.CreatedDate.Date
             ).Count();
 
-            if (countDateRequest > MAX_REQUEST_COUNT)
-                return ResponseService<CashoutRequest>.BadRequest($"You are not allowed to create more then {MAX_REQUEST_COUNT} request per day");
-            else if (request.Amount <= 0)
+            var processingCashoutAmounts = unitOfWork.CashoutRequestRepository.Search(c => c.CreatedBy == loginUserId && c.Status == (short)CashoutRequestStatusEnum.PENDING_TO_APPROVE).Sum(c => c.Amount);
+
+            if (request.Amount <= 0)
                 return ResponseService<CashoutRequest>.BadRequest("Amount to cash out must be greater than 0");
+            else if (processingCashoutAmounts + request.Amount > wallet?.Ballance)
+            {
+                return ResponseService<CashoutRequest>.BadRequest($"The total of processing request amount and your current request amount is greater than your ballance. " +
+                    $"Please try with amount from 0 to {wallet.Ballance - processingCashoutAmounts}");
+            }
             else if (wallet?.Ballance < request.Amount)
                 return ResponseService<CashoutRequest>.BadRequest(ExceptionMessage.INSUFFICIENT_WALLET);
 
