@@ -169,7 +169,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             else if (processingCashoutAmounts + request.Amount > wallet?.Ballance)
             {
                 return ResponseService<CashoutRequest>.BadRequest($"The total of processing request amount and your current request amount is greater than your ballance. " +
-                    $"Please try with amount from 0 to {wallet.Ballance - processingCashoutAmounts}");
+                    $"Please try with amount from 0 to {wallet.Ballance - processingCashoutAmounts},000 VND");
             }
             else if (wallet?.Ballance < request.Amount)
                 return ResponseService<CashoutRequest>.BadRequest(ExceptionMessage.INSUFFICIENT_WALLET);

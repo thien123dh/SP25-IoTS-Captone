@@ -3,7 +3,6 @@ using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.ProductDTO;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CaptoneProject_IOTS_API.Controllers.FeedbackController
@@ -22,7 +21,7 @@ namespace CaptoneProject_IOTS_API.Controllers.FeedbackController
 
         [HttpPost("product/get-pagination")]
         public async Task<IActionResult> GetProductFeedbackPagination(
-            [FromBody] GenericPaginationRequest<ProductRequestDTO> payload    
+            [FromBody] GenericPaginationRequest<ProductRequestDTO> payload
         )
         {
             var res = await feedbackService.GetFeedbackPagination(payload.AdvancedFilter, payload.PaginationRequest);
@@ -33,7 +32,7 @@ namespace CaptoneProject_IOTS_API.Controllers.FeedbackController
         [HttpPost("create")]
         [Authorize]
         public async Task<IActionResult> CreateOrderFeedback(
-            [FromBody] StoreOrderFeedbackRequestDTO payload    
+            [FromBody] StoreOrderFeedbackRequestDTO payload
         )
         {
             var res = await feedbackService.CreateOrderFeedback(payload);
