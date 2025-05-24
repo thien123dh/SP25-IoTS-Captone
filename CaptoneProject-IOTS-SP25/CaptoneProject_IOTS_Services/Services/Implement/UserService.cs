@@ -181,6 +181,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 var userRequest = unitOfWork.UserRequestRepository.Search(u => u.Email == user.Email).FirstOrDefault();
 
                 var userRequestStatus = userRequest?.Status ?? 0;
+                var generalSetting = unitOfWork.GeneralSettingsRepository.Search(g => true).FirstOrDefault();
 
                 return ResponseService<Object>.OK(new
                 {
@@ -194,6 +195,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     user.Phone,
                     user.IsActive,
                     userRequestStatus,
+                    applicationFeePercent = generalSetting?.ApplicationFeePercent ?? 0
                 });
             }
             catch (Exception ex)
