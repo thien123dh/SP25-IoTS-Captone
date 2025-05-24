@@ -2020,7 +2020,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         CreatedDate = DateTime.Now,
                         CurrentBallance = wallet.Ballance,
 
-                        Description = $"You have received {appRevenue} gold for Success Order {order.ApplicationSerialNumber} / Seller: {order.SellerId}",
+                        Description = $"You have received {appRevenue} gold for Success Order {order.ApplicationSerialNumber} / Seller: {loginUserId}",
                         Status = "Success",
                         TransactionType = $"Order {order.ApplicationSerialNumber}",
                         UserId = AdminConst.ADMIN_ID,
