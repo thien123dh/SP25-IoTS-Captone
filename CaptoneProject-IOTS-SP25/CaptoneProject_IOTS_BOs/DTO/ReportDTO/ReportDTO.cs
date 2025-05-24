@@ -28,6 +28,8 @@ namespace CaptoneProject_IOTS_BOs.DTO.ReportDTO
 
         public string? ProductName { set; get; }
 
+        public decimal? Price { set; get; }
+
         public string? Content { set; get; }
 
         public int? CreatedBy { set; get; }
