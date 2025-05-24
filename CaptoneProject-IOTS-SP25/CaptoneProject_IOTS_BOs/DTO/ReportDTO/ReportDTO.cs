@@ -15,9 +15,13 @@ namespace CaptoneProject_IOTS_BOs.DTO.ReportDTO
 
         public int OrderItemId { set; get; }
 
+        public string? OrderCode { set; get; }
+
         public int? ProductId { set; get; }
 
         public int? ProductType { set; get; }
+
+        public string? ProductName { set; get; }
 
         public string? Content { set; get; }
 

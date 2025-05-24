@@ -81,11 +81,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         Amount = totalAmount,
                     };
 
-                    orderItem.OrderItemStatus = (int)OrderItemStatusEnum.SUCCESS_ORDER;
+                    //orderItem.OrderItemStatus = (int)OrderItemStatusEnum.SUCCESS_ORDER;
 
                     report = unitOfWork.ReportRepository.Update(report);
 
-                    unitOfWork.OrderDetailRepository.Update(orderItem);
+                    //unitOfWork.OrderDetailRepository.Update(orderItem);
 
                     _ = walletService.UpdateUserWalletOrderTransactionAsync([updateWalletModel]);
 
@@ -94,7 +94,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         Amount = appAmount,
                         CreatedDate = DateTime.Now,
                         CurrentBallance = 0,
-                        Description = $"You have received {appAmount} gold for Success Order",
+                        Description = $"You have received {appAmount} gold for Order {orderItem.Order.ApplicationSerialNumber} / Seller {orderItem.SellerId}",
                         Status = "Success",
                         TransactionType = $"Order {orderItem.Order.ApplicationSerialNumber}",
                         UserId = AdminConst.ADMIN_ID,
@@ -156,6 +156,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             res.StoreName = store?.Name;
             res.ProductType = orderItem?.ProductType;
             res.ProductId = (orderItem?.IosDeviceId != null) ? orderItem?.IosDeviceId : (orderItem?.LabId != null) ? orderItem?.LabId : orderItem?.ComboId;
+            res.ProductName = orderItem?.IotsDevice?.Name ?? orderItem?.Combo?.Name ?? orderItem?.Lab?.Title ?? "";
+            res.OrderCode = orderItem?.Order?.ApplicationSerialNumber;
 
             return res;
         }
@@ -185,7 +187,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var pagination = unitOfWork.ReportRepository.GetPaginate(
                 filter: func,
                 orderBy: ob => ob.OrderByDescending(item => item.CreatedDate),
-                includeProperties: "OrderItem,CreatedByNavigation",
+                includeProperties: "OrderItem,OrderItem.Order,OrderItem.IotsDevice,OrderItem.Combo,OrderItem.Lab,CreatedByNavigation",
                 pageIndex: request.PageIndex,
                 pageSize: request.PageSize
             );
