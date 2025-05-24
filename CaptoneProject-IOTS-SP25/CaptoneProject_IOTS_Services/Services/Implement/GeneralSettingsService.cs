@@ -42,6 +42,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             generalSettings.UpdatedDate = DateTime.Now;
             generalSettings.UpdatedBy = loginUserId;
 
+            if (generalSettings.ApplicationFeePercent <= 0 &&  generalSettings.OrderSuccessDays > 100)
+            {
+                return ResponseService<GeneralSettings>.BadRequest("Invalid Value. The value must be in [0, 100]");
+            }
+
             _unitOfWork.GeneralSettingsRepository.Update(generalSettings);
 
             return ResponseService<GeneralSettings>.OK(generalSettings);
