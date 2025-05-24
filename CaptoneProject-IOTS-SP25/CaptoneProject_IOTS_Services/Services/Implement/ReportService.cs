@@ -213,6 +213,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             res.ProductId = (orderItem?.IosDeviceId != null) ? orderItem?.IosDeviceId : (orderItem?.LabId != null) ? orderItem?.LabId : orderItem?.ComboId;
             res.ProductName = orderItem?.IotsDevice?.Name ?? orderItem?.Combo?.Name ?? orderItem?.Lab?.Title ?? "";
             res.OrderCode = orderItem?.Order?.ApplicationSerialNumber;
+            res.Price = orderItem?.Price;
 
             return res;
         }
