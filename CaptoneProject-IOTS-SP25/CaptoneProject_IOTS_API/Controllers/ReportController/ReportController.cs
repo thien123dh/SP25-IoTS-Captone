@@ -1,5 +1,6 @@
 ﻿using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
+using CaptoneProject_IOTS_BOs.DTO.ReportDTO;
 using CaptoneProject_IOTS_Service.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -32,9 +33,9 @@ namespace CaptoneProject_IOTS_API.Controllers.FeedbackController
 
         [HttpPost]
         [Route("approve/{reportId}")]
-        public async Task<IActionResult> ApproveReport(int reportId)
+        public async Task<IActionResult> HandledSuccessReport(int reportId)
         {
-            var res = await ratingService.ApproveOrRejectReport(reportId, true);
+            var res = await ratingService.HandledSuccessReportAsync(reportId, true);
 
             if (res.IsSuccess)
             {
@@ -45,10 +46,11 @@ namespace CaptoneProject_IOTS_API.Controllers.FeedbackController
         }
 
         [HttpPost]
-        [Route("reject/{reportId}")]
-        public async Task<IActionResult> RejectReport(int reportId)
+        [Route("refund/{reportId}")]
+        public async Task<IActionResult> RefundedReport(int reportId, 
+            [FromBody] DtoRefundReportRequest payload)
         {
-            var res = await ratingService.ApproveOrRejectReport(reportId, false);
+            var res = await ratingService.RefundReportAsync(reportId, payload);
 
             if (res.IsSuccess)
             {

@@ -31,7 +31,92 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             APPLICATION_FEE = unitOfWork?.GeneralSettingsRepository?.Search(item => true)?.FirstOrDefault()?.ApplicationFeePercent ?? 0;
         }
 
-        public async Task<ResponseDTO> ApproveOrRejectReport(int reportId, bool isApprove)
+        public async Task<ResponseDTO> RefundReportAsync(int reportId, DtoRefundReportRequest request)
+        {
+            var report = unitOfWork.ReportRepository.Search(
+                item => item.Id == reportId && item.Status == (int)ReportStatusEnum.PENDING_TO_HANDLING)
+                ?.Include(item => item.OrderItem)
+                ?.ThenInclude(o => o.IotsDevice)
+                ?.Include(item => item.OrderItem)
+                ?.ThenInclude(o => o.Combo)
+                ?.Include(item => item.OrderItem)
+                ?.ThenInclude(o => o.Lab)
+                ?.Include(o => o.OrderItem)
+                ?.ThenInclude(o => o.Order)
+                ?.FirstOrDefault();
+
+            if (report == null)
+                return ResponseService<object>.NotFound("Report cannot be found. Please try again");
+
+            var orderItem = report.OrderItem;
+
+            if (request.RefundQuantity > report?.OrderItem?.Quantity)
+            {
+                return ResponseService<object>.BadRequest("Refund Quantity must be less than order quantity");
+            }
+
+            report.RefundQuantity = request.RefundQuantity;
+            report.RefundAmount = report?.OrderItem?.Price * request.RefundQuantity;
+
+            report.Status = (int)ReportStatusEnum.REFUNDED;
+
+            report = unitOfWork.ReportRepository.Update(report);
+
+            var sellerId = orderItem?.SellerId;
+
+            if (sellerId == null)
+                return ResponseService<object>.NotFound("Seller cannot be found");
+
+            var totalAmount = ((report?.OrderItem?.Price ?? 0) * (report?.OrderItem?.Quantity ?? 0)) - (report?.RefundAmount ?? 0);
+
+            if (totalAmount > 0)
+            {
+                var sellerReceivedAmount = (totalAmount * (((decimal)100 - APPLICATION_FEE) / 100)) / 1000;
+                var appAmount = (totalAmount * ((APPLICATION_FEE) / 100)) / 1000;
+
+                var updateWalletModel = new UpdateUserWalletRequestDTO
+                {
+                    UserId = (int)sellerId,
+                    Amount = sellerReceivedAmount,
+                };
+
+                report = unitOfWork.ReportRepository.Update(report);
+
+                await walletService.UpdateUserWalletOrderTransactionAsync([updateWalletModel], orderItem?.Order.ApplicationSerialNumber);
+
+                Transaction appTrans = new Transaction
+                {
+                    Amount = appAmount,
+                    CreatedDate = DateTime.Now,
+                    CurrentBallance = 0,
+                    Description = $"You have received {appAmount} gold for Order {orderItem?.Order.ApplicationSerialNumber} / Seller {orderItem?.SellerId}",
+                    Status = "Success",
+                    TransactionType = $"Order {orderItem?.Order.ApplicationSerialNumber}",
+                    UserId = AdminConst.ADMIN_ID,
+                    IsApplication = 1
+                };
+
+                _ = unitOfWork.TransactionRepository.Create(appTrans);
+            }
+
+            Notifications notifications = new Notifications
+            {
+                EntityId = reportId,
+                EntityType = (int)EntityTypeEnum.REPORT,
+                Title = $"Your Bad Feedback Order was Refunded {report?.RefundAmount ?? 0}",
+                Content = $"Your Bad Feedback Order was Refunded {report?.RefundAmount ?? 0}",
+                ReceiverId = (int)sellerId
+            };
+
+            _ = unitOfWork.NotificationRepository.Create(notifications);
+
+            return ResponseService<object>.OK(new
+            {
+                ReportId = reportId
+            });
+        }
+
+        public async Task<ResponseDTO> HandledSuccessReportAsync(int reportId, bool isApprove)
         {
             var report = unitOfWork.ReportRepository.Search(
                 item => item.Id == reportId && item.Status == (int)ReportStatusEnum.PENDING_TO_HANDLING)
@@ -52,91 +137,61 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             try
             {
-                if (isApprove)
+                report.Status = (int)ReportStatusEnum.COMPLETED;
+
+                var totalAmount = ((report?.OrderItem?.Price ?? 0) * (report?.OrderItem?.Quantity ?? 0));
+
+                var sellerReceiverAmount = (totalAmount * (((decimal)100 - APPLICATION_FEE) / 100)) / 1000;
+                var appAmount = (totalAmount * ((APPLICATION_FEE) / 100)) / 1000;
+
+                var sellerId = orderItem?.SellerId;
+
+                if (sellerId == null)
+                    return ResponseService<object>.NotFound("Seller cannot be found.");
+
+                Notifications notifications = new Notifications
                 {
-                    report.Status = (int)ReportStatusEnum.COMPLETED;
+                    EntityId = reportId,
+                    EntityType = (int)EntityTypeEnum.REPORT,
+                    Title = "Your Customer's Report was Handled Successfully by Admin",
+                    Content = "Your Customer's Report was Handled Successfully by Admin",
+                    ReceiverId = (int)sellerId
+                };
 
-                    var totalAmount = ((report?.OrderItem?.Price ?? 0) * (report?.OrderItem?.Quantity ?? 0));
-
-                    totalAmount = (totalAmount * (((decimal)100 - APPLICATION_FEE) / 100)) / 1000;
-                    var appAmount = (totalAmount * ((APPLICATION_FEE) / 100)) / 1000;
-
-                    var sellerId = orderItem?.SellerId;
-
-                    if (sellerId == null)
-                        return ResponseService<object>.NotFound("Seller cannot be found.");
-
-                    Notifications notifications = new Notifications
-                    {
-                        EntityId = reportId,
-                        EntityType = (int)EntityTypeEnum.REPORT,
-                        Title = "Your Customer's Report was Handled Successfully by Admin",
-                        Content = "Your Customer's Report was Handled Successfully by Admin",
-                        ReceiverId = (int)sellerId
-                    };
-
-                    var updateWalletModel = new UpdateUserWalletRequestDTO
-                    {
-                        UserId = (int)sellerId,
-                        Amount = totalAmount,
-                    };
-
-                    //orderItem.OrderItemStatus = (int)OrderItemStatusEnum.SUCCESS_ORDER;
-
-                    report = unitOfWork.ReportRepository.Update(report);
-
-                    //unitOfWork.OrderDetailRepository.Update(orderItem);
-
-                    _ = walletService.UpdateUserWalletOrderTransactionAsync([updateWalletModel]);
-
-                    Transaction appTrans = new Transaction
-                    {
-                        Amount = appAmount,
-                        CreatedDate = DateTime.Now,
-                        CurrentBallance = 0,
-                        Description = $"You have received {appAmount} gold for Order {orderItem.Order.ApplicationSerialNumber} / Seller {orderItem.SellerId}",
-                        Status = "Success",
-                        TransactionType = $"Order {orderItem.Order.ApplicationSerialNumber}",
-                        UserId = AdminConst.ADMIN_ID,
-                        IsApplication = 1
-                    };
-
-                    _ = unitOfWork.NotificationRepository.Create(notifications);
-                    
-                    _ = unitOfWork.TransactionRepository.Create(appTrans);
-
-                    return ResponseService<object>.OK(new
-                    {
-                        ReportId = reportId
-                    });
-                }
-                else //Rejected flow
+                var updateWalletModel = new UpdateUserWalletRequestDTO
                 {
-                    report.Status = (int)ReportStatusEnum.REFUNDED;
+                    UserId = (int)sellerId,
+                    Amount = sellerReceiverAmount,
+                };
 
-                    report = unitOfWork.ReportRepository.Update(report);
+                //orderItem.OrderItemStatus = (int)OrderItemStatusEnum.SUCCESS_ORDER;
 
-                    var sellerId = orderItem?.SellerId;
+                report = unitOfWork.ReportRepository.Update(report);
 
-                    if (sellerId == null)
-                        return ResponseService<object>.NotFound("Seller cannot be found");
+                //unitOfWork.OrderDetailRepository.Update(orderItem);
 
-                    Notifications notifications = new Notifications
-                    {
-                        EntityId = reportId,
-                        EntityType = (int)EntityTypeEnum.REPORT,
-                        Title = "Your Customer's Report was Handled Failed",
-                        Content = "Your Customer's Report was Handled Failed",
-                        ReceiverId = (int)sellerId
-                    };
+                await walletService.UpdateUserWalletOrderTransactionAsync([updateWalletModel], report?.OrderItem?.Order.ApplicationSerialNumber);
 
-                    _ = unitOfWork.NotificationRepository.Create(notifications);
+                Transaction appTrans = new Transaction
+                {
+                    Amount = appAmount,
+                    CreatedDate = DateTime.Now,
+                    CurrentBallance = 0,
+                    Description = $"You have received {appAmount} gold for Order {orderItem.Order.ApplicationSerialNumber} / Seller {orderItem.SellerId}",
+                    Status = "Success",
+                    TransactionType = $"Order {orderItem.Order.ApplicationSerialNumber}",
+                    UserId = AdminConst.ADMIN_ID,
+                    IsApplication = 1
+                };
 
-                    return ResponseService<object>.OK(new
-                    {
-                        ReportId = reportId
-                    });
-                }
+                _ = unitOfWork.NotificationRepository.Create(notifications);
+
+                _ = unitOfWork.TransactionRepository.Create(appTrans);
+
+                return ResponseService<object>.OK(new
+                {
+                    ReportId = reportId
+                });
             }
             catch
             {
