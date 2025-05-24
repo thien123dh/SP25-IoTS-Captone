@@ -1112,7 +1112,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                                 WarrantyMonths = warrantyMonths,
                                 PhysicalSerialNumbers = warrantySerialNumbers,
                                 UpdatedDate = actionDate,
-                                ReportStatus = report?.Status
+                                ReportStatus = report?.Status,
+                                RefundAmount = report?.RefundAmount ?? 0,
+                                RefundQuantity = report?.RefundQuantity ?? 0
                             };
                         });
 
@@ -1231,7 +1233,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                                 WarrantyMonths = warrantyMonths,
                                 PhysicalSerialNumbers = warrantySerialNumbers,
                                 UpdatedDate = actionDate,
-                                ReportStatus = report?.Status
+                                ReportStatus = report?.Status,
+                                RefundAmount = report?.RefundAmount ?? 0,
+                                RefundQuantity = report?.RefundQuantity ?? 0
                             };
                         });
 

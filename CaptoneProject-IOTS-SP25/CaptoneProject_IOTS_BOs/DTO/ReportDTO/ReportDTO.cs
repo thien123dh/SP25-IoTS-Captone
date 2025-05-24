@@ -7,6 +7,11 @@ using static CaptoneProject_IOTS_BOs.Constant.ProductConst;
 
 namespace CaptoneProject_IOTS_BOs.DTO.ReportDTO
 {
+    public class DtoRefundReportRequest
+    {
+        public int RefundQuantity { set; get; }
+    }
+
     public class ReportResponseDTO
     {
         public int Id { set; get; }

@@ -44,6 +44,10 @@ namespace CaptoneProject_IOTS_BOs.DTO.OrderItemsDTO
         public int OrderItemStatus { set; get; } = 1;
         public List<string>? PhysicalSerialNumbers { set; get; }
         public short? ReportStatus { set; get; }
+
+        public int? RefundQuantity { set; get; }
+
+        public decimal? RefundAmount { set; get; }
     }
 
     public class OrderItemsGroupResponseDTO
