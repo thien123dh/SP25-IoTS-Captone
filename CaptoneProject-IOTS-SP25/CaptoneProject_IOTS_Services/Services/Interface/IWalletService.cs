@@ -15,6 +15,6 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
         Task<GenericResponseDTO<Wallet>> GetWalletByUserId(int userId);
         Task<GenericResponseDTO<Wallet>> CreateTransactionUserWallet(CreateTransactionWalletDTO source);
         Task<bool> CheckWalletBallance(decimal fee, int userId);
-        Task<ResponseDTO> UpdateUserWalletOrderTransactionAsync(List<UpdateUserWalletRequestDTO> request, string? orderCode = null);
+        Task<ResponseDTO> UpdateUserWalletOrderTransactionAsync(List<UpdateUserWalletRequestDTO> request, string? orderCode = null, decimal? refundAmount = null);
     }
 }

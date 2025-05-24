@@ -21,6 +21,10 @@ namespace CaptoneProject_IOTS_BOs.Models
 
         public string Content { set; get; }
 
+        public decimal? RefundAmount { set; get; }
+
+        public int? RefundQuantity { set; get; }
+
         [ForeignKey(nameof(User))]
         public int? CreatedBy { set; get; }
 

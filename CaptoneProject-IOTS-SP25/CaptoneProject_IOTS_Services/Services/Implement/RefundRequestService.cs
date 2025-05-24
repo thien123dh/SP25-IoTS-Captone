@@ -2,6 +2,7 @@
 using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
 using CaptoneProject_IOTS_BOs.DTO.RefundDTO;
+using CaptoneProject_IOTS_BOs.DTO.ReportDTO;
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Service.Mapper;
 using CaptoneProject_IOTS_Service.ResponseService;
@@ -39,7 +40,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             return res;
         }
-
         public async Task<ResponseDTO> GetPaginationRefundRequest(int? statusFilter, PaginationRequest request)
         {
             var loginUserId = userServices.GetLoginUserId();
@@ -48,7 +48,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var adminOrStaff = new List<int> { (int)RoleEnum.ADMIN, (int)RoleEnum.STAFF };
 
             Expression<Func<RefundRequest, bool>> func = item => (statusFilter == null || statusFilter == item.Status) && item.CreatedBy == loginUserId;
-            
+
             if (adminOrStaff.Contains((int)role))
             {
                 func = item => (statusFilter == null || statusFilter == item.Status);
