@@ -9,7 +9,6 @@ using CaptoneProject_IOTS_BOs.DTO.VNPayDTO;
 using CaptoneProject_IOTS_BOs.Models;
 using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
-using MailKit.Search;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.Data;
@@ -1211,7 +1210,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         var trainer = od?.Lab?.CreatedByNavigation;
                         var orderItemStatusId = od.OrderItemStatus;
                         var actionDate = od.UpdatedDate;
-                        
+
                         var items = group?.Select(od =>
                         {
                             var warrantySerialNumbers = (od.SellerId == loginUserId || od.OrderId == loginUserId) || isGlobalRole ? od?.PhysicalSerialNumbers?.Split("|")?.ToList() : null;
@@ -1696,7 +1695,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         Amount = appRevenue,
                         CreatedDate = DateTime.Now,
                         CurrentBallance = wallet.Ballance,
-                        
+
                         Description = $"You have received {appRevenue} gold for Success Order {order.ApplicationSerialNumber} / Seller: {order.SellerId}",
                         Status = "Success",
                         TransactionType = $"Order {order.ApplicationSerialNumber}",
@@ -1704,7 +1703,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         IsApplication = 1
                     };
 
-                    _ = _unitOfWork.WalletRepository.Update(wallet);
+                    _unitOfWork.WalletRepository.Update(wallet);
 
                     _ = _unitOfWork.TransactionRepository.CreateAsync(new List<Transaction> { trans, appTrans });
                 }
