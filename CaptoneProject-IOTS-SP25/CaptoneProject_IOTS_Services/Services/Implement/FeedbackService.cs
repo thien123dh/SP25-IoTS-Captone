@@ -131,7 +131,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                                     CreatedDate = DateTime.Now,
                                     OrderItemId = feedback.OrderItemId,
                                     Title = title,
-                                    Status = (int)ReportStatusEnum.PENDING_TO_HANDLING
+                                    Status = (int)ReportStatusEnum.PENDING_TO_HANDLING,
+                                    BankName = request.BankName,
+                                    AccountName = request.AccountName,
+                                    AccountNumber = request.AccountNumber,
                                 }
                             );
                         }

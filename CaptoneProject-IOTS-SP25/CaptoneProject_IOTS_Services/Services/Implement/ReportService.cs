@@ -214,6 +214,9 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             res.ProductName = orderItem?.IotsDevice?.Name ?? orderItem?.Combo?.Name ?? orderItem?.Lab?.Title ?? "";
             res.OrderCode = orderItem?.Order?.ApplicationSerialNumber;
             res.Price = orderItem?.Price;
+            res.AccountName = report.AccountName;
+            res.AccountNumber = report.AccountNumber;
+            res.BankName = report.BankName;
 
             return res;
         }

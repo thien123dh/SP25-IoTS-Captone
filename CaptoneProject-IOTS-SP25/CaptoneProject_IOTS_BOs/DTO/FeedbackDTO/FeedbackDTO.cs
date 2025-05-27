@@ -25,6 +25,9 @@ namespace CaptoneProject_IOTS_BOs.DTO.FeedbackDTO
         public int OrderId { set; get; }
         public int SellerId { set; get; }
         public RoleEnum SellerRole { set; get; }
+        public string? BankName { set; get; }
+        public string? AccountName { set; get; }
+        public string? AccountNumber { set; get; }
         public List<FeedbackItemRequestDTO> FeedbackList { set; get; }
     }
 

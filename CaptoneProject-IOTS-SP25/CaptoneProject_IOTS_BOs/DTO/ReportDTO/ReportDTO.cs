@@ -40,6 +40,12 @@ namespace CaptoneProject_IOTS_BOs.DTO.ReportDTO
 
         public string? ContactNumber { set; get; }
 
+        public string? BankName { set; get; }
+
+        public string? AccountName { set; get; }
+
+        public string? AccountNumber { set; get; }
+
         public int? StoreId { set; get; }
 
         public string? StoreName { set; get; }
