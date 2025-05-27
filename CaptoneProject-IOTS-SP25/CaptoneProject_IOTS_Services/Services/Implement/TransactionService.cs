@@ -32,7 +32,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var transaction = new Transaction
             {
                 Amount = request.Amount,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow.AddHours(7),
                 Description = request.Description,
                 TransactionType = request.TransactionType,
                 UserId = request.UserId,

@@ -25,6 +25,12 @@ namespace CaptoneProject_IOTS_BOs.Models
 
         public int? RefundQuantity { set; get; }
 
+        public string? BankName { set; get; }
+
+        public string? AccountName { set; get; }
+
+        public string? AccountNumber { set; get; }
+
         [ForeignKey(nameof(User))]
         public int? CreatedBy { set; get; }
 

@@ -76,7 +76,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     }
 
                     cashoutRequest.Status = (int)CashoutRequestStatusEnum.APPROVED;
-                    cashoutRequest.ActionDate = DateTime.Now;
+                    cashoutRequest.ActionDate = DateTime.UtcNow.AddHours(7);
                     cashoutRequest.ActionBy = (int)loginUserId;
                 }
                 else
@@ -93,7 +93,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     if (remarks != null)
                         cashoutRequest.Remarks = remarks.Remark;
                     cashoutRequest.Status = (int)CashoutRequestStatusEnum.REJECTED;
-                    cashoutRequest.ActionDate = DateTime.Now;
+                    cashoutRequest.ActionDate = DateTime.UtcNow.AddHours(7);
                     cashoutRequest.ActionBy = (int)loginUserId;
                 }
 
@@ -118,7 +118,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 Transaction transaction = new Transaction
                 {
                     Amount = -cashoutRequest.Amount,
-                    CreatedDate = DateTime.Now,
+                    CreatedDate = DateTime.UtcNow.AddHours(7),
                     CurrentBallance = userWallet.Ballance,
                     TransactionType = "Cashout",
                     Status = "Success",
@@ -138,8 +138,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var res = GenericMapper<CreateCashoutRequestDTO, CashoutRequest>.MapTo(request);
 
             res.CreatedBy = target.Id > 0 ? target.CreatedBy : (int)loginUserId;
-            res.CreatedDate = target.Id > 0 ? target.CreatedDate : DateTime.Now;
-            res.ActionDate = DateTime.Now;
+            res.CreatedDate = target.Id > 0 ? target.CreatedDate : DateTime.UtcNow.AddHours(7);
+            res.ActionDate = DateTime.UtcNow.AddHours(7);
             res.ActionBy = (int)loginUserId;
 
             return res;
@@ -159,7 +159,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var wallet = walletRes?.Data;
 
             var countDateRequest = unitOfWork.CashoutRequestRepository.Search(
-                item => item.CreatedBy == loginUserId && DateTime.Now.Date == item.CreatedDate.Date
+                item => item.CreatedBy == loginUserId && DateTime.UtcNow.AddHours(7).Date == item.CreatedDate.Date
             ).Count();
 
             var processingCashoutAmounts = unitOfWork.CashoutRequestRepository.Search(c => c.CreatedBy == loginUserId && c.Status == (short)CashoutRequestStatusEnum.PENDING_TO_APPROVE).Sum(c => c.Amount);
