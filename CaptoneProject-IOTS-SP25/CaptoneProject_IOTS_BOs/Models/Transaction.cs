@@ -26,7 +26,7 @@ namespace CaptoneProject_IOTS_BOs.Models
 
         public string Status { set; get; }
 
-        public DateTime CreatedDate { set; get; } = DateTime.Now;
+        public DateTime CreatedDate { set; get; } = DateTime.UtcNow.AddHours(7);
 
         [MaxLength(250)]
         public string Description { set; get; }
