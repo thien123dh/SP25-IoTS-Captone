@@ -57,6 +57,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             report.RefundQuantity = request.RefundQuantity;
             report.RefundAmount = report?.OrderItem?.Price * request.RefundQuantity;
+            var refundAmount = report?.RefundAmount;
 
             report.Status = (int)ReportStatusEnum.REFUNDED;
 
@@ -87,7 +88,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 Transaction appTrans = new Transaction
                 {
                     Amount = appAmount,
-                    CreatedDate = DateTime.Now,
+                    CreatedDate = DateTime.UtcNow.AddHours(7),
                     CurrentBallance = 0,
                     Description = $"You have received {appAmount} gold for Order {orderItem?.Order.ApplicationSerialNumber} / Seller {orderItem?.SellerId}",
                     Status = "Success",
@@ -96,7 +97,19 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     IsApplication = 1
                 };
 
+                Transaction orderByTransaction = new Transaction
+                {
+                    Amount = refundAmount ?? 0,
+                    CreatedDate = DateTime.UtcNow.AddHours(7),
+                    CurrentBallance = 0,
+                    Description = $"You have refunded {appAmount} gold for Order {orderItem?.Order.ApplicationSerialNumber}",
+                    Status = "Success",
+                    TransactionType = $"Order {orderItem?.Order.ApplicationSerialNumber}",
+                    UserId = orderItem.OrderBy
+                };
+
                 _ = unitOfWork.TransactionRepository.Create(appTrans);
+                _ = unitOfWork.TransactionRepository.Create(orderByTransaction);
             }
 
             Notifications notifications = new Notifications
@@ -175,7 +188,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 Transaction appTrans = new Transaction
                 {
                     Amount = appAmount,
-                    CreatedDate = DateTime.Now,
+                    CreatedDate = DateTime.UtcNow.AddHours(7),
                     CurrentBallance = 0,
                     Description = $"You have received {appAmount} gold for Order {orderItem.Order.ApplicationSerialNumber} / Seller {orderItem.SellerId}",
                     Status = "Success",

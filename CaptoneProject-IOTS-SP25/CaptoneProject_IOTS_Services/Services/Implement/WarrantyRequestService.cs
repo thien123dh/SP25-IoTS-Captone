@@ -83,7 +83,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 {
                     return ResponseService<WarrantyRequestResponseDTO>.BadRequest("Please feedback this order before create warranty request. Please try again");
                 }
-                else if (orderItem.WarrantyEndDate < DateTime.Now)
+                else if (orderItem.WarrantyEndDate < DateTime.UtcNow.AddHours(7))
                 {
                     return ResponseService<WarrantyRequestResponseDTO>.BadRequest("Warranty Date of this product was Expired");
                 }
@@ -229,7 +229,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (isApprove)
             {
                 warranty.Status = (int)WarrantyRequestStatusEnum.APPROVED;
-                warranty.ActionDate = DateTime.Now;
+                warranty.ActionDate = DateTime.UtcNow.AddHours(7);
 
                 notification = new NotificationRequestDTO
                 {
@@ -281,7 +281,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 return ResponseService<WarrantyRequestResponseDTO>.BadRequest("This warranty request already handled. Please check again");
 
             warranty.Status = (int)WarrantyRequestStatusEnum.SUCCESS;
-            warranty.ActionDate = DateTime.Now;
+            warranty.ActionDate = DateTime.UtcNow.AddHours(7);
 
             notification = new NotificationRequestDTO
             {

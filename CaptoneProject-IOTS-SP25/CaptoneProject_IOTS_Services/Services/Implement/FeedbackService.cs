@@ -62,7 +62,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             {
                 Content = source.Comment,
                 CreatedBy = loginUserId,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow.AddHours(7),
                 OrderItemId = source.OrderItemId,
                 Rating = source.Rating
             };
@@ -128,7 +128,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                                 {
                                     Content = feedback.Content,
                                     CreatedBy = loginUserId,
-                                    CreatedDate = DateTime.Now,
+                                    CreatedDate = DateTime.UtcNow.AddHours(7),
                                     OrderItemId = feedback.OrderItemId,
                                     Title = title,
                                     Status = (int)ReportStatusEnum.PENDING_TO_HANDLING,
@@ -176,7 +176,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 Transaction appTrans = new Transaction
                 {
                     Amount = appReceived,
-                    CreatedDate = DateTime.Now,
+                    CreatedDate = DateTime.UtcNow.AddHours(7),
                     CurrentBallance = 0,
                     Description = $"You have received {appReceived} gold for Success Order {order.ApplicationSerialNumber} / Seller: {request.SellerId}",
                     Status = "Success",

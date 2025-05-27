@@ -358,11 +358,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 var transaction = new Transaction
                 {
                     UserId = loginUserId,
-                    CreatedDate = DateTime.Now,
+                    CreatedDate = DateTime.UtcNow.AddHours(7),
                     Description = $"You have deposited {orderResponse.TotalPrice} VND into the system.",
-                    Amount = orderResponse.TotalPrice,
+                    Amount = orderResponse.TotalPrice / 1000,
                     CurrentBallance = -1,
-                    TransactionType = "Order",
+                    TransactionType = $"Order {orderResponse.ApplicationSerialNumber}",
                     Status = "Success",
                 };
 
@@ -491,7 +491,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     OrderItemStatus = (int)OrderItemStatusEnum.PENDING,
                     TxnRef = "",
                     TrackingId = trackingId,
-                    WarrantyEndDate = DateTime.Now.AddMonths(item?.IosDeviceNavigation?.WarrantyMonth ?? item?.ComboNavigation?.WarrantyMonth ?? 0)
+                    WarrantyEndDate = DateTime.UtcNow.AddHours(7).AddMonths(item?.IosDeviceNavigation?.WarrantyMonth ?? item?.ComboNavigation?.WarrantyMonth ?? 0)
                 };
 
                 _unitOfWork.OrderDetailRepository.Create(orderDetail);
@@ -1686,7 +1686,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     Transaction trans = new Transaction
                     {
                         Amount = totalReceivedGolds,
-                        CreatedDate = DateTime.Now,
+                        CreatedDate = DateTime.UtcNow.AddHours(7),
                         CurrentBallance = wallet.Ballance,
                         Description = $"You have received {totalReceivedGolds} gold for Success Order",
                         Status = "Success",
@@ -1697,7 +1697,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     Transaction appTrans = new Transaction
                     {
                         Amount = appRevenue,
-                        CreatedDate = DateTime.Now,
+                        CreatedDate = DateTime.UtcNow.AddHours(7),
                         CurrentBallance = wallet.Ballance,
 
                         Description = $"You have received {appRevenue} gold for Success Order {order.ApplicationSerialNumber} / Seller: {loginUserId}",
@@ -1756,7 +1756,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 if (numberOfCancelled > MAX_CANCELLED_PER_DAYS)
                     return ResponseService<List<OrderResponseToStoreDTO>>.BadRequest($"You cannot cancel more than {MAX_CANCELLED_PER_DAYS} orders per day");
 
-
                 var orderItems = _unitOfWork.OrderDetailRepository.Search(
                     item => item.OrderId == orderId
                 ).Include(item => item.IotsDevice)
@@ -1812,6 +1811,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 await _unitOfWork.OrderDetailRepository.UpdateAsync(saveOrderItems);
 
+                var totalRefunded = order.TotalPrice - (order.ShippingFee ?? 0);
+
                 var refundRequest = new RefundRequest
                 {
                     AccountName = request.AccountName,
@@ -1822,8 +1823,19 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     ActionDate = DateTime.Now,
                     CreatedBy = loginUserId,
                     CreatedDate = DateTime.Now,
-                    Amount = order.TotalPrice,
+                    Amount = totalRefunded,
                     OrderId = orderId
+                };
+
+                Transaction orderByTransaction = new Transaction
+                {
+                    Amount = totalRefunded,
+                    CreatedDate = DateTime.UtcNow.AddHours(7),
+                    CurrentBallance = 0,
+                    Description = $"You have refunded {totalRefunded} gold for Order {order.ApplicationSerialNumber}",
+                    Status = "Success",
+                    TransactionType = $"Order {order.ApplicationSerialNumber}",
+                    UserId = order.OrderBy
                 };
 
                 _ = _unitOfWork.RefundRequestRepository.Create(refundRequest);
