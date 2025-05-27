@@ -1,5 +1,4 @@
-﻿using Azure;
-using CaptoneProject_IOTS_BOs;
+﻿using CaptoneProject_IOTS_BOs;
 using CaptoneProject_IOTS_BOs.Constant;
 using CaptoneProject_IOTS_BOs.DTO.NotificationDTO;
 using CaptoneProject_IOTS_BOs.DTO.PaginationDTO;
@@ -10,22 +9,9 @@ using CaptoneProject_IOTS_Repository.Repository.Implement;
 using CaptoneProject_IOTS_Service.Mapper;
 using CaptoneProject_IOTS_Service.ResponseService;
 using CaptoneProject_IOTS_Service.Services.Interface;
-using MailKit.Net.Imap;
-using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Microsoft.Identity.Client.AppConfig;
-using OtpNet;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 using static CaptoneProject_IOTS_BOs.Constant.EntityTypeConst;
 using static CaptoneProject_IOTS_BOs.Constant.UserEnumConstant;
 using static CaptoneProject_IOTS_BOs.Constant.UserRequestConstant;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace CaptoneProject_IOTS_Service.Services.Implement
 {
@@ -69,8 +55,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 otp += random.Next(0, 10);
             }
 
-            //return otp.Trim();
-            return "123456";
+            return otp.Trim();
+            //return "123456";
         }
 
         public async Task<bool> SendStaffManagerEmail(string email, string password)
@@ -92,11 +78,11 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
         public async Task<GenericResponseDTO<UserRequestResponseDTO>> CreateOrUpdateUserRequest(UserRequestRequestDTO payload)
         {
             int? loginUserId = _userServices.GetLoginUserId();
-            
+
             UserRequest? userRequest = await userRequestRepository.GetByEmail(payload.Email);
 
             userRequest = (userRequest == null) ? new UserRequest() : userRequest;
-            
+
             userRequest.ActionBy = loginUserId;
             userRequest.Status = payload.UserRequestStatus;
             userRequest.Email = payload.Email;
@@ -138,27 +124,29 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 string url = environmentService.GetFrontendDomain();
 
                 var link = url + "/" + response.Id;
-                
+
                 try
                 {
                     var emailTemplate = _emailService.GetVerifyOtpTemplate(userRequest.OtpCode, link, userRequest.Email);
 
                     _ = _emailService.SendEmailAsync(userRequest.Email, emailTemplate.Subject, emailTemplate.Body);
-                } catch (Exception ex)
+                }
+                catch (Exception ex)
                 {
 
                 }
 
                 return ResponseService<UserRequestResponseDTO>.OK(UserRequestMapper.MappingToUserRequestResponseDTO(response));
-            
-            } catch (Exception ex)
+
+            }
+            catch (Exception ex)
             {
                 return ResponseService<UserRequestResponseDTO>.BadRequest(ex.Message);
             }
-            
+
         }
-        
-        public async Task<ResponseDTO> GetUserRequestPagination(int? userRequestStatusFilter, 
+
+        public async Task<ResponseDTO> GetUserRequestPagination(int? userRequestStatusFilter,
             PaginationRequest paginationRequest)
         {
             PaginationResponseDTO<UserRequest> paginationData = userRequestRepository.GetPaginate(
@@ -188,7 +176,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return ResponseService<Object>
                 .OK(PaginationMapper<UserRequest, UserRequestResponseDTO>
                     .MapTo(UserRequestMapper.MappingToUserRequestResponseDTO, paginationData));
-            
+
         }
 
         public async Task<ResponseDTO> VerifyOTP(string email, string otp)
@@ -229,7 +217,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
             if (userRequest == null)
                 return ResponseService<UserRequestDetailsResponseDTO>.NotFound(ExceptionMessage.USER_REQUEST_NOT_FOUND);
-                
+
             var userResponse = (await _userServices.GetUserDetailsByEmail(userRequest.Email));
 
             if (!userResponse.IsSuccess)
@@ -257,7 +245,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (userRequest == null)
                 return ResponseService<UserRequestDetailsResponseDTO>
                     .NotFound(ExceptionMessage.USER_REQUEST_NOT_FOUND);
-                
+
 
             if (userRequest.Status != (int)UserRequestStatusEnum.PENDING_TO_APPROVE)
                 return ResponseService<UserRequestDetailsResponseDTO>
@@ -279,7 +267,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 if (isApprove > 0)
                 {
-                    noti = new NotificationRequestDTO {
+                    noti = new NotificationRequestDTO
+                    {
                         Title = "Your user request has been approve. Welcome to Iot Trading Website",
                         Content = "Your user request has been approve. Welcome to Iot Trading Website",
                         EntityId = userRequest.Id,
@@ -325,7 +314,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             var userRequest = await userRequestRepository.GetById(id);
 
             if (userRequest == null)
-                return ResponseService<UserRequest>.NotFound(ExceptionMessage.USER_REQUEST_NOT_FOUND);           
+                return ResponseService<UserRequest>.NotFound(ExceptionMessage.USER_REQUEST_NOT_FOUND);
 
             try
             {
@@ -333,7 +322,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 return ResponseService<UserRequest>.OK(userRequest);
 
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return ResponseService<UserRequest>.BadRequest(ex.Message);
             }
@@ -355,7 +345,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
 
                 return await GetUserRequestDetailsById(updateItem.Id);
 
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return ResponseService<UserRequestDetailsResponseDTO>
                     .NotFound(ex.Message);
