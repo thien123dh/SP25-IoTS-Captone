@@ -73,7 +73,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (totalAmount > 0)
             {
                 var sellerReceivedAmount = (totalAmount * (((decimal)100 - APPLICATION_FEE) / 100)) / 1000;
-                var appAmount = (totalAmount * ((APPLICATION_FEE) / 100)) / 1000;
+                var appAmount = (totalAmount * ((decimal)APPLICATION_FEE / 100)) / 1000;
 
                 var updateWalletModel = new UpdateUserWalletRequestDTO
                 {
@@ -90,7 +90,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     Amount = appAmount,
                     CreatedDate = DateTime.UtcNow.AddHours(7),
                     CurrentBallance = 0,
-                    Description = $"You have received {appAmount} gold for Order {orderItem?.Order.ApplicationSerialNumber} / Seller {orderItem?.SellerId}",
+                    Description = $"You have received {appAmount} gold for Order {orderItem?.Order.ApplicationSerialNumber}",
                     Status = "Success",
                     TransactionType = $"Order {orderItem?.Order.ApplicationSerialNumber}",
                     UserId = AdminConst.ADMIN_ID,
@@ -102,7 +102,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     Amount = refundAmount ?? 0,
                     CreatedDate = DateTime.UtcNow.AddHours(7),
                     CurrentBallance = 0,
-                    Description = $"You have refunded {appAmount} gold for Order {orderItem?.Order.ApplicationSerialNumber}",
+                    Description = $"You have refunded {refundAmount} gold for Order {orderItem?.Order.ApplicationSerialNumber}",
                     Status = "Success",
                     TransactionType = $"Order {orderItem?.Order.ApplicationSerialNumber}",
                     UserId = orderItem.OrderBy
@@ -155,7 +155,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 var totalAmount = ((report?.OrderItem?.Price ?? 0) * (report?.OrderItem?.Quantity ?? 0));
 
                 var sellerReceiverAmount = (totalAmount * (((decimal)100 - APPLICATION_FEE) / 100)) / 1000;
-                var appAmount = (totalAmount * ((APPLICATION_FEE) / 100)) / 1000;
+                var appAmount = (totalAmount * ((decimal)APPLICATION_FEE / 100)) / 1000;
 
                 var sellerId = orderItem?.SellerId;
 
@@ -190,7 +190,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     Amount = appAmount,
                     CreatedDate = DateTime.UtcNow.AddHours(7),
                     CurrentBallance = 0,
-                    Description = $"You have received {appAmount} gold for Order {orderItem.Order.ApplicationSerialNumber} / Seller {orderItem.SellerId}",
+                    Description = $"You have received {appAmount} gold for Order {orderItem.Order.ApplicationSerialNumber}",
                     Status = "Success",
                     TransactionType = $"Order {orderItem.Order.ApplicationSerialNumber}",
                     UserId = AdminConst.ADMIN_ID,
