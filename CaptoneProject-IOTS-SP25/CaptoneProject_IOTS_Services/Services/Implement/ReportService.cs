@@ -97,20 +97,22 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     IsApplication = 1
                 };
 
-                Transaction orderByTransaction = new Transaction
-                {
-                    Amount = refundAmount ?? 0,
-                    CreatedDate = DateTime.UtcNow.AddHours(7),
-                    CurrentBallance = 0,
-                    Description = $"You have refunded {refundAmount} gold for Order {orderItem?.Order.ApplicationSerialNumber}",
-                    Status = "Success",
-                    TransactionType = $"Order {orderItem?.Order.ApplicationSerialNumber}",
-                    UserId = orderItem.OrderBy
-                };
-
-                _ = unitOfWork.TransactionRepository.Create(appTrans);
-                _ = unitOfWork.TransactionRepository.Create(orderByTransaction);
+                unitOfWork.TransactionRepository.Create(appTrans);
             }
+
+            //Order transaction refunded
+            Transaction orderByTransaction = new Transaction
+            {
+                Amount = refundAmount ?? 0,
+                CreatedDate = DateTime.UtcNow.AddHours(7),
+                CurrentBallance = 0,
+                Description = $"You have refunded {refundAmount} gold for Order {orderItem?.Order.ApplicationSerialNumber}",
+                Status = "Success",
+                TransactionType = $"Order {orderItem?.Order.ApplicationSerialNumber}",
+                UserId = orderItem.OrderBy
+            };
+
+            unitOfWork.TransactionRepository.Create(orderByTransaction);
 
             Notifications notifications = new Notifications
             {
