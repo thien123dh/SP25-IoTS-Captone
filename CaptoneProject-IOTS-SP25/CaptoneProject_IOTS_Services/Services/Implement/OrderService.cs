@@ -1688,7 +1688,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         Amount = totalReceivedGolds,
                         CreatedDate = DateTime.UtcNow.AddHours(7),
                         CurrentBallance = wallet.Ballance,
-                        Description = $"You have received {totalReceivedGolds} gold for Success Order",
+                        Description = $"You have received {totalReceivedGolds} gold for Success Order {order.ApplicationSerialNumber}",
                         Status = "Success",
                         TransactionType = $"Order {order.ApplicationSerialNumber}",
                         UserId = (int)loginUserId
@@ -1699,7 +1699,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         Amount = appRevenue,
                         CreatedDate = DateTime.UtcNow.AddHours(7),
                         CurrentBallance = 0,
-                        Description = $"You have received {appRevenue} gold for Success Order {order.ApplicationSerialNumber} / Seller: {loginUserId}",
+                        Description = $"You have received {appRevenue} gold for Success Order {order.ApplicationSerialNumber}",
                         Status = "Success",
                         TransactionType = $"Order {order.ApplicationSerialNumber}",
                         UserId = AdminConst.ADMIN_ID,
@@ -1772,11 +1772,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         return item;
                     }
                 ).ToList();
-                //foreach (var item in orderItems)
-                //{
-                //    item.OrderItemStatus = (int)OrderItemStatusEnum.CANCELLED;
-                //    item.UpdatedDate = DateTime.Now;
-                //}
 
                 order.OrderStatusId = (int)OrderStatusEnum.CANCELLED;
                 order.UpdatedDate = DateTime.Now;
@@ -1824,17 +1819,6 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     CreatedDate = DateTime.Now,
                     Amount = totalRefunded,
                     OrderId = orderId
-                };
-
-                Transaction orderByTransaction = new Transaction
-                {
-                    Amount = totalRefunded,
-                    CreatedDate = DateTime.UtcNow.AddHours(7),
-                    CurrentBallance = 0,
-                    Description = $"You have refunded {totalRefunded} gold for Order {order.ApplicationSerialNumber}",
-                    Status = "Success",
-                    TransactionType = $"Order {order.ApplicationSerialNumber}",
-                    UserId = order.OrderBy
                 };
 
                 _ = _unitOfWork.RefundRequestRepository.Create(refundRequest);
