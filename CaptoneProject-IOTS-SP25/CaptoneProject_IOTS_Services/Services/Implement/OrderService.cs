@@ -360,7 +360,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     UserId = loginUserId,
                     CreatedDate = DateTime.UtcNow.AddHours(7),
                     Description = $"You have deposited {orderResponse.TotalPrice} VND into the system.",
-                    Amount = orderResponse.TotalPrice / 1000,
+                    Amount = -(orderResponse.TotalPrice / 1000),
                     CurrentBallance = -1,
                     TransactionType = $"Order {orderResponse.ApplicationSerialNumber}",
                     Status = "Success",
@@ -1672,7 +1672,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     decimal totalReceivedGolds = orderItems?.Sum(item =>
                     {
                         var amount = (decimal)(item.Price * item.Quantity);
-                        var fee = amount * (APPLICATION_FEE / 100);
+                        var fee = amount * ((decimal)APPLICATION_FEE / 100);
 
                         appRevenue += fee / 1000;
 
@@ -1698,8 +1698,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     {
                         Amount = appRevenue,
                         CreatedDate = DateTime.UtcNow.AddHours(7),
-                        CurrentBallance = wallet.Ballance,
-
+                        CurrentBallance = 0,
                         Description = $"You have received {appRevenue} gold for Success Order {order.ApplicationSerialNumber} / Seller: {loginUserId}",
                         Status = "Success",
                         TransactionType = $"Order {order.ApplicationSerialNumber}",

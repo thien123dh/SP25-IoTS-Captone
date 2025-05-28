@@ -136,7 +136,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                 .Include(item => item.Order)
                 .Sum(item => item.Price / 1000 * item.Quantity));
 
-            var totalOrderRevenue = (sumOrderItems * (APPLICATION_FEE / 100));
+            var totalOrderRevenue = (sumOrderItems * ((decimal)APPLICATION_FEE / 100));
 
             var packageRevenue = unitOfWork.AccountMembershipPackageRepository.Search(
                 item => requestRange.StartDate <= item.LastPaymentDate && item.LastPaymentDate <= requestRange.EndDate
