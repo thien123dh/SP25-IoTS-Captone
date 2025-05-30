@@ -1,4 +1,5 @@
-﻿using CaptoneProject_IOTS_BOs.DTO.OrderDTO;
+﻿using CaptoneProject_IOTS_BOs.Constant;
+using CaptoneProject_IOTS_BOs.DTO.OrderDTO;
 using CaptoneProject_IOTS_BOs.DTO.VNPayDTO;
 using CaptoneProject_IOTS_BOs.DTO.WalletDTO;
 using CaptoneProject_IOTS_BOs.Models;
@@ -9,6 +10,7 @@ using CaptoneProject_IOTS_Service.Services.Interface;
 using MailKit.Search;
 using Microsoft.AspNetCore.Http;
 using Microsoft.OData.Edm;
+using Microsoft.OData.UriParser;
 using Newtonsoft.Json;
 using Org.BouncyCastle.Asn1.Pkcs;
 using System;
@@ -179,7 +181,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             if (vnp_ResponseCode == "00" && transactionStatus == "00")
             {
                 //await _userService.UpdateUserStatus(userId, 1);
-                await _walletService.CreateTransactionUserWallet(createTransactionPayment, false);
+                await _walletService.CreateTransactionUserWallet(createTransactionPayment);
             }
             else
             {
