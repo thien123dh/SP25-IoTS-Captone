@@ -13,7 +13,7 @@ namespace CaptoneProject_IOTS_Service.Services.Interface
     {
         Task<GenericResponseDTO<Wallet>> CreateOrUpdateWallet(CreateUpdateWalletDTO source);
         Task<GenericResponseDTO<Wallet>> GetWalletByUserId(int userId);
-        Task<GenericResponseDTO<Wallet>> CreateTransactionUserWallet(CreateTransactionWalletDTO source);
+        Task<GenericResponseDTO<Wallet>> CreateTransactionUserWallet(CreateTransactionWalletDTO source, bool isCreateTransaction = true);
         Task<bool> CheckWalletBallance(decimal fee, int userId);
         Task<ResponseDTO> UpdateUserWalletOrderTransactionAsync(List<UpdateUserWalletRequestDTO> request, string? orderCode = null, decimal? refundAmount = null);
     }

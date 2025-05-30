@@ -173,7 +173,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                     Amount = accountMembershipPackage.Fee,
                     CreatedDate = DateTime.Now,
                     CurrentBallance = 0,
-                    Description = $"You have received {accountMembershipPackage.Fee} gold for Store/Trainer Registered",
+                    Description = $"You have received {accountMembershipPackage.Fee} gold for Store/Trainer {user.Id} Registered",
                     Status = "Success",
                     TransactionType = "Register Membership Package",
                     UserId = AdminConst.ADMIN_ID,
