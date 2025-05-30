@@ -103,10 +103,10 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             //Order transaction refunded
             Transaction orderByTransaction = new Transaction
             {
-                Amount = refundAmount ?? 0,
+                Amount = refundAmount / 1000 ?? 0,
                 CreatedDate = DateTime.UtcNow.AddHours(7),
                 CurrentBallance = 0,
-                Description = $"You have refunded {refundAmount} gold for Order {orderItem?.Order.ApplicationSerialNumber}",
+                Description = $"You have refunded {refundAmount / 1000} gold for Order {orderItem?.Order.ApplicationSerialNumber}",
                 Status = "Success",
                 TransactionType = $"Order {orderItem?.Order.ApplicationSerialNumber}",
                 UserId = orderItem.OrderBy
