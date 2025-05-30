@@ -90,7 +90,7 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
             return ResponseService<Wallet>.OK(wallet);
         }
 
-        public async Task<GenericResponseDTO<Wallet>> CreateTransactionUserWallet(CreateTransactionWalletDTO source)
+        public async Task<GenericResponseDTO<Wallet>> CreateTransactionUserWallet(CreateTransactionWalletDTO source, bool isCreateTransaction = true)
         {
             var user = userRepository.GetById(source.UserId);
 
@@ -129,7 +129,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                             Status = TransactionStatusEnum.SUCCESS,
                         };
 
-                        transactionService.CreateTransactionAsync(transaction);
+                        if (isCreateTransaction)
+                            _ = transactionService.CreateTransactionAsync(transaction);
                     }
                 }
                 catch
@@ -143,7 +144,8 @@ namespace CaptoneProject_IOTS_Service.Services.Implement
                         Status = TransactionStatusEnum.FAILED,
                     };
 
-                    transactionService.CreateTransactionAsync(transaction);
+                    if (isCreateTransaction)
+                        _ = transactionService.CreateTransactionAsync(transaction);
 
                     return ResponseService<Wallet>.BadRequest("Transaction was Failed. Please try again");
                 }
